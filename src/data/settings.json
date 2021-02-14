@@ -1,0 +1,81 @@
+{
+  "debug": true,
+  "trace": true,
+  "setActiveFactionsForAllSystems": false,
+  "ignoreFactions": [
+    "SolarisVII"
+  ],
+
+  "dailyFlareupChance": 0.25,
+
+  "aggressionPerSystemOwned": 1.0,
+  "aggressionByReputation": {
+    "LOATHED": 70.0,
+    "HATED": 50.0,
+    "DISLIKED": 30.0,
+    "INDIFFERENT": 10.0,
+    "LIKED": 20.0,
+    "FRIENDLY": 30.0,
+    "HONORED": 70.0,
+    "ALLIED": 100.0
+  },
+  "aggressionMultiplier": {
+    "NoFaction": 0.0,
+    "AuriganRestoration": 0.5,
+    "ClanJadeFalcon": 2.0
+  },
+  "cantBeAttacked": [
+    "ComStar",
+    "NoFaction"
+  ],
+
+  "limitTargetsToFactionEnemies": true,
+  "baseTargetChance": 10.0,
+  "targetChancePerBorderWorld": 1.0,
+
+  "flareupMarker": {
+      "useHmAnimation": true,
+      "flashpointPrefix": "",
+      "swapColour": true,
+      "keepAlpha": true,
+      "useOnlyInner": true,
+      "autoDetectContracts": false,
+      "useContractColourOverride": false,
+      "innerCircle": {
+          "Colour": "#8904B1"
+      }
+  },
+
+  "minCountdown": 30,
+  "maxCountdown": 45,
+
+  "defaultAttackStrength": 20,
+  "defaultDefenseStrength": 15,
+  "strengthVariation": 10,
+  "attackStrength": {
+    "Davion": 30,
+    "ClanJadeFalcon": 50
+  },
+  "defenseStrength": {
+    "Davion": 20,
+    "ClanJadeFalcon": 20
+  },
+
+  "minReputationToHelp": "DISLIKED",
+  "wontHirePlayer": [
+    "ClanWolf",
+    "ClanJadeFalcon"
+  ],
+
+  "daysBetweenMissions": 3,
+  "combatForceLossMin": 2,
+  "combatForceLossMax": 5,
+  "flareupMissionBonusPerHalfSkull": 50000,
+
+  "pirateTags": [
+    "planet_other_pirate",
+    "planet_pirate_lord",
+    "planet_other_prison",
+    "planet_other_blackmarket"
+  ]
+}

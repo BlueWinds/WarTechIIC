@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B1713B54-9BA6-4816-BE62-D0F7FF546186}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>WarTechIIC</RootNamespace>
+    <AssemblyName>WarTechIIC</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>./bin/Debug/</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>./bin/Release/</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <Target Name="Production" BeforeTargets="Build">
+      <Message Importance="high" Text="$(BTPATH)" />
+  </Target>
+  <ItemGroup>
+    <Reference Include="0Harmony, Version=1.2.0.1, Culture=neutral, PublicKeyToken=null">
+      <HintPath>$(BTPATH)/BattleTech_Data/Managed/0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(BTPATH)/BattleTech_Data/Managed/Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(BTPATH)/BattleTech_Data/Managed/Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+      <HintPath>$(BTPATH)/BattleTech_Data/Managed/Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>$(BTPATH)/BattleTech_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" /><Reference Include="IRBTModUtils, Version=1.7.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>$(BTPATH)/Mods/IRBTModUtils/IRBTModUtils.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" /><Reference Include="ColourfulFlashpoints, Version=1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>$(BTPATH)/Mods/ColourfulFlashpoints/ColourfulFlashPoints.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(BTPATH)/BattleTech_Data/Managed/Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src/WarTechIIC.cs" />
+    <Compile Include="src/Utilities.cs" />
+    <Compile Include="src/ContractManager.cs" />
+    <Compile Include="src/WhoAndWhere.cs" />
+    <Compile Include="src/Flareup.cs" />
+    <Compile Include="src/patches/AAR_ContractObjectivesWidget.cs" />
+    <Compile Include="src/patches/Contract.cs" />
+    <Compile Include="src/patches/LanceConfiguratorPanel.cs" />
+    <Compile Include="src/patches/SimGameState.cs" />
+    <Compile Include="src/patches/SGCmdCenterLanceConfigBG.cs" />
+    <Compile Include="src/patches/SGContractsWidget.cs" />
+    <Compile Include="src/patches/SGNavigationScreen.cs" />
+    <Compile Include="src/patches/SGTravelManager.cs" />
+    <Compile Include="src/patches/Starmap.cs" />
+    <Compile Include="src/patches/TaskTimelineWidget.cs" />
+    <Compile Include="src/data/Settings.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src/data/mod.json" />
+    <None Include="src/data/modstate.json" />
+    <None Include="src/data/contracts/*" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)/Microsoft.CSharp.targets" />
+  <PropertyGroup>
+  </PropertyGroup>
+  <Target Name="AfterBuild">
+    <Copy
+      SourceFiles="$(TargetPath);src/data/mod.json;src/data/modstate.json;src/data/settings.json"
+      DestinationFolder="$(BTPATH)/Mods/WarTech IIC/"
+      OverwriteReadOnlyFiles="true"
+      SkipUnchangedFiles="false"
+    />
+    <Copy
+      SourceFiles="src/data/contracts/wiic_help_attacker.json;src/data/contracts/wiic_help_defender.json"
+      DestinationFolder="$(BTPATH)/Mods/WarTech IIC/contracts/"
+      OverwriteReadOnlyFiles="true"
+      SkipUnchangedFiles="false"
+    />
+  </Target>
+</Project>
