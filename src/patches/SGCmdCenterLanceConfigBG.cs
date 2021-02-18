@@ -8,8 +8,12 @@ namespace WarTechIIC {
         public static void Postfix(SGCmdCenterLanceConfigBG __instance) {
             try {
                 Flareup flareup = Utilities.currentFlareup();
-                WIIC.modLog.Debug?.Write($"SGCmdCenterLanceConfigBG.ShowLanceConfiguratorScreen. selectedContract: {WIIC.sim.SelectedContract.Name}, flareupContract: {flareup.currentContractName}");
-                if (flareup != null && WIIC.sim.SelectedContract.Name == flareup.currentContractName) {
+                if (flareup == null || WIIC.sim.SelectedContract == null) {
+                    return;
+                }
+
+                WIIC.modLog.Debug?.Write($"SGCmdCenterLanceConfigBG.ShowLanceConfiguratorScreen. selectedContract: {WIIC.sim.SelectedContract.Name}, flareup: {flareup}");
+                if (WIIC.sim.SelectedContract.Name == flareup.currentContractName) {
                     WIIC.modLog.Debug?.Write($"Hiding nav drawer from ShowLanceConfiguratorScreen.");
                     SGLeftNavDrawer leftDrawer = (SGLeftNavDrawer)AccessTools.Field(typeof(SGRoomManager), "LeftDrawerWidget").GetValue(WIIC.sim.RoomManager);
                     leftDrawer.gameObject.SetActive(false);
@@ -26,7 +30,7 @@ namespace WarTechIIC {
         public static bool Prefix(SGCmdCenterLanceConfigBG __instance) {
             try {
                 Flareup flareup = Utilities.currentFlareup();
-                WIIC.modLog.Debug?.Write($"SGCmdCenterLanceConfigBG.HandleEscapeKeypress. selectedContract: {WIIC.sim.SelectedContract.Name}, flareupContract: {flareup.currentContractName}");
+                WIIC.modLog.Debug?.Write($"SGCmdCenterLanceConfigBG.HandleEscapeKeypress. selectedContract: {WIIC.sim.SelectedContract.Name}, flareup: {flareup}");
                 if (flareup != null && WIIC.sim.SelectedContract.Name == flareup.currentContractName) {
                     return false;
                 }

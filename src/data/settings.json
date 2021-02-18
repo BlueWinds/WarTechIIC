@@ -3,7 +3,8 @@
   "trace": true,
   "setActiveFactionsForAllSystems": false,
   "ignoreFactions": [
-    "SolarisVII"
+    "SolarisVII",
+    "NoFaction",
   ],
 
   "dailyFlareupChance": 0.25,
@@ -25,8 +26,7 @@
     "ClanJadeFalcon": 2.0
   },
   "cantBeAttacked": [
-    "ComStar",
-    "NoFaction"
+    "ComStar"
   ],
 
   "limitTargetsToFactionEnemies": true,

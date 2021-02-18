@@ -12,6 +12,7 @@ namespace WarTechIIC {
         private static bool Prefix(SGNavigationScreen __instance) {
             try {
                 Flareup flareup = Utilities.currentFlareup();
+                WIIC.modLog.Warn?.Write($"OnTravelCourseAccepted. Flareup: {flareup}, ActiveTravelContract: {WIIC.sim.ActiveTravelContract}");
                 if (flareup == null) {
                     return true;
                 }
@@ -34,21 +35,38 @@ namespace WarTechIIC {
                 string primaryButtonText = Strings.T("Break Deployment");
                 string cancel = Strings.T("Cancel");
                 string message = Strings.T("Leaving {0} will break our current deployment. Our reputation with {1} and the MRB will suffer, Commander.", flareup.location.Name, flareup.employer.FactionDef.ShortName);
+                WIIC.modLog.Info?.Write(message);
                 PauseNotification.Show(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
-                    cleanup();
-                    WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
-                    WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
+                    try {
+                        WIIC.modLog.Info?.Write("Breaking deployment contract");
 
-                    if (flareup.employer.DoesGainReputation) {
-                        float employerRepBadFaithMod = WIIC.sim.Constants.Story.EmployerRepBadFaithMod;
-                        int num = (int) Math.Round(flareup.location.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
+                        Flareup flareup2 = Utilities.currentFlareup();
+                        WIIC.modLog.Info?.Write("Flareup: {flareup2}");
 
-                        WIIC.sim.SetReputation(flareup.employer, num);
-                        WIIC.sim.SetReputation(FactionEnumeration.GetFactionByName("faction_MercenaryReviewBoard"), num);
+                        if (flareup2 != null && flareup2.employer.DoesGainReputation) {
+                            WIIC.modLog.Info?.Write("Employer: {flareup2.employer}");
+
+                            float employerRepBadFaithMod = WIIC.sim.Constants.Story.EmployerRepBadFaithMod;
+                            WIIC.modLog.Info?.Write("employerRepBadFaithMod: {employerRepBadFaithMod}");
+                            WIIC.modLog.Info?.Write("CAREER: {SimGameState.SimGameType.CAREER}");
+                            WIIC.modLog.Info?.Write("difficulty: {flareup2.location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
+                            int num = (int) Math.Round(flareup2.location.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
+
+                            WIIC.sim.SetReputation(flareup2.employer, num);
+                            WIIC.sim.SetReputation(FactionEnumeration.GetFactionByName("faction_MercenaryReviewBoard"), num);
+                        }
+
+                        WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
+                        WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
+
+                        WIIC.sim.RoomManager.RefreshTimeline(false);
+                        WIIC.sim.Starmap.SetActivePath();
+                        WIIC.sim.SetSimRoomState(DropshipLocation.SHIP);
+
+                        cleanup();
+                    } catch (Exception e) {
+                        WIIC.modLog.Error?.Write(e);
                     }
-
-                    WIIC.sim.Starmap.SetActivePath();
-                    WIIC.sim.SetSimRoomState(DropshipLocation.SHIP);
                 }, primaryButtonText, cleanup, cancel);
 
                 WIIC.sim.Starmap.Screen.AllowInput(false);

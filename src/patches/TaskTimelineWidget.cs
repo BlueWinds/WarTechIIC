@@ -39,4 +39,21 @@ namespace WarTechIIC {
             }
         }
     }
+
+    [HarmonyPatch(typeof(TaskTimelineWidget), "OnTaskDetailsClicked")]
+    public static class TaskTimelineWidget_OnTaskDetailsClicked_Patch {
+        static void Postfix(TaskManagementElement element) {
+            try {
+                Flareup flareup = Utilities.currentFlareup();
+                if (element.Entry.ID != "nextflareupContract" || flareup == null) {
+                    return;
+                }
+
+                WIIC.sim.SetTimeMoving(false);
+                PauseNotification.Show("Flareup Details", flareup.getDescription(), WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), "", true, null);
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+        }
+    }
 }

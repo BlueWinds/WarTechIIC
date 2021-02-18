@@ -8,6 +8,7 @@ namespace WarTechIIC {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort) {
             try {
                 Settings s = WIIC.settings;
+                WIIC.modLog.Debug?.Write($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}");
 
                 Flareup flareup = Utilities.currentFlareup();
                 if (flareup == null || __instance.Name != flareup.currentContractName) {
@@ -17,6 +18,7 @@ namespace WarTechIIC {
                 int newCost = __instance.MoneyResults +s.flareupMissionBonusPerHalfSkull * __instance.Difficulty;
                 Traverse.Create(__instance).Property("MoneyResults").SetValue(newCost);
 
+                WIIC.modLog.Info?.Write($"Flareup contract complete. Employer: {flareup.employer.Name}, Attacker: {flareup.attacker.Name}, force loss: {flareup.currentContractForceLoss}");
                 if (flareup.employer == flareup.attacker) {
                     flareup.defenderStrength -= flareup.currentContractForceLoss;
                 } else {

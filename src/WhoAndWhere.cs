@@ -85,7 +85,7 @@ namespace WarTechIIC {
                 if (!enemyBorderWorlds.ContainsKey(system.OwnerValue)) {
                     enemyBorderWorlds[system.OwnerValue] = new Dictionary<StarSystem, double>();
                     enemyAttackWeight[system.OwnerValue] = s.baseTargetChance;
-                    WIIC.modLog.Debug?.Write($"Potential defender {system.OwnerValue.Name} added with inital weight {s.baseTargetChance}");
+                    WIIC.modLog.Debug?.Write($"Potential defender {system.OwnerValue.Name} added because of system {system.Name}");
                 }
                 enemyBorderWorlds[system.OwnerValue][system] = attackerNeighboringSystems;
                 enemyAttackWeight[system.OwnerValue] += s.targetChancePerBorderWorld;

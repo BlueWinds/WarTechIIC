@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Harmony;
 using BattleTech;
 using BattleTech.Save;
@@ -11,21 +13,23 @@ namespace WarTechIIC {
             try {
                 WIIC.modLog.Info?.Write($"Patching starmap with new owners (setActiveFactionsForAllSystems: {WIIC.settings.setActiveFactionsForAllSystems})");
                 int count = 0;
+                int controlCount = 0;
                 foreach (StarSystem system in WIIC.sim.StarSystems) {
                     if (WIIC.settings.setActiveFactionsForAllSystems) {
                         Utilities.setActiveFactions(system);
                     }
-                    foreach (string tag in system.Tags) {
-                        // Check if a previous flareup flipped control of the system
-                        FactionValue ownerFromTag = Utilities.controlFromTag(tag);
-                        if (ownerFromTag != null) {
-                            WIIC.modLog.Debug?.Write($"Found new owner {ownerFromTag.Name} at {system.Name}");
-                            Utilities.applyOwner(system, ownerFromTag);
-                        }
+
+                    // Check if a previous flareup flipped control of the system
+                    string tag = system.Tags.ToList().Find(Utilities.isControlTag);
+                    FactionValue ownerFromTag = Utilities.controlFromTag(tag);
+                    if (tag != null && ownerFromTag != null) {
+                        WIIC.modLog.Info?.Write($"Found new owner {ownerFromTag.Name} at {system.Name}");
+                        Utilities.applyOwner(system, ownerFromTag);
+                        controlCount++;
                     }
                     count++;
                 }
-                WIIC.modLog.Info?.Write($"Finished patching starmap (checked {count} systems)");
+                WIIC.modLog.Info?.Write($"Finished patching starmap (checked {count} systems, flipped control of {controlCount})");
 
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

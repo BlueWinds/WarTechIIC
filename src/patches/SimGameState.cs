@@ -19,6 +19,7 @@ namespace WarTechIIC {
                 WIIC.sim = __instance;
                 WIIC.modLog.Debug?.Write("Clearing Flareups for new SimGameState");
                 WIIC.flareups.Clear();
+                ColourfulFlashPoints.Main.clearMapMarkers();
 
                 if (WIIC.settings.setActiveFactionsForAllSystems) {
                     foreach (StarSystem system in __instance.StarSystems) {
@@ -41,13 +42,14 @@ namespace WarTechIIC {
                 WIIC.flareups.Clear();
                 ColourfulFlashPoints.Main.clearMapMarkers();
                 foreach (StarSystem system in __instance.StarSystems) {
-                    foreach (string tag in system.Tags) {
-                        if (Flareup.isSerializedFlareup(tag)) {
-                            WIIC.modLog.Debug?.Write($"    {tag}");
-                            Flareup flareup = Flareup.Deserialize(tag, __instance);
-                            WIIC.flareups[system.ID] = flareup;
-                            flareup.addToMap();
-                        }
+                    string tag = system.Tags.ToList().Find(Flareup.isSerializedFlareup);
+                    if (tag != null) {
+                        WIIC.modLog.Debug?.Write($"    {tag}");
+                        system.Tags.Remove(tag);
+
+                        Flareup flareup = Flareup.Deserialize(tag, __instance);
+                        WIIC.flareups[system.ID] = flareup;
+                        flareup.addToMap();
                     }
                 }
             } catch (Exception e) {
@@ -89,7 +91,7 @@ namespace WarTechIIC {
                 foreach (Flareup flareup in WIIC.flareups.Values.ToList()) {
                     bool finished = flareup.passDay();
                     if (finished) {
-                        WIIC.flareups.Remove(flareup.location.Name);
+                        WIIC.flareups.Remove(flareup.location.ID);
                     } else {
                         flareup.addToMap();
                         if (activeItems.TryGetValue(flareup.workOrder, out var taskManagementElement)) {
@@ -143,6 +145,7 @@ namespace WarTechIIC {
                 }
 
                 // Clean up the opposite-side travel contract, if it exists
+                __instance.ClearBreadcrumb();
                 flareup.removeParticipationContracts();
 
                 // When the player arrives, we start the flareup the next day - it's only fair not to make them wait around. :)
@@ -154,7 +157,6 @@ namespace WarTechIIC {
                 __instance.SetSimRoomState(DropshipLocation.SHIP);
                 __instance.RoomManager.AddWorkQueueEntry(flareup.workOrder);
                 __instance.RoomManager.RefreshTimeline(false);
-                __instance.Update();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }

@@ -92,7 +92,7 @@ namespace WarTechIIC {
 
         public bool passDay() {
             Settings s = WIIC.settings;
-            if (countdown > 1) {
+            if (countdown > 0) {
                 countdown--;
                 return false;
             }
@@ -162,6 +162,11 @@ namespace WarTechIIC {
                 WIIC.fluffDescriptions[location.ID] = location.Def.Description.Details;
             }
 
+            string description = getDescription() + "\n" + WIIC.fluffDescriptions[location.ID];
+            AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(location.Def.Description, new object[] { description });
+        }
+
+        public string getDescription() {
             var description = new StringBuilder();
             description.AppendLine(Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, attacker.FactionDef.ShortName));
             if (countdown > 0) {
@@ -170,13 +175,10 @@ namespace WarTechIIC {
             if (daysUntilMission > 0) {
                description.AppendLine(Strings.T("{0} days until the next mission", daysUntilMission));
             }
-            description.AppendLine("\n\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name, Utilities.forcesToDots(attackerStrength)));
+            description.AppendLine("\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name, Utilities.forcesToDots(attackerStrength)));
             description.AppendLine(Strings.T("{0} forces: {1}", location.OwnerValue.FactionDef.Name, Utilities.forcesToDots(defenderStrength)));
 
-            description.AppendLine("\n");
-            description.AppendLine(WIIC.fluffDescriptions[location.ID]);
-
-            AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(location.Def.Description, new object[] { description.ToString() });
+            return description.ToString();
         }
 
         public void spawnParticipationContracts() {
@@ -209,7 +211,9 @@ namespace WarTechIIC {
         }
 
         public void removeParticipationContracts() {
-            location.SystemContracts.RemoveAll(c => (c.ContractTypeValue.Name == "wiic_help_attacker" || c.ContractTypeValue.Name == "wiic_help_defender"));
+            WIIC.modLog.Debug?.Write($"Cleaning up participation contracts. Count: {WIIC.sim.GlobalContracts.Count}");
+            WIIC.sim.GlobalContracts.RemoveAll(c => (c.Override.ID == "wiic_help_attacker" || c.Override.ID == "wiic_help_defender"));
+            WIIC.modLog.Debug?.Write($"Post-Count: {WIIC.sim.GlobalContracts.Count}");
         }
 
         public void launchMission() {
@@ -221,12 +225,9 @@ namespace WarTechIIC {
             string message = $"{employer.FactionDef.ShortName} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it sounds urgent.";
             WIIC.modLog.Debug?.Write(message);
 
-            void decline() {
-                WIIC.modLog.Info?.Write($"Passed on flareup mission.");
-            }
-
-            WIIC.sim.SetTimeMoving(false);
-            PauseNotification.Show(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
+//             WIIC.sim.SetTimeMoving(false);
+            SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
+            queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
                     WIIC.modLog.Info?.Write($"Accepted flareup mission {contract.Name}.");
                     location.SystemContracts.Add(contract);
@@ -238,7 +239,13 @@ namespace WarTechIIC {
                 } catch (Exception e) {
                     WIIC.modLog.Error?.Write(e);
                 }
-            }, primaryButtonText, decline, cancel);
+            }, primaryButtonText, delegate {
+                  WIIC.modLog.Info?.Write($"Passed on flareup mission.");
+            }, cancel);
+
+            if (!queue.IsOpen) {
+                queue.DisplayIfAvailable();
+            }
         }
 
         private WorkOrderEntry_Notification _workOrder;
