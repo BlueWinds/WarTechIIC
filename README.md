@@ -14,9 +14,9 @@ WIIC first decides who will be the attacker in the new flareup.
 1) Only factions that control at least one star system on the map are considered.
 2) And factions in `ignoreFactions` are ignored.
 3) A weight is assigned to each faction, the sum of several factors:
-3a) `aggressionPerSystemOwned` is multiplied by the number of star systems the faction controls. This represents larger factions having more border worlds and more resources.
-3b) The player's reputation with the faction is pulled from `aggressionByReputation` and added in. This gives extra weight to factions that the player is interested in, either by fighting against them frequently or by allying with them.
-3c) The sum of the above two is multiplied by that faction's entry in `aggressionMultiplier`, if they have one. This means if you set their `aggressionMultiplier` to 0, they'll never attack people.
+    1) `aggressionPerSystemOwned` is multiplied by the number of star systems the faction controls. This represents larger factions having more border worlds and more resources.
+    2) The player's reputation with the faction is pulled from `aggressionByReputation` and added in. This gives extra weight to factions that the player is interested in, either by fighting against them frequently or by allying with them.
+    3) The sum of the above two is multiplied by that faction's entry in `aggressionMultiplier`, if they have one. This means if you set their `aggressionMultiplier` to 0, they'll never attack people.
 
 With the weight for each potential attacker figured out, one is selected at random.
 
@@ -25,8 +25,8 @@ With the attacker decided, WIIC looks to see where they will attack.
 1) Factions in `cantBeAttacked`... can't be attacked.
 2) If `limitTargetsToFactionEnemies` is `true`, then only a faction's enemies - as defined in their factionDef - are considered as possible targets. Otherwise, any faction they share a border with is fair game.
 3) A weight is assigned to each defender, the sum of two factors.
-3a) `targetChancePerBorderWorld` is multiplied by the number of border worlds between the attacker and this faction. A border world is considered any world you can reach in a single jump from one of the attacker's planets. If there are no border worlds, the faction is discarded as a potential defender.
-3b) The `baseTargetChance` is added in.
+    1) `targetChancePerBorderWorld` is multiplied by the number of border worlds between the attacker and this faction. A border world is considered any world you can reach in a single jump from one of the attacker's planets. If there are no border worlds, the faction is discarded as a potential defender.
+    2) The `baseTargetChance` is added in.
 
 With the weight for each potential defender figured out, one is selected at random.
 
