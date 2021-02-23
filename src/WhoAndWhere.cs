@@ -29,7 +29,7 @@ namespace WarTechIIC {
             WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
 
             Flareup flareup = new Flareup(system, attacker, WIIC.sim);
-            WIIC.flareups[system.Name] = flareup;
+            WIIC.flareups[system.ID] = flareup;
             flareup.addToMap();
         }
 
@@ -58,7 +58,6 @@ namespace WarTechIIC {
                     modifier = s.aggressionMultiplier[entry.Key.Name];
                 }
                 withMult[entry.Key] = entry.Value * modifier;
-                WIIC.modLog.Debug?.Write($"Potential aggressor {entry.Key.Name} with weight {withMult[entry.Key]} (modifier {modifier})");
             }
 
             return Utilities.WeightedChoice(withMult);
@@ -85,7 +84,6 @@ namespace WarTechIIC {
                 if (!enemyBorderWorlds.ContainsKey(system.OwnerValue)) {
                     enemyBorderWorlds[system.OwnerValue] = new Dictionary<StarSystem, double>();
                     enemyAttackWeight[system.OwnerValue] = s.baseTargetChance;
-                    WIIC.modLog.Debug?.Write($"Potential defender {system.OwnerValue.Name} added because of system {system.Name}");
                 }
                 enemyBorderWorlds[system.OwnerValue][system] = attackerNeighboringSystems;
                 enemyAttackWeight[system.OwnerValue] += s.targetChancePerBorderWorld;

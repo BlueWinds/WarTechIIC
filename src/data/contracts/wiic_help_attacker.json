@@ -39,8 +39,8 @@
   "contractRewardOverride": 30000,
   "travelOnly": true,
   "useTravelCostPenalty": false,
-  "usesExpiration": true,
-  "expirationTimeOverride": 30,
+  "usesExpiration": false,
+  "expirationTimeOverride": 0,
   "negotiatedSalary": 1,
   "negotiatedSalvage": 0,
   "player1Team": {

@@ -58,23 +58,6 @@ namespace WarTechIIC {
         }
     }
 
-    [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
-    public static class SimGameState_DehydratePatch {
-        [HarmonyPrefix]
-        public static void SaveFlareups() {
-            WIIC.modLog.Debug?.Write("Saving active flareups in system tags");
-
-            try {
-                foreach (Flareup flareup in WIIC.flareups.Values) {
-                    WIIC.modLog.Debug?.Write($"    {flareup.Serialize()}");
-                    flareup.location.Tags.Add(flareup.Serialize());
-                }
-            } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
-            }
-        }
-    }
-
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameStateOnDayPassedPatch {
         private static FieldInfo _getTimelineWidget = AccessTools.Field(typeof(SGRoomManager), "timelineWidget");
@@ -91,6 +74,7 @@ namespace WarTechIIC {
                 foreach (Flareup flareup in WIIC.flareups.Values.ToList()) {
                     bool finished = flareup.passDay();
                     if (finished) {
+                        WIIC.modLog.Debug?.Write($"Removing flareup at {flareup.location.ID}.");
                         WIIC.flareups.Remove(flareup.location.ID);
                     } else {
                         flareup.addToMap();
@@ -168,13 +152,17 @@ namespace WarTechIIC {
         [HarmonyPrefix]
         public static void SetCurrentSystemPrefix(StarSystem system, bool force = false, bool timeSkip = false) {
             try {
+                WIIC.modLog.Debug?.Write($"Entering system {system.ID} from {WIIC.sim.CurSystem.ID}");
+
                 if (WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
+                    WIIC.modLog.Debug?.Write($"Found flareup from previous system, cleaning up contracts");
                     // Clean up participation contracts for the system we've just left
                     Flareup prevFlareup = WIIC.flareups[WIIC.sim.CurSystem.ID];
                     prevFlareup.removeParticipationContracts();
                 }
 
                 if (WIIC.flareups.ContainsKey(system.ID)) {
+                    WIIC.modLog.Debug?.Write($"Found flareup for new system, adding contracts");
                     // Create new participation contracts for the system we're entering
                     Flareup flareup = WIIC.flareups[system.ID];
                     flareup.spawnParticipationContracts();

@@ -19,6 +19,7 @@ namespace WarTechIIC {
                 Traverse.Create(__instance).Property("MoneyResults").SetValue(newCost);
 
                 WIIC.modLog.Info?.Write($"Flareup contract complete. Employer: {flareup.employer.Name}, Attacker: {flareup.attacker.Name}, force loss: {flareup.currentContractForceLoss}");
+                WIIC.modLog.Debug?.Write($"CurMaxContracts: {flareup.location.CurMaxContracts}, CurMaxBreadcrumbs: {flareup.location.CurMaxBreadcrumbs}, InitialContractsFetched: {flareup.location.InitialContractsFetched}, SystemContracts: {flareup.location.SystemContracts.Count}, SystemBreadcrumbs: {flareup.location.SystemBreadcrumbs.Count}");
                 if (flareup.employer == flareup.attacker) {
                     flareup.defenderStrength -= flareup.currentContractForceLoss;
                 } else {

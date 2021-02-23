@@ -18,15 +18,9 @@ namespace WarTechIIC {
                     return;
                 }
 
-                string moneyString = "";
-
-                if (WIIC.settings.flareupMissionBonusPerHalfSkull > 0) {
-                    int bonusMoney = WIIC.settings.flareupMissionBonusPerHalfSkull * contract.Difficulty;
-
-                    moneyString = string.Format("\n¢{0:n0} bonus", bonusMoney);
-                }
-
-                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup{2}", flareup.target.FactionDef.ShortName, flareup.currentContractForceLoss, moneyString);
+                int bonusMoney = WIIC.settings.flareupMissionBonusPerHalfSkull * contract.Difficulty;
+                string loss = Utilities.forcesToString(flareup.currentContractForceLoss);
+                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus", flareup.target.FactionDef.ShortName, loss, bonusMoney);
                 WIIC.modLog.Debug?.Write(objectiveString);
 
                 MissionObjectiveResult objective = new MissionObjectiveResult(objectiveString, GUID, false, true, ObjectiveStatus.Succeeded, false);

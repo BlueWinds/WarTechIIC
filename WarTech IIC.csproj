@@ -79,6 +79,7 @@
     <Compile Include="src/Flareup.cs" />
     <Compile Include="src/patches/AAR_ContractObjectivesWidget.cs" />
     <Compile Include="src/patches/Contract.cs" />
+    <Compile Include="src/patches/GameInstanceSave.cs" />
     <Compile Include="src/patches/LanceConfiguratorPanel.cs" />
     <Compile Include="src/patches/SimGameState.cs" />
     <Compile Include="src/patches/SGCmdCenterLanceConfigBG.cs" />

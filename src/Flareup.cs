@@ -108,7 +108,7 @@ namespace WarTechIIC {
             } else {
                 defenderStrength -= Utilities.rng.Next(s.combatForceLossMin, s.combatForceLossMax);
             }
-            WIIC.modLog.Debug?.Write($"Flareup at {location.Name} rand: {rand}, attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
+            WIIC.modLog.Debug?.Write($"Flareup progressed at {location.Name}. attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
 
             daysUntilMission = s.daysBetweenMissions;
 
@@ -124,7 +124,7 @@ namespace WarTechIIC {
         }
 
         public void conclude() {
-            WIIC.modLog.Info?.Write($"Flareup finished. {location.Name}. attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
+            WIIC.modLog.Info?.Write($"Flareup finished at {location.Name}.");
 
             removeParticipationContracts();
             if (attackerStrength <= 0) {
@@ -154,7 +154,6 @@ namespace WarTechIIC {
 
         public void addToMap() {
             MapMarker mapMarker = new MapMarker(location.ID, WIIC.settings.flareupMarker);
-            WIIC.modLog.Debug?.Write($"Adding mapMarker at {location.ID}");
             ColourfulFlashPoints.Main.addMapMarker(mapMarker);
 
             if (!WIIC.fluffDescriptions.ContainsKey(location.ID)) {
@@ -175,14 +174,15 @@ namespace WarTechIIC {
             if (daysUntilMission > 0) {
                description.AppendLine(Strings.T("{0} days until the next mission", daysUntilMission));
             }
-            description.AppendLine("\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name, Utilities.forcesToDots(attackerStrength)));
-            description.AppendLine(Strings.T("{0} forces: {1}", location.OwnerValue.FactionDef.Name, Utilities.forcesToDots(defenderStrength)));
+            description.AppendLine("\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name, Utilities.forcesToString(attackerStrength)));
+            description.AppendLine(Strings.T("{0} forces: {1}", location.OwnerValue.FactionDef.Name, Utilities.forcesToString(defenderStrength)));
 
             return description.ToString();
         }
 
         public void spawnParticipationContracts() {
             Enum.TryParse(WIIC.settings.minReputationToHelp, out SimGameReputation minRep);
+            int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
             if (!WIIC.settings.wontHirePlayer.Contains(attacker.Name) && sim.GetReputation(attacker) >= minRep) {
                 WIIC.modLog.Info?.Write($"Adding contract wiic_help_attacker. Target={location.OwnerValue.Name}, Employer={attacker.Name}, TargetSystem={location.ID}, Difficulty={location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
                 Contract attackContract = sim.AddContract(new SimGameState.AddContractData {
@@ -190,10 +190,9 @@ namespace WarTechIIC {
                     Target = location.OwnerValue.Name,
                     Employer = attacker.Name,
                     TargetSystem = location.ID,
-                    Difficulty = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)
+                    Difficulty = diff
                 });
-
-                attackContract.SetExpiration(countdown);
+                attackContract.SetFinalDifficulty(diff);
             }
 
             if (!WIIC.settings.wontHirePlayer.Contains(location.OwnerValue.Name) && sim.GetReputation(location.OwnerValue) >= minRep) {
@@ -203,17 +202,17 @@ namespace WarTechIIC {
                     Target = attacker.Name,
                     Employer = location.OwnerValue.Name,
                     TargetSystem = location.ID,
-                    Difficulty = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)
+                    Difficulty = diff
                 });
-
-                defendContract.SetExpiration(countdown);
+                defendContract.SetFinalDifficulty(diff);
             }
         }
 
         public void removeParticipationContracts() {
-            WIIC.modLog.Debug?.Write($"Cleaning up participation contracts. Count: {WIIC.sim.GlobalContracts.Count}");
-            WIIC.sim.GlobalContracts.RemoveAll(c => (c.Override.ID == "wiic_help_attacker" || c.Override.ID == "wiic_help_defender"));
-            WIIC.modLog.Debug?.Write($"Post-Count: {WIIC.sim.GlobalContracts.Count}");
+            if (location == WIIC.sim.CurSystem) {
+                WIIC.modLog.Debug?.Write($"Cleaning up participation contracts for {location.Name}.");
+                WIIC.sim.GlobalContracts.RemoveAll(c => (c.Override.ID == "wiic_help_attacker" || c.Override.ID == "wiic_help_defender"));
+            }
         }
 
         public void launchMission() {
@@ -222,7 +221,7 @@ namespace WarTechIIC {
             string title = Strings.T("Flareup Mission");
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
-            string message = $"{employer.FactionDef.ShortName} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it sounds urgent.";
+            string message = $"{employer.FactionDef.Name} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it sounds urgent.";
             WIIC.modLog.Debug?.Write(message);
 
 //             WIIC.sim.SetTimeMoving(false);
@@ -230,7 +229,6 @@ namespace WarTechIIC {
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
                     WIIC.modLog.Info?.Write($"Accepted flareup mission {contract.Name}.");
-                    location.SystemContracts.Add(contract);
                     currentContractName = contract.Name;
                     currentContractForceLoss = Utilities.rng.Next(WIIC.settings.combatForceLossMin, WIIC.settings.combatForceLossMax);
 

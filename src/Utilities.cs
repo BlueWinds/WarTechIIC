@@ -40,12 +40,12 @@ namespace WarTechIIC {
         }
 
         public static void applyOwner(StarSystem system, FactionValue newOwner) {
-            WIIC.modLog.Trace?.Write($"Flipping control of ${system.Name} to ${newOwner.Name}");
+            WIIC.modLog.Trace?.Write($"Flipping control of {system.Name} to {newOwner.Name}");
             List<string> tagList = system.Tags.ToList();
             system.Tags.Remove(tagList.Find(t => t.StartsWith("planet_faction_")));
             system.Tags.Remove(tagList.Find(isControlTag));
-            system.Tags.Add($"planet_faction_${newOwner.Name.ToLower()}");
-            system.Tags.Add($"WIIC_control_${newOwner.Name}");
+            system.Tags.Add($"planet_faction_{newOwner.Name.ToLower()}");
+            system.Tags.Add($"WIIC_control_{newOwner.Name}");
 
             methodSetOwner.Invoke(system.Def, new object[] { newOwner });
             setActiveFactions(system);
@@ -91,8 +91,8 @@ namespace WarTechIIC {
             return WIIC.flareups[WIIC.sim.CurSystem.ID];
         }
 
-        public static string forcesToDots(int forces) {
-            return $"<color=#debc02>{new String('O', forces / 10 + 1)}</color>";
+        public static string forcesToString(int forces) {
+            return $"<color=#debc02>{forces}</color>";
         }
     }
 }
