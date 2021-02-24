@@ -39,5 +39,7 @@ namespace WarTechIIC {
         public int flareupMissionBonusPerHalfSkull = 0;
 
         public List<string> pirateTags = new List<string>();
+
+        public List<int> customContractEnums = new List<int>();
     }
 }
