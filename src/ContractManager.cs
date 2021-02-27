@@ -13,18 +13,12 @@ namespace WarTechIIC {
         public static FactionValue employer;
         public static FactionValue target;
 
-        private static readonly ContractType[] contractTypes = new ContractType[] {
-            ContractType.AmbushConvoy,
-            ContractType.Assassinate,
-            ContractType.CaptureBase,
-            ContractType.CaptureEscort,
-            ContractType.DefendBase,
-            ContractType.DestroyBase,
-            ContractType.Rescue,
-            ContractType.SimpleBattle,
-            ContractType.FireMission,
-            ContractType.AttackDefend,
-            ContractType.ThreeWayBattle
+        private static readonly int[] contractTypes = new int[]
+        {
+            (int)ContractType.AmbushConvoy, (int)ContractType.Assassinate, (int)ContractType.CaptureBase,
+            (int)ContractType.CaptureEscort, (int)ContractType.DefendBase, (int)ContractType.DestroyBase, (int)ContractType.Rescue,
+            (int)ContractType.SimpleBattle, (int)ContractType.FireMission, (int)ContractType.AttackDefend,
+            (int)ContractType.ThreeWayBattle
         };
 
         private static MethodInfo _getContractRangeDifficultyRange = AccessTools.Method(typeof(SimGameState), "GetContractRangeDifficultyRange");
@@ -42,7 +36,11 @@ namespace WarTechIIC {
             employer = emp;
             target = tar;
             var difficultyRange = _getContractRangeDifficultyRange.Invoke(WIIC.sim, new object[] { system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty });
-            var potentialContracts = (Dictionary<int, List<ContractOverride>>)_getContractOverrides.Invoke(WIIC.sim, new object[] { difficultyRange, contractTypes });
+
+            var validTypes = contractTypes.AddRangeToArray(WIIC.settings.customContractEnums.ToArray());
+//            var validTypes = WIIC.settings.customContractEnums.ToArray();
+
+            var potentialContracts = (Dictionary<int, List<ContractOverride>>)_getContractOverrides.Invoke(WIIC.sim, new object[] { difficultyRange, validTypes });
 
             WeightedList<MapAndEncounters> playableMaps =
                 MetadataDatabase.Instance.GetReleasedMapsAndEncountersBySinglePlayerProceduralContractTypeAndTags(

@@ -77,5 +77,10 @@
     "planet_pirate_lord",
     "planet_other_prison",
     "planet_other_blackmarket"
-  ]
+  ],
+  	"customContractEnums": [
+		10000,
+		10001,
+		10002
+	]
 }
