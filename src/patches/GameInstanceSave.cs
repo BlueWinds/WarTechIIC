@@ -11,7 +11,7 @@ namespace WarTechIIC {
     public static class GameInstanceSave_PreSerialization_Patch {
         [HarmonyPrefix]
         public static void SaveFlareups() {
-            WIIC.modLog.Debug?.Write("Saving active flareups in system tags");
+            WIIC.modLog.Debug?.Write("Saving active flareups in system tags, funds: {WIIC.sim.Funds}");
 
             try {
                 foreach (Flareup flareup in WIIC.flareups.Values) {

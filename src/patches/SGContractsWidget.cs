@@ -29,7 +29,7 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Name}, flareupContract: {flareup.currentContractName}");
 
                     HBSButton backButton = (HBSButton)AccessTools.Field(typeof(SGContractsWidget), "NegotiateTitleBackButton").GetValue(__instance);
-                    backButton.SetState(ButtonState.Unavailable);
+                    backButton.SetState(ButtonState.Disabled);
 
                     SGLeftNavDrawer leftDrawer = (SGLeftNavDrawer)AccessTools.Field(typeof(SGRoomManager), "LeftDrawerWidget").GetValue(WIIC.sim.RoomManager);
                     leftDrawer.gameObject.SetActive(false);

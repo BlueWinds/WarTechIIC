@@ -15,16 +15,11 @@ namespace WarTechIIC {
                     return;
                 }
 
-                int newCost = __instance.MoneyResults +s.flareupMissionBonusPerHalfSkull * __instance.Difficulty;
-                Traverse.Create(__instance).Property("MoneyResults").SetValue(newCost);
+                int newCost = __instance.MoneyResults + s.flareupMissionBonusPerHalfSkull * __instance.Difficulty;
+                WIIC.modLog.Info?.Write($"Flareup contract complete, adding bonus. old money: {__instance.MoneyResults}, new: {newCost}, funds: {WIIC.sim.Funds}");
 
-                WIIC.modLog.Info?.Write($"Flareup contract complete. Employer: {flareup.employer.Name}, Attacker: {flareup.attacker.Name}, force loss: {flareup.currentContractForceLoss}");
-                WIIC.modLog.Debug?.Write($"CurMaxContracts: {flareup.location.CurMaxContracts}, CurMaxBreadcrumbs: {flareup.location.CurMaxBreadcrumbs}, InitialContractsFetched: {flareup.location.InitialContractsFetched}, SystemContracts: {flareup.location.SystemContracts.Count}, SystemBreadcrumbs: {flareup.location.SystemBreadcrumbs.Count}");
-                if (flareup.employer == flareup.attacker) {
-                    flareup.defenderStrength -= flareup.currentContractForceLoss;
-                } else {
-                    flareup.attackerStrength -= flareup.currentContractForceLoss;
-                }
+                Traverse.Create(__instance).Property("MoneyResults").SetValue(newCost);
+                WIIC.modLog.Info?.Write($"Reading it back after setting: {__instance.MoneyResults}");
 
                 ContractManager.employer = null;
                 ContractManager.target = null;

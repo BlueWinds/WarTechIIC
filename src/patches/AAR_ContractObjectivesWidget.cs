@@ -23,8 +23,17 @@ namespace WarTechIIC {
                 string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus", flareup.target.FactionDef.ShortName, loss, bonusMoney);
                 WIIC.modLog.Debug?.Write(objectiveString);
 
+                if (flareup.employer == flareup.attacker) {
+                    flareup.defenderStrength -= flareup.currentContractForceLoss;
+                    WIIC.modLog.Debug?.Write($"defenderStrength -= {flareup.currentContractForceLoss}");
+                } else {
+                    flareup.attackerStrength -= flareup.currentContractForceLoss;
+                    WIIC.modLog.Debug?.Write($"attackerStrength -= {flareup.currentContractForceLoss}");
+                }
+
                 MissionObjectiveResult objective = new MissionObjectiveResult(objectiveString, GUID, false, true, ObjectiveStatus.Succeeded, false);
                 Traverse.Create(__instance).Method("AddObjective", objective).GetValue();
+                WIIC.modLog.Info?.Write($"MoneyResults from ARR: {contract.MoneyResults}, funds: {WIIC.sim.Funds}");
 
                 flareup.currentContractForceLoss = 0;
                 flareup.currentContractName = "";

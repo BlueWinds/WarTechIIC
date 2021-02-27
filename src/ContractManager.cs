@@ -94,6 +94,7 @@ namespace WarTechIIC {
     }
 
     [HarmonyPatch(typeof(SimGameState), "PrepContract")]
+    [HarmonyPriority(300)]
     public static class SimGameState_PrepContract_Patch {
         static void Prefix(Contract contract, ref FactionValue employer, ref FactionValue employersAlly, ref FactionValue target, ref FactionValue targetsAlly, ref FactionValue NeutralToAll, ref FactionValue HostileToAll) {
             WIIC.modLog.Debug?.Write($"Prepping contract. employer: {ContractManager.employer}, arg: {employer}. name: {contract.Name}");
