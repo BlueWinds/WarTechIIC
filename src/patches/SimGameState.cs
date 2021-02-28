@@ -18,6 +18,7 @@ namespace WarTechIIC {
             try {
                 WIIC.sim = __instance;
                 WIIC.modLog.Debug?.Write("Clearing Flareups for new SimGameState");
+                WIIC.sim.CompanyTags.Add("WIIC_enabled");
                 WIIC.flareups.Clear();
                 ColourfulFlashPoints.Main.clearMapMarkers();
 
@@ -40,6 +41,7 @@ namespace WarTechIIC {
                 WIIC.modLog.Debug?.Write("Loading Flareups");
                 WIIC.sim = __instance;
                 WIIC.flareups.Clear();
+                WIIC.sim.CompanyTags.Add("WIIC_enabled");
                 ColourfulFlashPoints.Main.clearMapMarkers();
                 foreach (StarSystem system in __instance.StarSystems) {
                     string tag = system.Tags.ToList().Find(Flareup.isSerializedFlareup);
