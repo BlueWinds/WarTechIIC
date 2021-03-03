@@ -27,6 +27,7 @@ With the attacker decided, WIIC looks to see where they will attack.
 3) A weight is assigned to each defender, the sum of two factors.
     1) `targetChancePerBorderWorld` is multiplied by the number of border worlds between the attacker and this faction. A border world is considered any world you can reach in a single jump from one of the attacker's planets. If there are no border worlds, the faction is discarded as a potential defender.
     2) The `baseTargetChance` is added in.
+4) Each defender's weight is multiplied by the value in `targetChoiceMultiplier[attacker][defender]`, if any. For example: `targetChoiceMultiplier: {ClanJadeFalcon: {ClanGhostBear: 10}}` makes the Falcons 10x as likely to attack the Bears as they would normally be.
 
 With the weight for each potential defender figured out, one is selected at random.
 
@@ -67,3 +68,20 @@ If the player accepts the contract, the "countdown" is immediately set to 0, and
 On the same interval as automatic force loss, every `daysBetweenMissions` days, the player will be offered a mission with nothing more than the mission name. There's no penalty for passing, but if they accept, they *must* drop - no accepting the mission and then backing out! If they complete the mission, then the faction they fought against loses between `combatForceLossMin` and `combatForceLossMax` points, and the player gets a `flareupMissionBonusPerHalfSkull * (difficulty of mission)` cbill bonus.
 
 While participating in a flareup, the player has to stay in the star system - if they attempt to leave, they will get a popup warning them of the consequences of breaking the contract. These aren't actually terribly severe, just reputation loss with the employer equal to one bad faith withdrawal from a mission.
+
+# Simgame statistics and tags
+WIIC reads and sets a variety of tags and statistics on companies and star systems. These can be used in conditions, set, updated or removed from events and flashpoints like any other stat or tag.
+
+### Company Tags
+* `WIIC_helping_attacker` and `WIIC_helping_defender` - If present, the company is in the middle of a flareup, helping the attacker/defender take the current system. You can remove this from events, and nothing will break. Adding it from events will force player participation if there's already a flareup in their current system, otherwise it won't do anything.
+* `WIIC_give_{system}_to_{newOwner}` (eg: WIIC_give_Sol_to_ClanWolf) - Setting this will pass control of the named star system to the new owner. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_{faction}_attacks_{system}` (eg: WIIC_ClanJadeFalcon_attacks_Sol) - Setting this will cause a new flareup to start in the given system, with the faction as the attacker, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_set_{system}_{attacker|defender}_strength_10` (eg: WIIC_set_Sol_defender_strength_10) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_{faction}_attacks_{defenderFaction}_x{count}` (eg: WIIC_ClanDiamondShark_attacks_ClanJadeFalcon_x3) - Setting this will spawn up to (count) new Flareups as the attacker goes after the defender all across their shared border. It may spawn fewer than that many, if WIIC can't find border worlds to create them on. The tag won't actually added to the company - WIIC 'eats' it.
+
+### Company Stats
+For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.
+
+* `WIIC_dailyFlareupChance` (float) If present, this overrides the `dailyFlareupChance` from settings.json.
+* `WIIC_{attacker}_aggressionMultiplier` (float) If present, this overrides `aggressionMultiplier[attacker]` from settings.json.
+* `WIIC_{attacker}_hates_{defender}` (float) If present, this overrides `targetChoiceMultiplier[attacker][defender]` from settings.json.

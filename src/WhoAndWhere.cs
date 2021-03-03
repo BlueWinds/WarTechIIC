@@ -16,8 +16,9 @@ namespace WarTechIIC {
 
         public static void checkForNewFlareup() {
             double rand = Utilities.rng.NextDouble();
-            WIIC.modLog.Debug?.Write($"Checking for new flareup: {rand} / {WIIC.settings.dailyFlareupChance}");
-            if (rand > WIIC.settings.dailyFlareupChance || (WIIC.sim.IsCampaign && !WIIC.sim.CompanyTags.Contains("story_complete"))) {
+            double chance = Utilities.statOrDefault("WIIC_dailyFlareupChance", WIIC.settings.dailyFlareupChance);
+            WIIC.modLog.Debug?.Write($"Checking for new flareup: {rand} / {chance}");
+            if (rand > chance || (WIIC.sim.IsCampaign && !WIIC.sim.CompanyTags.Contains("story_complete"))) {
                 return;
             }
 
@@ -54,10 +55,11 @@ namespace WarTechIIC {
             var withMult = new Dictionary<FactionValue, double>();
             foreach (KeyValuePair<FactionValue, double> entry in weightedFactions) {
                 double modifier = 1;
+
                 if (s.aggressionMultiplier.ContainsKey(entry.Key.Name)) {
                     modifier = s.aggressionMultiplier[entry.Key.Name];
                 }
-                withMult[entry.Key] = entry.Value * modifier;
+                withMult[entry.Key] = entry.Value * Utilities.statOrDefault($"WIIC_{entry.Key.Name}", modifier);;
             }
 
             return Utilities.WeightedChoice(withMult);
@@ -77,7 +79,7 @@ namespace WarTechIIC {
 
                 List<StarSystem> neighbors = WIIC.sim.Starmap.GetAvailableNeighborSystem(system);
                 int attackerNeighboringSystems = neighbors.Where(n => n.OwnerValue == attacker).Count();
-                if (attackerNeighboringSystems == 0 || WIIC.flareups.ContainsKey(system.ID)) {
+                if (attackerNeighboringSystems == 0 || WIIC.flareups.ContainsKey(system.ID) || Utilities.flashpointInSystem(system)) {
                     continue;
                 }
 
@@ -89,9 +91,52 @@ namespace WarTechIIC {
                 enemyAttackWeight[system.OwnerValue] += s.targetChancePerBorderWorld;
             }
 
+            foreach (FactionValue potentianDefender in enemyAttackWeight.Keys) {
+                enemyAttackWeight[potentianDefender] *= targetMultiplier(attacker, potentianDefender);
+            }
+
             FactionValue defender = Utilities.WeightedChoice(enemyAttackWeight);
             WIIC.modLog.Debug?.Write($"Chose defender {defender.Name} based on weight {enemyAttackWeight[defender]}");
             return Utilities.WeightedChoice(enemyBorderWorlds[defender]);
+        }
+
+        public static List<StarSystem> getDefenderBorderWorlds(FactionValue attacker, FactionValue defender, int count) {
+            Settings s = WIIC.settings;
+            var defenderBorderWorlds = new Dictionary<StarSystem, double>();
+            foreach (StarSystem system in WIIC.sim.StarSystems) {
+                if (system.OwnerValue != defender || Utilities.flashpointInSystem(system)) {
+                    continue;
+                }
+
+                List<StarSystem> neighbors = WIIC.sim.Starmap.GetAvailableNeighborSystem(system);
+                int attackerNeighboringSystems = neighbors.Where(n => n.OwnerValue == attacker).Count();
+                if (attackerNeighboringSystems == 0 || WIIC.flareups.ContainsKey(system.ID)) {
+                    continue;
+                }
+
+                defenderBorderWorlds[system] = attackerNeighboringSystems;
+            }
+            List<StarSystem> targets = new List<StarSystem>();
+            while (count > 0 && defenderBorderWorlds.Count > 0) {
+                StarSystem choice = Utilities.WeightedChoice(defenderBorderWorlds);
+                targets.Add(choice);
+                defenderBorderWorlds.Remove(choice);
+            }
+
+            return targets;
+        }
+
+        private static double targetMultiplier(FactionValue attacker, FactionValue defender) {
+            Settings s = WIIC.settings;
+            double defaultValue = 1;
+
+            if (s.targetChoiceMultiplier.ContainsKey(attacker.Name)) {
+                if (s.targetChoiceMultiplier[attacker.Name].ContainsKey(defender.Name)) {
+                    defaultValue = s.targetChoiceMultiplier[attacker.Name][defender.Name];
+                }
+            }
+
+            return Utilities.statOrDefault($"WIIC_{attacker.Name}_hates_{defender.Name}", defaultValue);
         }
 
         public static List<string> getEmployers(StarSystem system) {

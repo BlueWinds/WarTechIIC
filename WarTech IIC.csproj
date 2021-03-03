@@ -78,6 +78,7 @@
     <Compile Include="src/WhoAndWhere.cs" />
     <Compile Include="src/Flareup.cs" />
     <Compile Include="src/patches/AAR_ContractObjectivesWidget.cs" />
+    <Compile Include="src/patches/ApplySimGameEventResult.cs" />
     <Compile Include="src/patches/Contract.cs" />
     <Compile Include="src/patches/GameInstanceSave.cs" />
     <Compile Include="src/patches/LanceConfiguratorPanel.cs" />

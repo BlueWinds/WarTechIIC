@@ -4,7 +4,7 @@ using BattleTech;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(Contract), "CompleteContract")]
-    public static class Contract_CompleteContract {
+    public static class Contract_CompleteContract_Patch {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort) {
             try {
                 Settings s = WIIC.settings;

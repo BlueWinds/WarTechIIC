@@ -17,6 +17,7 @@ namespace WarTechIIC {
         public Dictionary<string, double> aggressionMultiplier = new Dictionary<string, double>();
 
         public List<string> cantBeAttacked = new List<string>();
+        public Dictionary<string, Dictionary<string, double>> targetChoiceMultiplier= new Dictionary<string, Dictionary<string, double>>();
         public bool limitTargetsToFactionEnemies = true;
         public double baseTargetChance = 10;
         public double targetChancePerBorderWorld = 1;

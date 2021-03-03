@@ -1,13 +1,13 @@
 {
   "debug": true,
   "trace": true,
-  "setActiveFactionsForAllSystems": false,
+  "setActiveFactionsForAllSystems": true,
   "ignoreFactions": [
     "SolarisVII",
     "NoFaction",
   ],
 
-  "dailyFlareupChance": 0.25,
+  "dailyFlareupChance": 0.1,
 
   "aggressionPerSystemOwned": 1.0,
   "aggressionByReputation": {
@@ -25,6 +25,13 @@
     "AuriganRestoration": 0.5,
     "ClanJadeFalcon": 2.0
   },
+  "targetChoiceMultiplier": {
+    "ClanJadeFalcon": {
+      "ClanWolf": 2,
+      "ClanBloodAsp": 0.5
+    }
+  },
+
   "cantBeAttacked": [
     "ComStar"
   ],

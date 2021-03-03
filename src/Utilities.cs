@@ -94,5 +94,17 @@ namespace WarTechIIC {
         public static string forcesToString(int forces) {
             return $"<color=#debc02>{forces}</color>";
         }
+
+        public static double statOrDefault(string stat, double defaultValue) {
+            if (WIIC.sim.CompanyStats.ContainsStatistic(stat) && WIIC.sim.CompanyStats.GetValue<float>(stat) >= 0) {
+              return (double) WIIC.sim.CompanyStats.GetValue<float>(stat);
+            }
+
+            return defaultValue;
+        }
+
+        public static bool flashpointInSystem(StarSystem system) {
+          return WIIC.sim.AvailableFlashpoints.Find(f => f.CurSystem == system) != null;
+        }
     }
 }

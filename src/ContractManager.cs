@@ -95,9 +95,12 @@ namespace WarTechIIC {
     public static class SimGameState_PrepContract_Patch {
         [HarmonyPriority(Priority.First)]
         static void Prefix(Contract contract, ref FactionValue employer, ref FactionValue employersAlly, ref FactionValue target, ref FactionValue targetsAlly, ref FactionValue NeutralToAll, ref FactionValue HostileToAll) {
-            WIIC.modLog.Debug?.Write($"Prepping contract. employer: {ContractManager.employer}, arg: {employer}. name: {contract.Name}");
-            WIIC.modLog.Debug?.Write($"CurSystem: {WIIC.sim.CurSystem.ID}, CurMaxContracts: {WIIC.sim.CurSystem.CurMaxContracts}, SystemContracts: {WIIC.sim.CurSystem.SystemContracts.Count}");
             try {
+                WIIC.modLog.Debug?.Write($"Prepping contract. employer: {ContractManager.employer}, arg: {employer}. name: {contract.Name}");
+                if (WIIC.sim == null) {
+                    return;
+                }
+
                 if (ContractManager.employer != null) {
                     employer = ContractManager.employer;
                     employersAlly = ContractManager.employer;
