@@ -5,3 +5,5 @@ ILSpy
 obj/
 build/
 bin/
+.vs/WarTech IIC/v16/.suo
+WarTech IIC.csproj.user
