@@ -13,14 +13,14 @@ using BattleTech.Save.Test;
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "Init")]
     public static class SimGameState_InitPatch {
-        [HarmonyPostfix]
-        public static void OnInit(SimGameState __instance) {
+        public static void Postfix(SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
                 WIIC.modLog.Debug?.Write("Clearing Flareups for new SimGameState");
                 WIIC.sim.CompanyTags.Add("WIIC_enabled");
                 WIIC.flareups.Clear();
                 ColourfulFlashPoints.Main.clearMapMarkers();
+                WIIC.readFromJson();
 
                 if (WIIC.settings.setActiveFactionsForAllSystems) {
                     foreach (StarSystem system in __instance.StarSystems) {
@@ -91,7 +91,6 @@ namespace WarTechIIC {
                 WIIC.sim.RoomManager.RefreshTimeline(false);
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
-                WIIC.modLog.Error?.Write(e.InnerException);
             }
         }
     }
@@ -180,7 +179,7 @@ namespace WarTechIIC {
         public static void Postfix() {
             try {
                 Flareup flareup = Utilities.currentFlareup();
-                WIIC.modLog.Debug?.Write($"CompleteLanceConfigurationPrep. selectedContract: {WIIC.sim.SelectedContract.Name}, flareupContract: {flareup.currentContractName}");
+                WIIC.modLog.Debug?.Write($"CompleteLanceConfigurationPrep. selectedContract: {WIIC.sim.SelectedContract.Name}, flareupContract: {(flareup != null ? flareup.currentContractName : null)}");
                 if (flareup != null && WIIC.sim.SelectedContract.Name == flareup.currentContractName) {
                     WIIC.modLog.Debug?.Write($"Hiding nav drawer from CompleteLanceConfigurationPrep.");
                     SGLeftNavDrawer leftDrawer = (SGLeftNavDrawer)AccessTools.Field(typeof(SGRoomManager), "LeftDrawerWidget").GetValue(WIIC.sim.RoomManager);

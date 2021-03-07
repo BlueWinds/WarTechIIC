@@ -13,14 +13,12 @@ namespace WarTechIIC {
         public List<string> ignoreFactions = new List<string>();
 
         public double aggressionPerSystemOwned = 0;
-        public Dictionary<string, double> aggressionByReputation = new Dictionary<string, double>();
-        public Dictionary<string, double> aggressionMultiplier = new Dictionary<string, double>();
+        public Dictionary<string, double> reputationMultiplier = new Dictionary<string, double>();
+        public Dictionary<string, double> aggression = new Dictionary<string, double>();
 
         public List<string> cantBeAttacked = new List<string>();
-        public Dictionary<string, Dictionary<string, double>> targetChoiceMultiplier= new Dictionary<string, Dictionary<string, double>>();
+        public Dictionary<string, Dictionary<string, double>> hatred = new Dictionary<string, Dictionary<string, double>>();
         public bool limitTargetsToFactionEnemies = true;
-        public double baseTargetChance = 10;
-        public double targetChancePerBorderWorld = 1;
 
         public FpMarker flareupMarker = new FpMarker();
 
@@ -42,5 +40,7 @@ namespace WarTechIIC {
         public List<string> pirateTags = new List<string>();
 
         public List<int> customContractEnums = new List<int>();
+
+        public string saveFolder;
     }
 }

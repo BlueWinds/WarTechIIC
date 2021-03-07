@@ -56,7 +56,7 @@ namespace WarTechIIC {
                 return;
             }
 
-            fieldSetContractEmployers.SetValue(system.Def, WhoAndWhere.getEmployers(system) );
+            fieldSetContractEmployers.SetValue(system.Def, WhoAndWhere.getEmployers(system));
             fieldSetContractTargets.SetValue(system.Def, WhoAndWhere.getTargets(system));
         }
 

@@ -7,38 +7,34 @@
     "NoFaction",
   ],
 
-  "dailyFlareupChance": 0.1,
+  "dailyFlareupChance": 0.25,
 
-  "aggressionPerSystemOwned": 1.0,
-  "aggressionByReputation": {
-    "LOATHED": 70.0,
-    "HATED": 50.0,
-    "DISLIKED": 30.0,
-    "INDIFFERENT": 10.0,
-    "LIKED": 20.0,
-    "FRIENDLY": 30.0,
-    "HONORED": 70.0,
-    "ALLIED": 100.0
-  },
-  "aggressionMultiplier": {
+  "aggression": {
     "NoFaction": 0.0,
     "AuriganRestoration": 0.5,
     "ClanJadeFalcon": 2.0
   },
-  "targetChoiceMultiplier": {
+  "hatred": {
     "ClanJadeFalcon": {
       "ClanWolf": 2,
       "ClanBloodAsp": 0.5
     }
   },
-
   "cantBeAttacked": [
     "ComStar"
   ],
+  "reputationMultiplier": {
+    "LOATHED": 7.0,
+    "HATED": 5.0,
+    "DISLIKED": 3.0,
+    "INDIFFERENT": 1.0,
+    "LIKED": 2.0,
+    "FRIENDLY": 3.0,
+    "HONORED": 7.0,
+    "ALLIED": 10.0
+  },
 
   "limitTargetsToFactionEnemies": true,
-  "baseTargetChance": 10.0,
-  "targetChancePerBorderWorld": 1.0,
 
   "flareupMarker": {
       "useHmAnimation": true,
@@ -69,10 +65,7 @@
   },
 
   "minReputationToHelp": "DISLIKED",
-  "wontHirePlayer": [
-    "ClanWolf",
-    "ClanJadeFalcon"
-  ],
+  "wontHirePlayer": [],
 
   "daysBetweenMissions": 3,
   "combatForceLossMin": 2,
@@ -89,5 +82,6 @@
     10000,
     10001,
     10002
-  ]
+  ],
+  "saveFolder": "../../BTASaves"
 }

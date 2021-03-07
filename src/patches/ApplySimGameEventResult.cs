@@ -6,16 +6,13 @@ using Harmony;
 using BattleTech;
 
 namespace WarTechIIC {
-    [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult")]
+    [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult", new Type[] {typeof(SimGameEventResult), typeof(List<object>), typeof(SimGameEventTracker)})]
     public static class SimGameState_ApplySimGameEventResult_Patch {
         // WIIC_give_Sol_to_ClanWolf
         private static Regex GIVE_SYSTEM = new Regex("^WIIC_give_(.*?)_to_(.*)$", RegexOptions.Compiled);
 
         // WIIC_ClanJadeFalcon_attacks_Sol
         private static Regex ATTACK_SYSTEM = new Regex("^WIIC_(.*?)_attacks_(.*)$", RegexOptions.Compiled);
-
-        // WIIC_ClanDiamondShark_attacks_ClanJadeFalcon_x3
-        private static Regex ATTACK_FACTION = new Regex("^WIIC_(.*?)_attacks_(.*?)_(.*)x$", RegexOptions.Compiled);
 
         // WIIC_set_Sol_attacker_strength_10
         private static Regex ATTACKER_FORCES = new Regex("^WIIC_set_(.*?)_attacker_strength_(.*)$", RegexOptions.Compiled);
@@ -51,25 +48,6 @@ namespace WarTechIIC {
                             Flareup flareup = new Flareup(system, attacker, WIIC.sim);
                             WIIC.flareups[system.ID] = flareup;
                             flareup.addToMap();
-
-                            result.AddedTags.Remove(addedTag);
-                            continue;
-                        }
-
-                        matches = ATTACK_FACTION.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            FactionValue attacker = FactionEnumeration.GetFactionByName(matches[0].Groups[0].Value);
-                            FactionValue defender = FactionEnumeration.GetFactionByName(matches[0].Groups[1].Value);
-                            int count = int.Parse(matches[0].Groups[2].Value);
-
-                            List<StarSystem> targets = WhoAndWhere.getDefenderBorderWorlds(attacker, defender, count);
-                            WIIC.modLog.Debug?.Write($"ApplySimGameEventResult: {attacker.Name} attacking {defender.Name} in {count} systems (found {targets.Count} viable border worlds)");
-
-                            foreach (StarSystem system in targets) {
-                                Flareup flareup = new Flareup(system, attacker, WIIC.sim);
-                                WIIC.flareups[system.ID] = flareup;
-                                flareup.addToMap();
-                            }
 
                             result.AddedTags.Remove(addedTag);
                             continue;
