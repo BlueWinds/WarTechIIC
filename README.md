@@ -9,27 +9,19 @@ When a game is loaded or started, WIIC looks at `setActiveFactionsForAllSystems`
 ## Generating Flareups
 Every day that passes, there is a `dailyFlareupChance` chance that a new flareup will be added to the map. There are no limits to the number of flareups that can be active at once, and they can occur from day 1 onwards. When a flareup occurs...
 
-### Deciding attacker
-WIIC first decides who will be the attacker in the new flareup.
-1) Only factions that control at least one star system on the map are considered.
-2) And factions in `ignoreFactions` are ignored.
-3) A weight is assigned to each faction, the sum of several factors:
-    1) `aggressionPerSystemOwned` is multiplied by the number of star systems the faction controls. This represents larger factions having more border worlds and more resources.
-    2) The player's reputation with the faction is pulled from `aggressionByReputation` and added in. This gives extra weight to factions that the player is interested in, either by fighting against them frequently or by allying with them.
-    3) The sum of the above two is multiplied by that faction's entry in `aggressionMultiplier`, if they have one. This means if you set their `aggressionMultiplier` to 0, they'll never attack people.
+### Deciding attacker and location
+WIIC first decides who will be the attacker and where they'll attack by iterating through all star systems on the map.
+1) If the star system already has a flareup or flashpoint present, it's ignored.
+2) If it's controlled by a faction in `cantBeAttacked` or `ignoreFactions`, it's also skipped.
+3) Each faction that controlls a neighboling system and isn't in `ignoreFactions` might attack with the following items multiplied together:
+    0) If `limitTargetsToFactionEnemies` is `true` and this attacker isn't the system owner's enemy, they're ignored.
+    1) The number of bordering systems the attacker controls (within one jump)
+    2) The distance multipilier: `1 / sqrt(100 + distanceInLyFromPlayer)`. Systems near the player are more likely to be attacked than those far across the map.
+    3) `aggression[attacker]`, read from the settings, defaulting to 1.
+    4) `reputationMultiplier[attacker] + reputationMultiplier[defender]`.
+    5) `hates[attacker][defender]`, defaulting to 1.
 
-With the weight for each potential attacker figured out, one is selected at random.
-
-### Deciding defender
-With the attacker decided, WIIC looks to see where they will attack.
-1) Factions in `cantBeAttacked`... can't be attacked.
-2) If `limitTargetsToFactionEnemies` is `true`, then only a faction's enemies - as defined in their factionDef - are considered as possible targets. Otherwise, any faction they share a border with is fair game.
-3) A weight is assigned to each defender, the sum of two factors.
-    1) `targetChancePerBorderWorld` is multiplied by the number of border worlds between the attacker and this faction. A border world is considered any world you can reach in a single jump from one of the attacker's planets. If there are no border worlds, the faction is discarded as a potential defender.
-    2) The `baseTargetChance` is added in.
-4) Each defender's weight is multiplied by the value in `targetChoiceMultiplier[attacker][defender]`, if any. For example: `targetChoiceMultiplier: {ClanJadeFalcon: {ClanGhostBear: 10}}` makes the Falcons 10x as likely to attack the Bears as they would normally be.
-
-With the weight for each potential defender figured out, one is selected at random.
+With the weight for each target system and each faction which could attack it figured out, one is selected at random.
 
 ### Initial setup
 A border world controlled by the defender and near the attacker is chosen at random. The flareup is added to the map - this adds a blip to the starmap, appearance controlled by the `flareupMarker`. See [ColourfulFlashpoints](https://github.com/wmtorode/ColourfulFlashPoints) for details on the settings.
@@ -69,6 +61,9 @@ On the same interval as automatic force loss, every `daysBetweenMissions` days, 
 
 While participating in a flareup, the player has to stay in the star system - if they attempt to leave, they will get a popup warning them of the consequences of breaking the contract. These aren't actually terribly severe, just reputation loss with the employer equal to one bad faith withdrawal from a mission.
 
+# Exporting / Importing map control
+Every time a career saves, WIIC writes out `{savePath}/WIIC_systemControl.json`, which contains a list of all systems that have flipped control during the current career. If you copy this into the mod directory (`WarTechIIC/WIIC_systemControl.json`), then when you start a fresh career, WIIC will import the list. Bam, you can persist your map across careers!
+
 # Simgame statistics and tags
 WIIC reads and sets a variety of tags and statistics on companies and star systems. These can be used in conditions, set, updated or removed from events and flashpoints like any other stat or tag.
 
@@ -77,11 +72,10 @@ WIIC reads and sets a variety of tags and statistics on companies and star syste
 * `WIIC_give_{system}_to_{newOwner}` (eg: WIIC_give_Sol_to_ClanWolf) - Setting this will pass control of the named star system to the new owner. The tag won't actually added to the company - WIIC 'eats' it.
 * `WIIC_{faction}_attacks_{system}` (eg: WIIC_ClanJadeFalcon_attacks_Sol) - Setting this will cause a new flareup to start in the given system, with the faction as the attacker, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
 * `WIIC_set_{system}_{attacker|defender}_strength_10` (eg: WIIC_set_Sol_defender_strength_10) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_{faction}_attacks_{defenderFaction}_x{count}` (eg: WIIC_ClanDiamondShark_attacks_ClanJadeFalcon_x3) - Setting this will spawn up to (count) new Flareups as the attacker goes after the defender all across their shared border. It may spawn fewer than that many, if WIIC can't find border worlds to create them on. The tag won't actually added to the company - WIIC 'eats' it.
 
 ### Company Stats
 For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.
 
 * `WIIC_dailyFlareupChance` (float) If present, this overrides the `dailyFlareupChance` from settings.json.
-* `WIIC_{attacker}_aggressionMultiplier` (float) If present, this overrides `aggressionMultiplier[attacker]` from settings.json.
+* `WIIC_{attacker}_aggression` (float) If present, this overrides `aggression[attacker]` from settings.json.
 * `WIIC_{attacker}_hates_{defender}` (float) If present, this overrides `targetChoiceMultiplier[attacker][defender]` from settings.json.

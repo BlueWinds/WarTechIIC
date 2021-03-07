@@ -18,6 +18,7 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write($"    {flareup.Serialize()}");
                     flareup.location.Tags.Add(flareup.Serialize());
                 }
+                WIIC.serializeToJson();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }

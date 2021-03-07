@@ -67,6 +67,9 @@
     <Reference Include="System.Xml" /><Reference Include="ColourfulFlashpoints, Version=1.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>$(BTPATH)/Mods/ColourfulFlashpoints/ColourfulFlashPoints.dll</HintPath>
     </Reference>
+    <Reference Include="System.Xml" /><Reference Include="NewSaveFolder, Version=1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>$(BTPATH)/Mods/NewSaveLocation/NewSaveFolder.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(BTPATH)/BattleTech_Data/Managed/Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -82,6 +85,7 @@
     <Compile Include="src/patches/Contract.cs" />
     <Compile Include="src/patches/GameInstanceSave.cs" />
     <Compile Include="src/patches/LanceConfiguratorPanel.cs" />
+    <Compile Include="src/patches/SimGameInterruptManager.cs" />
     <Compile Include="src/patches/SimGameState.cs" />
     <Compile Include="src/patches/SGCmdCenterLanceConfigBG.cs" />
     <Compile Include="src/patches/SGContractsWidget.cs" />

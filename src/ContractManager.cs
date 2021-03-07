@@ -38,7 +38,6 @@ namespace WarTechIIC {
             var difficultyRange = _getContractRangeDifficultyRange.Invoke(WIIC.sim, new object[] { system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty });
 
             var validTypes = contractTypes.AddRangeToArray(WIIC.settings.customContractEnums.ToArray());
-//            var validTypes = WIIC.settings.customContractEnums.ToArray();
 
             var potentialContracts = (Dictionary<int, List<ContractOverride>>)_getContractOverrides.Invoke(WIIC.sim, new object[] { difficultyRange, validTypes });
 
