@@ -12,13 +12,12 @@
   "aggression": {
     "NoFaction": 0.0,
     "AuriganRestoration": 0.5,
-    "ClanJadeFalcon": 2.0
+    "ClanJadeFalcon": 2.0,
+    "ClanWolf": 2.0,
+    "ClanGhostBear": 2.0
   },
   "hatred": {
-    "ClanJadeFalcon": {
-      "ClanWolf": 2,
-      "ClanBloodAsp": 0.5
-    }
+    "ClanJadeFalcon": {}
   },
   "cantBeAttacked": [
     "ComStar"
@@ -55,14 +54,8 @@
   "defaultAttackStrength": 20,
   "defaultDefenseStrength": 15,
   "strengthVariation": 10,
-  "attackStrength": {
-    "Davion": 30,
-    "ClanJadeFalcon": 50
-  },
-  "defenseStrength": {
-    "Davion": 20,
-    "ClanJadeFalcon": 20
-  },
+  "attackStrength": {},
+  "defenseStrength": {},
 
   "minReputationToHelp": "DISLIKED",
   "wontHirePlayer": [],

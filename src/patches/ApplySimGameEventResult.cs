@@ -9,16 +9,16 @@ namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult", new Type[] {typeof(SimGameEventResult), typeof(List<object>), typeof(SimGameEventTracker)})]
     public static class SimGameState_ApplySimGameEventResult_Patch {
         // WIIC_give_Sol_to_ClanWolf
-        private static Regex GIVE_SYSTEM = new Regex("^WIIC_give_(.*?)_to_(.*)$", RegexOptions.Compiled);
+        private static Regex GIVE_SYSTEM = new Regex("^WIIC_give_(?<system>.*?)_to_(?<faction>.*)$", RegexOptions.Compiled);
 
         // WIIC_ClanJadeFalcon_attacks_Sol
-        private static Regex ATTACK_SYSTEM = new Regex("^WIIC_(.*?)_attacks_(.*)$", RegexOptions.Compiled);
+        private static Regex ATTACK_SYSTEM = new Regex("^WIIC_(?<faction>.*?)_attacks_(?<system>.*)$", RegexOptions.Compiled);
 
         // WIIC_set_Sol_attacker_strength_10
-        private static Regex ATTACKER_FORCES = new Regex("^WIIC_set_(.*?)_attacker_strength_(.*)$", RegexOptions.Compiled);
+        private static Regex ATTACKER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_attacker_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
         // WIIC_set_Sol_defender_strength_10
-        private static Regex DEFENDER_FORCES = new Regex("^WIIC_set_(.*?)_defender_strength_(.*)$", RegexOptions.Compiled);
+        private static Regex DEFENDER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_defender_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
         public static void Prefix(ref SimGameEventResult result) {
             try {
@@ -29,11 +29,14 @@ namespace WarTechIIC {
                     foreach (string addedTag in result.AddedTags.ToList()) {
                         MatchCollection matches = GIVE_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
-                            StarSystem system = WIIC.sim.GetSystemById(matches[0].Groups[0].Value);
-                            FactionValue newOwner = FactionEnumeration.GetFactionByName(matches[0].Groups[1].Value);
-                            WIIC.modLog.Debug?.Write($"ApplySimGameEventResult: Setting control of {system.Name} to {newOwner.Name}");
+                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            string factionName = matches[0].Groups["faction"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionName {factionName}");
 
-                            Utilities.applyOwner(system, newOwner);
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            FactionValue faction = FactionEnumeration.GetFactionByName(factionName);
+
+                            Utilities.applyOwner(system, faction);
 
                             result.AddedTags.Remove(addedTag);
                             continue;
@@ -41,11 +44,14 @@ namespace WarTechIIC {
 
                         matches = ATTACK_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
-                            FactionValue attacker = FactionEnumeration.GetFactionByName(matches[0].Groups[0].Value);
-                            StarSystem system = WIIC.sim.GetSystemById(matches[0].Groups[1].Value);
-                            WIIC.modLog.Debug?.Write($"ApplySimGameEventResult: {attacker.Name} attacking {system.Name}");
+                            string factionName = matches[0].Groups["faction"].Value;
+                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionName {factionName}, systemId {systemId}");
 
-                            Flareup flareup = new Flareup(system, attacker, WIIC.sim);
+                            FactionValue faction = FactionEnumeration.GetFactionByName(factionName);
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+
+                            Flareup flareup = new Flareup(system, faction, WIIC.sim);
                             WIIC.flareups[system.ID] = flareup;
                             flareup.addToMap();
 
@@ -55,14 +61,16 @@ namespace WarTechIIC {
 
                         matches = ATTACKER_FORCES.Matches(addedTag);
                         if (matches.Count > 0) {
-                            StarSystem system = WIIC.sim.GetSystemById(matches[0].Groups[0].Value);
-                            int strength = int.Parse(matches[0].Groups[1].Value);
+                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            int strength = int.Parse(matches[0].Groups["strength"].Value);
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             if (WIIC.flareups.ContainsKey(system.ID)) {
-                                WIIC.modLog.Debug?.Write($"ApplySimGameEventResult: Setting attacker strength to {strength} at {system.Name} in flareup");
                                 WIIC.flareups[system.ID].attackerStrength = strength;
                             } else {
-                                WIIC.modLog.Debug?.Write($"ApplySimGameEventResult: Would set attacker strength to {strength} at {system.Name}, but no flareup found");
+                                WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
 
                             result.AddedTags.Remove(addedTag);
@@ -71,14 +79,16 @@ namespace WarTechIIC {
 
                         matches = DEFENDER_FORCES.Matches(addedTag);
                         if (matches.Count > 0) {
-                            StarSystem system = WIIC.sim.GetSystemById(matches[0].Groups[0].Value);
-                            int strength = int.Parse(matches[0].Groups[1].Value);
+                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            int strength = int.Parse(matches[0].Groups["strength"].Value);
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             if (WIIC.flareups.ContainsKey(system.ID)) {
-                                WIIC.modLog.Debug?.Write($"ApplySimGameEventResult: Setting defender strength to {strength} at {system.Name} in flareup");
-                                WIIC.flareups[system.ID].defenderStrength = strength;
+                                WIIC.flareups[system.ID].attackerStrength = strength;
                             } else {
-                                WIIC.modLog.Debug?.Write($"ApplySimGameEventResult: Would set defender strength to {strength} at {system.Name}, but no flareup found");
+                                WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
 
                             result.AddedTags.Remove(addedTag);
@@ -86,8 +96,7 @@ namespace WarTechIIC {
                         }
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
         }
