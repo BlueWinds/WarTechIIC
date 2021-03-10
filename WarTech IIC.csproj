@@ -61,13 +61,13 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Xml" /><Reference Include="IRBTModUtils, Version=1.7.0.0, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="System.Xml" /><Reference Include="IRBTModUtils">
       <HintPath>$(BTPATH)/Mods/IRBTModUtils/IRBTModUtils.dll</HintPath>
     </Reference>
-    <Reference Include="System.Xml" /><Reference Include="ColourfulFlashpoints, Version=1.0.0, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="System.Xml" /><Reference Include="ColourfulFlashpoints">
       <HintPath>$(BTPATH)/Mods/ColourfulFlashpoints/ColourfulFlashPoints.dll</HintPath>
     </Reference>
-    <Reference Include="System.Xml" /><Reference Include="NewSaveFolder, Version=1.0.0, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="System.Xml" /><Reference Include="NewSaveFolder">
       <HintPath>$(BTPATH)/Mods/NewSaveLocation/NewSaveFolder.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">

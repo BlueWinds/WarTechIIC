@@ -6,6 +6,7 @@ using Harmony;
 using BattleTech;
 
 namespace WarTechIIC {
+
     [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult", new Type[] {typeof(SimGameEventResult), typeof(List<object>), typeof(SimGameEventTracker)})]
     public static class SimGameState_ApplySimGameEventResult_Patch {
         // WIIC_give_Sol_to_ClanWolf
@@ -34,7 +35,7 @@ namespace WarTechIIC {
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionName {factionName}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            FactionValue faction = FactionEnumeration.GetFactionByName(factionName);
+                            FactionValue faction = Utilities.GetFactionValueByFactionID(factionName);
 
                             Utilities.applyOwner(system, faction);
 
@@ -48,7 +49,7 @@ namespace WarTechIIC {
                             string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionName {factionName}, systemId {systemId}");
 
-                            FactionValue faction = FactionEnumeration.GetFactionByName(factionName);
+                            FactionValue faction = Utilities.GetFactionValueByFactionID(factionName);
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             Flareup flareup = new Flareup(system, faction, WIIC.sim);

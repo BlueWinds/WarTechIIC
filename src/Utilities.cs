@@ -12,6 +12,11 @@ namespace WarTechIIC {
         private static FieldInfo fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
         private static FieldInfo fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
 
+        public static FactionValue GetFactionValueByFactionID(string id)
+        {
+            return WIIC.sim.DataManager.Factions.FirstOrDefault(x => x.Value.FactionValue.Name == id).Value.FactionValue;
+        }
+
         public static TKey WeightedChoice<TKey>(Dictionary<TKey, double> weights) {
             double totalWeight = 0;
             foreach (KeyValuePair<TKey, double> entry in weights) {
