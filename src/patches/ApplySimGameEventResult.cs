@@ -30,7 +30,7 @@ namespace WarTechIIC {
                     foreach (string addedTag in result.AddedTags.ToList()) {
                         MatchCollection matches = GIVE_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
-                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            string systemId = matches[0].Groups["system"].Value;
                             string factionName = matches[0].Groups["faction"].Value;
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionName {factionName}");
 
@@ -46,7 +46,7 @@ namespace WarTechIIC {
                         matches = ATTACK_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
                             string factionName = matches[0].Groups["faction"].Value;
-                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            string systemId = matches[0].Groups["system"].Value;
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionName {factionName}, systemId {systemId}");
 
                             FactionValue faction = Utilities.GetFactionValueByFactionID(factionName);
@@ -62,7 +62,7 @@ namespace WarTechIIC {
 
                         matches = ATTACKER_FORCES.Matches(addedTag);
                         if (matches.Count > 0) {
-                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            string systemId = matches[0].Groups["system"].Value;
                             int strength = int.Parse(matches[0].Groups["strength"].Value);
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
 
@@ -80,7 +80,7 @@ namespace WarTechIIC {
 
                         matches = DEFENDER_FORCES.Matches(addedTag);
                         if (matches.Count > 0) {
-                            string systemId = $"starsystemdef_{matches[0].Groups["system"].Value}";
+                            string systemId = matches[0].Groups["system"].Value;
                             int strength = int.Parse(matches[0].Groups["strength"].Value);
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
 
