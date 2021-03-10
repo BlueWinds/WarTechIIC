@@ -68,12 +68,12 @@ Every time a career saves, WIIC writes out `{savePath}/WIIC_systemControl.json`,
 WIIC reads and sets a variety of tags and statistics on companies and star systems. These can be used in conditions, set, updated or removed from events and flashpoints like any other stat or tag.
 
 ### Company Tags
-When naming star systems, remember to use the ID, excluding "starsystemdef_", not the Name. You want `St.Ives`, not `starsystemdef_St.Ives` or `St. Ives`. For factions, refer to them by Name. You want `Clan Cloud Cobra`, not `ClanCloudCobra` or `faction_ClanCloudCobra`. This is slightly inconsistent, yes, but I work with what HBS gives me.
+When naming star systems, remember to use the ID and not the name. You want `starsystemdef_St.Ives`, not `St. Ives`. For factions, refer to them by Name. You want `Clan Cloud Cobra`, not `ClanCloudCobra` or `faction_ClanCloudCobra`. This is slightly inconsistent, yes, but I work with what HBS gives me.
 
 * `WIIC_helping_attacker` and `WIIC_helping_defender` - If present, the company is in the middle of a flareup, helping the attacker/defender take the current system. You can remove this from events, and nothing will break. Adding it from events will force player participation if there's already a flareup in their current system, otherwise it won't do anything.
-* `WIIC_give_{system}_to_{newOwner}` (eg: WIIC_give_Sol_to_Clan Wolf) - Setting this will pass control of the named star system to the new owner. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_{faction}_attacks_{system}` (eg: WIIC_Clan Jade Falcon_attacks_Sol) - Setting this will cause a new flareup to start in the given system, with the faction as the attacker, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_set_{system}_{attacker|defender}_strength_10` (eg: WIIC_set_Sol_defender_strength_10) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_give_{system}_to_{newOwner}` (eg: WIIC_give_systemdef_Sol_to_Clan Wolf) - Setting this will pass control of the named star system to the new owner. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_{faction}_attacks_{system}` (eg: WIIC_Clan Jade Falcon_attacks_systemdef_Sol) - Setting this will cause a new flareup to start in the given system, with the faction as the attacker, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_set_{system}_{attacker|defender}_strength_10` (eg: WIIC_set_systemded_Sol_defender_strength_10) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
 
 ### Company Stats
 For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.

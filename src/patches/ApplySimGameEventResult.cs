@@ -6,19 +6,18 @@ using Harmony;
 using BattleTech;
 
 namespace WarTechIIC {
-
     [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult", new Type[] {typeof(SimGameEventResult), typeof(List<object>), typeof(SimGameEventTracker)})]
     public static class SimGameState_ApplySimGameEventResult_Patch {
-        // WIIC_give_Sol_to_ClanWolf
+        // WIIC_give_systemdef_Sol_to_Clan Wolf
         private static Regex GIVE_SYSTEM = new Regex("^WIIC_give_(?<system>.*?)_to_(?<faction>.*)$", RegexOptions.Compiled);
 
-        // WIIC_ClanJadeFalcon_attacks_Sol
+        // WIIC_ClanJadeFalcon_attacks_systemdef_Sol
         private static Regex ATTACK_SYSTEM = new Regex("^WIIC_(?<faction>.*?)_attacks_(?<system>.*)$", RegexOptions.Compiled);
 
-        // WIIC_set_Sol_attacker_strength_10
+        // WIIC_set_systemdef_Sol_attacker_strength_10
         private static Regex ATTACKER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_attacker_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
-        // WIIC_set_Sol_defender_strength_10
+        // WIIC_set_systemdef_Sol_defender_strength_10
         private static Regex DEFENDER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_defender_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
         public static void Prefix(ref SimGameEventResult result) {
@@ -31,11 +30,11 @@ namespace WarTechIIC {
                         MatchCollection matches = GIVE_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
                             string systemId = matches[0].Groups["system"].Value;
-                            string factionName = matches[0].Groups["faction"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionName {factionName}");
+                            string factionID = matches[0].Groups["faction"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionID {factionID}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            FactionValue faction = Utilities.GetFactionValueByFactionID(factionName);
+                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
 
                             Utilities.applyOwner(system, faction);
 
@@ -45,11 +44,11 @@ namespace WarTechIIC {
 
                         matches = ATTACK_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
-                            string factionName = matches[0].Groups["faction"].Value;
+                            string factionID = matches[0].Groups["faction"].Value;
                             string systemId = matches[0].Groups["system"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionName {factionName}, systemId {systemId}");
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
 
-                            FactionValue faction = Utilities.GetFactionValueByFactionID(factionName);
+                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             Flareup flareup = new Flareup(system, faction, WIIC.sim);
