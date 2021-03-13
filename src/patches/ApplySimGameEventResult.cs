@@ -34,7 +34,15 @@ namespace WarTechIIC {
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionID {factionID}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            if (system == null) {
+                                WIIC.modLog.Debug?.Write($"ERROR: Could not find system with systemId {systemId}");
+                            }
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+                            if (faction == null) {
+                                WIIC.modLog.Debug?.Write($"ERROR: Could not find faction with factionID {factionID}");
+                            }
+
+                            if (faction == null || system == null) continue;
 
                             Utilities.cleanupSystem(system);
                             Utilities.applyOwner(system, faction);
@@ -49,8 +57,15 @@ namespace WarTechIIC {
                             string systemId = matches[0].Groups["system"].Value;
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
 
-                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            if (system == null) {
+                                WIIC.modLog.Debug?.Write($"ERROR: Could not find system with systemId {systemId}");
+                            }
+                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+                            if (faction == null) {
+                                WIIC.modLog.Debug?.Write($"ERROR: Could not find faction with factionID {factionID}");
+                            }
+                            if (faction == null || system == null) continue;
 
                             Utilities.cleanupSystem(system);
                             Flareup flareup = new Flareup(system, faction, WIIC.sim);
@@ -67,7 +82,11 @@ namespace WarTechIIC {
                             int strength = int.Parse(matches[0].Groups["strength"].Value);
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
 
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            StarSystem system = WIIC.sim.GetSystemById(systemId); 
+                            if (system == null) {
+                                WIIC.modLog.Debug?.Write($"ERROR: Could not find system with systemId {systemId}");
+                                continue;
+                            }
 
                             if (WIIC.flareups.ContainsKey(system.ID)) {
                                 WIIC.flareups[system.ID].attackerStrength = strength;
@@ -86,6 +105,10 @@ namespace WarTechIIC {
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            if (system == null) {
+                                WIIC.modLog.Debug?.Write($"ERROR: Could not find system with systemId {systemId}");
+                                continue;
+                            }
 
                             if (WIIC.flareups.ContainsKey(system.ID)) {
                                 WIIC.flareups[system.ID].attackerStrength = strength;
@@ -94,7 +117,6 @@ namespace WarTechIIC {
                             }
 
                             result.AddedTags.Remove(addedTag);
-                            continue;
                         }
                     }
                 }
