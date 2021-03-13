@@ -136,20 +136,6 @@ namespace WarTechIIC {
 
                 Utilities.applyOwner(location, attacker);
             }
-
-            if (WIIC.sim.CurSystem == location) {
-                WIIC.modLog.Debug?.Write($"Player was participating, removing company tags.");
-
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
-            }
-
-            // Revert system description to the default
-            if (WIIC.fluffDescriptions.ContainsKey(location.ID)) {
-                WIIC.modLog.Debug?.Write($"Reverting map description");
-                AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(location.Def.Description, new object[] { WIIC.fluffDescriptions[location.ID] });
-            }
-
         }
 
         public void addToMap() {

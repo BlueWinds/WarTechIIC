@@ -76,8 +76,7 @@ namespace WarTechIIC {
                 foreach (Flareup flareup in WIIC.flareups.Values.ToList()) {
                     bool finished = flareup.passDay();
                     if (finished) {
-                        WIIC.modLog.Debug?.Write($"Removing flareup at {flareup.location.ID}.");
-                        WIIC.flareups.Remove(flareup.location.ID);
+                        Utilities.cleanupSystem(flareup.location);
                     } else {
                         flareup.addToMap();
                         if (activeItems.TryGetValue(flareup.workOrder, out var taskManagementElement)) {
