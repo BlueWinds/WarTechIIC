@@ -106,13 +106,13 @@
   <Target Name="AfterBuild">
     <Copy
       SourceFiles="$(TargetPath);src/data/mod.json;src/data/modstate.json;src/data/settings.json"
-      DestinationFolder="$(BTPATH)/Mods/WarTech IIC/"
+      DestinationFolder="$(BTPATH)/Mods/WarTechIIC/"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="false"
     />
     <Copy
       SourceFiles="src/data/contracts/wiic_help_attacker.json;src/data/contracts/wiic_help_defender.json"
-      DestinationFolder="$(BTPATH)/Mods/WarTech IIC/contracts/"
+      DestinationFolder="$(BTPATH)/Mods/WarTechIIC/contracts/"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="false"
     />
