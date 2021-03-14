@@ -107,24 +107,5 @@ namespace WarTechIIC {
         public static bool flashpointInSystem(StarSystem system) {
           return WIIC.sim.AvailableFlashpoints.Find(f => f.CurSystem == system) != null;
         }
-
-        public static void cleanupSystem(StarSystem system) {
-            if (WIIC.flareups.ContainsKey(system.ID)) {
-                WIIC.modLog.Debug?.Write($"Removing flareup at {system.ID} because it flipped owner from an event");
-                WIIC.flareups.Remove(system.ID);
-            }
-
-            if (system == WIIC.sim.CurSystem) {
-                WIIC.modLog.Debug?.Write($"Player was participating in flareup at {system.ID}; Removing company tags");
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
-            }
-
-            // Revert system description to the default
-            if (WIIC.fluffDescriptions.ContainsKey(system.ID)) {
-                WIIC.modLog.Debug?.Write($"Reverting map description for {system.ID}");
-                AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(system.Def.Description, new object[] { WIIC.fluffDescriptions[system.ID] });
-            }
-        }
     }
 }

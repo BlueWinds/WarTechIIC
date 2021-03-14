@@ -10,10 +10,13 @@ namespace WarTechIIC {
     public class WhoAndWhere {
         private static Dictionary<string, TagSet> factionActivityTags = new Dictionary<string, TagSet>();
         private static Dictionary<string, TagSet> factionInvasionTags = new Dictionary<string, TagSet>();
+        private static TagSet cantBeAttackedTags;
 
         public static void init() {
             Settings s = WIIC.settings;
             FactionValue invalid = FactionEnumeration.GetInvalidUnsetFactionValue();
+
+            cantBeAttackedTags = new TagSet(s.cantBeAttackedTags);
 
             // Initializing tagsets for use when creating flareups
             foreach (string faction in s.factionActivityTags.Keys) {
@@ -57,13 +60,13 @@ namespace WarTechIIC {
 
         public static void checkForNewFlareup() {
             double rand = Utilities.rng.NextDouble();
-            double flareupChance = Utilities.statOrDefault("WIIC_dailyFlareupChance", WIIC.settings.dailyFlareupChance);
+            double flareupChance = Utilities.statOrDefault("WIIC_dailyAttackChance", WIIC.settings.dailyAttackChance);
             double raidChance = Utilities.statOrDefault("WIIC_dailyRaidChance", WIIC.settings.dailyRaidChance);
             WIIC.modLog.Debug?.Write($"Checking for new flareup: {rand} flareupChance: {flareupChance}, raidChance: {raidChance}");
 
             string type = "";
             if (rand < flareupChance) {
-                type = "Flareup";
+                type = "Attack";
             } else if (rand < flareupChance + raidChance) {
                 type = "Raid";
             }
@@ -125,6 +128,10 @@ namespace WarTechIIC {
                     continue;
                 }
 
+                if (system.Tags.ContainsAny(cantBeAttackedTags)) {
+                    continue;
+                }
+
                 if (!reputations.ContainsKey(defender)) {
                     SimGameReputation reputation = WIIC.sim.GetReputation(defender);
                     reputations[defender] = s.reputationMultiplier[reputation.ToString()];
@@ -169,7 +176,7 @@ namespace WarTechIIC {
                     considerAttacker(neighbor.OwnerValue);
                 }
 
-                if (type == "Flareup") {
+                if (type == "Attack") {
                     foreach (string faction in factionInvasionTags.Keys) {
                         if (system.Tags.ContainsAny(factionInvasionTags[faction])) {
                             considerAttacker(FactionEnumeration.GetFactionByName(faction));

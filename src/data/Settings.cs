@@ -8,7 +8,7 @@ namespace WarTechIIC {
     public class Settings {
         public bool debug = false;
         public bool trace = false;
-        public double dailyFlareupChance = 0;
+        public double dailyAttackChance = 0;
         public double dailyRaidChance = 0;
         public bool setActiveFactionsForAllSystems = false;
         public List<string> ignoreFactions = new List<string>();
@@ -17,10 +17,12 @@ namespace WarTechIIC {
         public Dictionary<string, double> aggression = new Dictionary<string, double>();
 
         public List<string> cantBeAttacked = new List<string>();
+        public List<string> cantBeAttackedTags = new List<string>();
+
         public Dictionary<string, Dictionary<string, double>> hatred = new Dictionary<string, Dictionary<string, double>>();
         public bool limitTargetsToFactionEnemies = true;
 
-        public FpMarker flareupMarker = new FpMarker();
+        public FpMarker attackMarker = new FpMarker();
         public FpMarker raidMarker = new FpMarker();
 
         public int minCountdown = 30;
@@ -32,16 +34,16 @@ namespace WarTechIIC {
         public Dictionary<string, int> defenseStrength = new Dictionary<string, int>();
         public double raidStrengthMultiplier = 1.0;
 
-        public string minReputationToHelpFlareup = "INDIFFERENT";
+        public string minReputationToHelpAttack = "INDIFFERENT";
         public string minReputationToHelpRaid = "INDIFFERENT";
         public List<string> wontHirePlayer = new List<string>();
         public int daysBetweenMissions = 2;
         public int combatForceLossMin = 2;
         public int combatForceLossMax = 5;
-        public int flareupMissionBonusPerHalfSkull = 0;
-        public int flareupMissionBonusSalvage = 0;
-        public int raidMissionBonusPerHalfSkull = 0;
-        public int raidMissionBonusSalvage = 0;
+        public int attackBonusPerHalfSkull = 0;
+        public int attackBonusSalvage = 0;
+        public int raidBonusPerHalfSkull = 0;
+        public int raidBonusSalvage = 0;
         public int raidResultDuration = 360;
 
         public Dictionary<string, List<string>> factionActivityTags = new Dictionary<string, List<string>>();

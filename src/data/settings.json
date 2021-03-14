@@ -7,7 +7,7 @@
     "NoFaction",
   ],
 
-  "dailyFlareupChance": 0.25,
+  "dailyAttackChance": 0.25,
   "dailyRaidChance": 0.25,
 
   "aggression": {
@@ -23,6 +23,9 @@
   "cantBeAttacked": [
     "ComStar"
   ],
+  "cantBeAttackedTags": [
+    "planet_Sol"
+  ],
   "reputationMultiplier": {
     "LOATHED": 7.0,
     "HATED": 5.0,
@@ -36,7 +39,7 @@
 
   "limitTargetsToFactionEnemies": true,
 
-  "flareupMarker": {
+  "attackMarker": {
       "useHmAnimation": true,
       "flashpointPrefix": "",
       "swapColour": true,
@@ -71,17 +74,17 @@
   "defenseStrength": {},
   "raidStrengthMultiplier": 0.75,
 
-  "minReputationToHelpFlareup": "INDIFFERENT",
+  "minReputationToHelpAttack": "INDIFFERENT",
   "minReputationToHelpRaid": "HATED",
   "wontHirePlayer": [],
 
   "daysBetweenMissions": 3,
   "combatForceLossMin": 2,
   "combatForceLossMax": 5,
-  "flareupMissionBonusPerHalfSkull": 50000,
-  "flareupMissionBonusSalvage": 0,
-  "raidMissionBonusPerHalfSkull": 5000,
-  "raidMissionBonusSalvage": 1,
+  "attackBonusPerHalfSkull": 50000,
+  "attackBonusSalvage": 0,
+  "raidBonusPerHalfSkull": 5000,
+  "raidBonusSalvage": 1,
   "raidResultDuration": 360,
 
   "factionActivityTags": {

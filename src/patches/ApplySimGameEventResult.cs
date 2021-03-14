@@ -14,6 +14,9 @@ namespace WarTechIIC {
         // WIIC_ClanJadeFalcon_attacks_systemdef_Sol
         private static Regex ATTACK_SYSTEM = new Regex("^WIIC_(?<faction>.*?)_attacks_(?<system>.*)$", RegexOptions.Compiled);
 
+        // WIIC_ClanJadeFalcon_raids_systemdef_Sol
+        private static Regex RAID_SYSTEM = new Regex("^WIIC_(?<faction>.*?)_raids_(?<system>.*)$", RegexOptions.Compiled);
+
         // WIIC_set_systemdef_Sol_attacker_strength_10
         private static Regex ATTACKER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_attacker_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
@@ -35,7 +38,7 @@ namespace WarTechIIC {
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
 
-                            Utilities.cleanupSystem(system);
+                            WIIC.cleanupSystem(system);
                             Utilities.applyOwner(system, faction);
 
                             result.AddedTags.Remove(addedTag);
@@ -51,8 +54,26 @@ namespace WarTechIIC {
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
-                            Utilities.cleanupSystem(system);
-                            Flareup flareup = new Flareup(system, faction, "Flareup", WIIC.sim);
+                            WIIC.cleanupSystem(system);
+                            Flareup flareup = new Flareup(system, faction, "Attack", WIIC.sim);
+                            WIIC.flareups[system.ID] = flareup;
+                            flareup.addToMap();
+
+                            result.AddedTags.Remove(addedTag);
+                            continue;
+                        }
+
+                        matches = RAID_SYSTEM.Matches(addedTag);
+                        if (matches.Count > 0) {
+                            string factionID = matches[0].Groups["faction"].Value;
+                            string systemId = matches[0].Groups["system"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult RAID_SYSTEM: factionID {factionID}, systemId {systemId}");
+
+                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+
+                            WIIC.cleanupSystem(system);
+                            Flareup flareup = new Flareup(system, faction, "Raid", WIIC.sim);
                             WIIC.flareups[system.ID] = flareup;
                             flareup.addToMap();
 

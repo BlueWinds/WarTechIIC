@@ -15,11 +15,11 @@ namespace WarTechIIC
     public class WIIC {
         internal static DeferringLogger modLog;
         internal static string modDir;
-        public static Settings settings;
-        public static Dictionary<string, Flareup> flareups = new Dictionary<string, Flareup>();
-        public static Dictionary<string, string> systemControl = new Dictionary<string, string>();
-        public static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
-        public static SimGameState sim;
+        internal static Settings settings;
+        internal static Dictionary<string, Flareup> flareups = new Dictionary<string, Flareup>();
+        internal static Dictionary<string, string> systemControl = new Dictionary<string, string>();
+        internal static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
+        internal static SimGameState sim;
 
         public static void Init(string modDirectory, string settingsJSON) {
             modDir = modDirectory;
@@ -47,7 +47,26 @@ namespace WarTechIIC
             WhoAndWhere.init();
         }
 
-        public static void serializeToJson() {
+        public static void cleanupSystem(StarSystem system) {
+            if (flareups.ContainsKey(system.ID)) {
+                modLog.Debug?.Write($"Removing flareup at {system.ID} because it flipped owner from an event");
+                flareups.Remove(system.ID);
+            }
+
+            if (system == sim.CurSystem) {
+                modLog.Debug?.Write($"Player was participating in flareup at {system.ID}; Removing company tags");
+                sim.CompanyTags.Remove("WIIC_helping_attacker");
+                sim.CompanyTags.Remove("WIIC_helping_defender");
+            }
+
+            // Revert system description to the default
+            if (fluffDescriptions.ContainsKey(system.ID)) {
+                modLog.Debug?.Write($"Reverting map description for {system.ID}");
+                AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(system.Def.Description, new object[] { fluffDescriptions[system.ID] });
+            }
+        }
+
+        internal static void serializeToJson() {
             try {
                 string path = Path.Combine(modDir, settings.saveFolder, "WIIC_systemControl.json");
 
@@ -61,7 +80,7 @@ namespace WarTechIIC
             }
         }
 
-        public static void readFromJson() {
+        internal static void readFromJson() {
             try {
                 string path = Path.Combine(modDir, "WIIC_systemControl.json");
                 if (!File.Exists(path)) {
