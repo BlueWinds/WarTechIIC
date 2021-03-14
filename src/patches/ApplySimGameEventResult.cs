@@ -67,6 +67,11 @@ namespace WarTechIIC {
                             }
                             if (faction == null || system == null) continue;
 
+                            if (system.OwnerValue.Name == faction.Name) {
+                                WIIC.modLog.Info?.Write($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
+                                continue;
+                            }
+
                             Utilities.cleanupSystem(system);
                             Flareup flareup = new Flareup(system, faction, WIIC.sim);
                             WIIC.flareups[system.ID] = flareup;
