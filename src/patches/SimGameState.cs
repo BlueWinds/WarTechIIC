@@ -9,6 +9,7 @@ using BattleTech;
 using BattleTech.UI;
 using BattleTech.Save;
 using BattleTech.Save.Test;
+using Localize;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "Init")]
@@ -90,6 +91,13 @@ namespace WarTechIIC {
                             taskManagementElement.UpdateItem(0);
                         }
                     }
+                }
+
+                if (Utilities.deferredToasts.Count > 0) {
+                    foreach (var toast in Utilities.deferredToasts) {
+                        WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
+                    }
+                    Utilities.deferredToasts = new List<string>();
                 }
 
                 WhoAndWhere.checkForNewFlareup();

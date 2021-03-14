@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Harmony;
 using BattleTech;
+using Localize;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult", new Type[] {typeof(SimGameEventResult), typeof(List<object>), typeof(SimGameEventTracker)})]
@@ -70,6 +71,9 @@ namespace WarTechIIC {
                                 WIIC.modLog.Info?.Write($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
                                 continue;
                             }
+
+                            string text = Strings.T("{0} attacking {1} at {2}.", faction.FactionDef.ShortName, system.OwnerValue.FactionDef.ShortName, system.Name);
+                            Utilities.deferredToasts.Add(text);
 
                             Utilities.cleanupSystem(system);
                             Flareup flareup = new Flareup(system, faction, "Flareup", WIIC.sim);
