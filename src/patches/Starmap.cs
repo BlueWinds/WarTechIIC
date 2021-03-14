@@ -20,10 +20,10 @@ namespace WarTechIIC {
                     }
 
                     // Check if a previous flareup flipped control of the system
-                    string tag = system.Tags.ToList().Find(Utilities.isControlTag);
-                    FactionValue ownerFromTag = Utilities.controlFromTag(tag);
-                    if (tag != null && ownerFromTag != null) {
+                    if (WIIC.systemControl.ContainsKey(system.ID)) {
+                        FactionValue ownerFromTag = Utilities.controlFromTag(WIIC.systemControl[system.ID]);
                         WIIC.modLog.Info?.Write($"Found new owner {ownerFromTag.Name} at {system.Name}");
+
                         Utilities.applyOwner(system, ownerFromTag);
                         controlCount++;
                     }

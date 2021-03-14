@@ -19,6 +19,7 @@ namespace WarTechIIC {
                 WIIC.modLog.Debug?.Write("Clearing Flareups for new SimGameState");
                 WIIC.sim.CompanyTags.Add("WIIC_enabled");
                 WIIC.flareups.Clear();
+                WIIC.systemControl.Clear();
                 ColourfulFlashPoints.Main.clearMapMarkers();
                 WIIC.readFromJson();
 
@@ -52,6 +53,12 @@ namespace WarTechIIC {
                         Flareup flareup = Flareup.Deserialize(tag, __instance);
                         WIIC.flareups[system.ID] = flareup;
                         flareup.addToMap();
+                    }
+
+                    tag = system.Tags.ToList().Find(Utilities.isControlTag);
+                    if (tag != null) {
+                        system.Tags.Remove(tag);
+                        WIIC.systemControl[system.ID] = tag;
                     }
                 }
             } catch (Exception e) {

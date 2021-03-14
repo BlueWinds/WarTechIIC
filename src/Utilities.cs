@@ -46,10 +46,7 @@ namespace WarTechIIC {
         public static void applyOwner(StarSystem system, FactionValue newOwner) {
             WIIC.modLog.Trace?.Write($"Flipping control of {system.Name} to {newOwner.Name}");
             List<string> tagList = system.Tags.ToList();
-            system.Tags.Remove(tagList.Find(t => t.StartsWith("planet_faction_")));
-            system.Tags.Remove(tagList.Find(isControlTag));
-            system.Tags.Add($"planet_faction_{newOwner.Name.ToLower()}");
-            system.Tags.Add($"WIIC_control_{newOwner.Name}");
+            WIIC.systemControl[system.ID] = $"WIIC_control_{newOwner.Name}";
 
             methodSetOwner.Invoke(system.Def, new object[] { newOwner });
             setActiveFactions(system);

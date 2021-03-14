@@ -53,7 +53,7 @@ namespace WarTechIIC {
                             int num = (int) Math.Round(flareup2.location.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
 
                             WIIC.sim.SetReputation(flareup2.employer, num);
-                            WIIC.sim.SetReputation(FactionEnumeration.GetFactionByName("faction_MercenaryReviewBoard"), num);
+                            WIIC.sim.SetReputation(FactionEnumeration.GetMercenaryReviewBoardFactionValue(), num);
                         }
 
                         WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");

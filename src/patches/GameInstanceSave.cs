@@ -18,6 +18,10 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write($"    {flareup.Serialize()}");
                     flareup.location.Tags.Add(flareup.Serialize());
                 }
+                foreach (KeyValuePair<string, string> control in WIIC.systemControl) {
+                    WIIC.modLog.Debug?.Write($"    {control.Key}: {control.Value}");
+                    WIIC.sim.GetSystemById(control.Key).Tags.Add(control.Value);
+                }
                 WIIC.serializeToJson();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
@@ -37,6 +41,9 @@ namespace WarTechIIC {
                     foreach (string tag in tagList) {
                         flareup.location.Tags.Remove(tag);
                     }
+                }
+                foreach (KeyValuePair<string, string> control in WIIC.systemControl) {
+                    WIIC.sim.GetSystemById(control.Key).Tags.Remove(control.Value);
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
