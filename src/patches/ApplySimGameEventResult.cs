@@ -21,12 +21,11 @@ namespace WarTechIIC {
         private static Regex DEFENDER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_defender_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
         public static void Prefix(ref SimGameEventResult result) {
-            try {
-                Settings s = WIIC.settings;
-                WIIC.modLog.Debug?.Write($"ApplySimGameEventResult");
+            Settings s = WIIC.settings;
 
-                if (result.Scope == EventScope.Company && result.AddedTags != null) {
-                    foreach (string addedTag in result.AddedTags.ToList()) {
+            if (result.Scope == EventScope.Company && result.AddedTags != null) {
+                foreach (string addedTag in result.AddedTags.ToList()) {
+                    try {
                         MatchCollection matches = GIVE_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
                             string systemId = matches[0].Groups["system"].Value;
@@ -53,7 +52,7 @@ namespace WarTechIIC {
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             Utilities.cleanupSystem(system);
-                            Flareup flareup = new Flareup(system, faction, WIIC.sim);
+                            Flareup flareup = new Flareup(system, faction, "Flareup", WIIC.sim);
                             WIIC.flareups[system.ID] = flareup;
                             flareup.addToMap();
 
@@ -96,10 +95,10 @@ namespace WarTechIIC {
                             result.AddedTags.Remove(addedTag);
                             continue;
                         }
+                    } catch (Exception e) {
+                        WIIC.modLog.Error?.Write(e);
                     }
                 }
-            } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
             }
         }
     }

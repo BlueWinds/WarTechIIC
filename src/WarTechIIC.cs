@@ -17,6 +17,7 @@ namespace WarTechIIC
         internal static string modDir;
         public static Settings settings;
         public static Dictionary<string, Flareup> flareups = new Dictionary<string, Flareup>();
+        public static Dictionary<string, string> systemControl = new Dictionary<string, string>();
         public static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
         public static SimGameState sim;
 
@@ -38,23 +39,17 @@ namespace WarTechIIC
                 modLog.Error?.Write(e);
             }
 
-            WhoAndWhere.init();
-
             var harmony = HarmonyInstance.Create("blue.winds.WarTechIIC");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
+        public static void FinishedLoading() {
+            WhoAndWhere.init();
+        }
+
         public static void serializeToJson() {
             try {
-                Dictionary<string, string> systemControl = new Dictionary<string, string>();
                 string path = Path.Combine(modDir, settings.saveFolder, "WIIC_systemControl.json");
-
-                foreach (StarSystem system in sim.StarSystems) {
-                    string tag = system.Tags.ToList().Find(Utilities.isControlTag);
-                    if (tag != null) {
-                        systemControl.Add(system.ID, tag);
-                    }
-                }
 
                 using (StreamWriter writer = new StreamWriter(path, false)) {
                     writer.Write(JsonConvert.SerializeObject(systemControl));

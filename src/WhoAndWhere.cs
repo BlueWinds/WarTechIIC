@@ -8,27 +8,73 @@ using Localize;
 
 namespace WarTechIIC {
     public class WhoAndWhere {
-        private static TagSet pirateTags;
+        private static Dictionary<string, TagSet> factionActivityTags = new Dictionary<string, TagSet>();
+        private static Dictionary<string, TagSet> factionInvasionTags = new Dictionary<string, TagSet>();
 
         public static void init() {
-            pirateTags = new TagSet(WIIC.settings.pirateTags);
+            Settings s = WIIC.settings;
+            FactionValue invalid = FactionEnumeration.GetInvalidUnsetFactionValue();
+
+            // Initializing tagsets for use when creating flareups
+            foreach (string faction in s.factionActivityTags.Keys) {
+                if (FactionEnumeration.GetFactionByName(faction) == invalid) {
+                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from factionActivityTags");
+                   continue;
+                }
+                factionActivityTags[faction] = new TagSet(s.factionActivityTags[faction]);
+            }
+
+            foreach (string faction in s.factionInvasionTags.Keys) {
+                if (FactionEnumeration.GetFactionByName(faction) == invalid) {
+                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from factionInvasionTags");
+                   continue;
+                }
+                factionInvasionTags[faction] = new TagSet(s.factionInvasionTags[faction]);
+            }
+
+            // Validation for factions in various settings
+            foreach (string faction in s.aggression.Keys) {
+                if (FactionEnumeration.GetFactionByName(faction) == invalid) {
+                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from aggression");
+                }
+            }
+            foreach (string faction in s.hatred.Keys) {
+                if (FactionEnumeration.GetFactionByName(faction) == invalid) {
+                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from hatred");
+                }
+                foreach (string target in s.hatred[faction].Keys) {
+                    if (FactionEnumeration.GetFactionByName(target) == invalid) {
+                        WIIC.modLog.Warn?.Write($"Can't find faction {target} from hatred[{faction}]");
+                    }
+                }
+            }
+            foreach (string faction in s.cantBeAttacked) {
+                if (FactionEnumeration.GetFactionByName(faction) == invalid) {
+                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from cantBeAttacked");
+                }
+            }
         }
 
         public static void checkForNewFlareup() {
             double rand = Utilities.rng.NextDouble();
-            double chance = Utilities.statOrDefault("WIIC_dailyFlareupChance", WIIC.settings.dailyFlareupChance);
-            WIIC.modLog.Debug?.Write($"Checking for new flareup: {rand} / {chance}");
-            if (rand > chance || (WIIC.sim.IsCampaign && !WIIC.sim.CompanyTags.Contains("story_complete"))) {
+            double flareupChance = Utilities.statOrDefault("WIIC_dailyFlareupChance", WIIC.settings.dailyFlareupChance);
+            double raidChance = Utilities.statOrDefault("WIIC_dailyRaidChance", WIIC.settings.dailyRaidChance);
+            WIIC.modLog.Debug?.Write($"Checking for new flareup: {rand} flareupChance: {flareupChance}, raidChance: {raidChance}");
+
+            string type = "";
+            if (rand < flareupChance) {
+                type = "Flareup";
+            } else if (rand < flareupChance + raidChance) {
+                type = "Raid";
+            }
+
+            if (type == "") {
                 return;
             }
 
-            (StarSystem system, FactionValue attacker) = getFlareupAttackerAndLocation();
+            (StarSystem system, FactionValue attacker) = getAttackerAndLocation(type);
 
-            string text = Strings.T("{0} attacking {1} at {2}.", attacker.FactionDef.ShortName, system.OwnerValue.FactionDef.ShortName, system.Name);
-            WIIC.modLog.Info?.Write(text);
-            WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
-
-            Flareup flareup = new Flareup(system, attacker, WIIC.sim);
+            Flareup flareup = new Flareup(system, attacker, type, WIIC.sim);
             WIIC.flareups[system.ID] = flareup;
             flareup.addToMap();
         }
@@ -41,8 +87,10 @@ namespace WarTechIIC {
             targets.Add("Locals");
             targets.Add(system.OwnerValue.Name);
 
-            if (system.Tags.ContainsAny(pirateTags)) {
-                targets.Add(FactionEnumeration.GetAuriganPiratesFactionValue().Name);
+            foreach (string faction in factionActivityTags.Keys) {
+                if (system.Tags.ContainsAny(factionActivityTags[faction])) {
+                    targets.Add(faction);
+                }
             }
 
             // Look across neighboring systems, and add targets of factions that border this system
@@ -60,7 +108,7 @@ namespace WarTechIIC {
             return employers;
         }
 
-        public static (StarSystem, FactionValue) getFlareupAttackerAndLocation() {
+        public static (StarSystem, FactionValue) getAttackerAndLocation(string type) {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
             var reputations = new Dictionary<FactionValue, double>();
@@ -86,13 +134,14 @@ namespace WarTechIIC {
                 FakeVector3 p2 = WIIC.sim.CurSystem.Def.Position;
                 double distanceMult = 1 / (100 + Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)));
 
-                foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
-                    FactionValue attacker = neighbor.OwnerValue;
+                Action<FactionValue> considerAttacker = (FactionValue attacker) => {
                     if (s.ignoreFactions.Contains(attacker.Name)) {
-                        continue;
+                        return;
                     }
-                    if (s.limitTargetsToFactionEnemies && !attacker.FactionDef.Enemies.Contains(defender.Name)) {
-                        continue;
+
+                    // Factions only attack themselves if they are their own enemy (eg, extremely fractured factions).
+                    if ((s.limitTargetsToFactionEnemies || attacker == system.OwnerValue) && !attacker.FactionDef.Enemies.Contains(defender.Name)) {
+                        return;
                     }
 
                     if (!reputations.ContainsKey(attacker)) {
@@ -114,6 +163,25 @@ namespace WarTechIIC {
                     }
 
                     weightedLocations[(system, attacker)] += aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
+                };
+
+                foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
+                    considerAttacker(neighbor.OwnerValue);
+                }
+
+                if (type == "Flareup") {
+                    foreach (string faction in factionInvasionTags.Keys) {
+                        if (system.Tags.ContainsAny(factionInvasionTags[faction])) {
+                            considerAttacker(FactionEnumeration.GetFactionByName(faction));
+                        }
+                    }
+                }
+                if (type == "Raid") {
+                    foreach (string faction in factionActivityTags.Keys) {
+                        if (system.Tags.ContainsAny(factionActivityTags[faction])) {
+                            considerAttacker(FactionEnumeration.GetFactionByName(faction));
+                        }
+                    }
                 }
             }
             return Utilities.WeightedChoice(weightedLocations);

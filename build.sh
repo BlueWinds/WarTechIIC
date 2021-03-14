@@ -14,4 +14,4 @@ then
     exit
 fi
 
-nodemon -x "msbuild && cd '$BTPATH/Mods/WarTechIIC' && rm -f 'WarTechIIC.log' && rm -f WIIC_systemControl.json && zip -rq '$PWD/WarTechIIC.zip' ." -w src/ -e .
+nodemon -x "msbuild && rm -f 'WarTechIIC.zip' && cd '$BTPATH/Mods/WarTechIIC' && zip -x WarTechIIC.log -x WIIC_systemControl.json -rq '$PWD/WarTechIIC.zip' ." -w src/ -e .

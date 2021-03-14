@@ -78,6 +78,9 @@ When naming star systems, remember to use the ID and not the name. You want `sta
 ### Company Stats
 For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.
 
-* `WIIC_dailyFlareupChance` (float) If present, this overrides the `dailyFlareupChance` from settings.json.
-* `WIIC_{attacker}_aggression` (float) If present, this overrides `aggression[attacker]` from settings.json.
-* `WIIC_{attacker}_hates_{defender}` (float) If present, this overrides `targetChoiceMultiplier[attacker][defender]` from settings.json.
+* `WIIC_dailyFlareupChance` (float) If present, this overrides the `dailyFlareupChance` from settings.json. -1 will use the value from settings.json.
+* `WIIC_dailyRaidChance` (float) If present, this overrides the `dailyRaidChance` from settings.json. -1 will use the value from settings.json.
+* `WIIC_{attacker}_aggression` (float) If present, this overrides `aggression[attacker]` from settings.json. -1 will use the value from settings.json.
+* `WIIC_{attacker}_hates_{defender}` (float) If present, this overrides `targetChoiceMultiplier[attacker][defender]` from settings.json. -1 will use the value from settings.json.
+* `WIIC_{faction}_attack_strength` (int) Adds to the attack strength of any flareups or raids the faction engages in. Can be negative. Note that this is *additive* - it does not override that faction's default values.
+* `WIIC_{faction}_defense_strength` (int) Adds to the attack strength of any flareups or raids the faction engages in. Can be negative. Note that this is *additive* - it does not override that faction's values.
