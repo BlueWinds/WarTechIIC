@@ -8,7 +8,6 @@
     "IRBTModUtils"
   ],
   "Manifest": [
-	  { "Type": "SimGameStatDescDef", "Path": "simGameStatDesc", "AddToDB": true },
 	  { "Type": "ContractOverride", "Path": "contracts" }
   ]
 }
