@@ -18,9 +18,13 @@ namespace WarTechIIC {
                     return;
                 }
 
-                int bonusMoney = WIIC.settings.flareupMissionBonusPerHalfSkull * contract.Difficulty;
+                Settings s = WIIC.settings;
+
+                int bonus = flareup.type == "Attack" ? s.attackBonusPerHalfSkull : s.raidBonusPerHalfSkull;
+                int bonusMoney = bonus * contract.Difficulty;
+                int bonusSalvage = flareup.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
                 string loss = Utilities.forcesToString(flareup.currentContractForceLoss);
-                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus", flareup.target.FactionDef.ShortName, loss, bonusMoney);
+                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus, {3} additional salvage", flareup.target.FactionDef.ShortName, loss, bonusMoney, bonusSalvage);
                 WIIC.modLog.Debug?.Write(objectiveString);
 
                 if (flareup.employer == flareup.attacker) {

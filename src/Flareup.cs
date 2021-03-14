@@ -20,7 +20,7 @@ namespace WarTechIIC {
         public string locationID;
 
         [JsonProperty]
-        public string type = "Flareup";
+        public string type = "Attack";
 
         public FactionValue attacker;
         [JsonProperty]
@@ -151,7 +151,7 @@ namespace WarTechIIC {
 
             removeParticipationContracts();
 
-            if (type == "Flareup") {
+            if (type == "Attack") {
                 if (attackerStrength <= 0) {
                     string text = Strings.T("Battle for {0} concludes - {1} holds off the {2} attack", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
                     sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
@@ -188,8 +188,7 @@ namespace WarTechIIC {
 
         public void addToMap() {
             Settings s = WIIC.settings;
-            WIIC.modLog.Info?.Write($"type {type}, {(type == "Raid" ? s.raidMarker : s.flareupMarker)}");
-            MapMarker mapMarker = new MapMarker(location.ID, type == "Raid" ? s.raidMarker : s.flareupMarker);
+            MapMarker mapMarker = new MapMarker(location.ID, type == "Raid" ? s.raidMarker : s.attackMarker);
             ColourfulFlashPoints.Main.addMapMarker(mapMarker);
 
             if (!WIIC.fluffDescriptions.ContainsKey(location.ID)) {
@@ -222,9 +221,14 @@ namespace WarTechIIC {
         }
 
         public void spawnParticipationContracts() {
-            Enum.TryParse(WIIC.settings.minReputationToHelpFlareup, out SimGameReputation minRep);
+            SimGameReputation minRep = SimGameReputation.INDIFFERENT;
+            if (type == "Attack") {
+                Enum.TryParse(WIIC.settings.minReputationToHelpAttack, out minRep);
+            } else if (type == "Raid") {
+                Enum.TryParse(WIIC.settings.minReputationToHelpRaid, out minRep);
+            }
             int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-            string contractPrefix = type == "Flareup" ? "wiic_help" : "wiic_raid";
+            string contractPrefix = type == "Attack" ? "wiic_help" : "wiic_raid";
 
             if (!WIIC.settings.wontHirePlayer.Contains(attacker.Name) && sim.GetReputation(attacker) >= minRep) {
                 WIIC.modLog.Info?.Write($"Adding contract {contractPrefix}_attacker. Target={location.OwnerValue.Name}, Employer={attacker.Name}, TargetSystem={location.ID}, Difficulty={location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
