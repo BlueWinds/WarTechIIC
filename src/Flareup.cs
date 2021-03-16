@@ -171,14 +171,16 @@ namespace WarTechIIC {
                     string text = Strings.T("Raid on {0} concludes - {1} drives off the {2} forces", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
                     sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
 
-                    result.Stats[0] = new SimGameStat($"WIIC_{attacker.Name}_attack_strength", 1, false);
-                    result.Stats[1] = new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", -1, false);
+                    SimGameStat attackStat =  new SimGameStat($"WIIC_{attacker.Name}_attack_strength", 1, false);
+                    SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", -1, false);
+                    result.Stats = new SimGameStat[] { attackStat, defenseStat };
                 } else if (defenderStrength <= 0) {
                     string text = Strings.T("Raid on {0} concludes - {1} weakens {2} control", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
                     sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
 
-                    result.Stats[0] = new SimGameStat($"WIIC_{attacker.Name}_attack_strength", -1, false);
-                    result.Stats[0] = new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", 1, false);
+                    SimGameStat attackStat = new SimGameStat($"WIIC_{attacker.Name}_attack_strength", -1, false);
+                    SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", 1, false);
+                    result.Stats = new SimGameStat[] { attackStat, defenseStat };
                 }
 
                 SimGameEventResult[] results = {result};
