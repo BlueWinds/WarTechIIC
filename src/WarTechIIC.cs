@@ -49,7 +49,7 @@ namespace WarTechIIC
 
         public static void cleanupSystem(StarSystem system) {
             if (flareups.ContainsKey(system.ID)) {
-                modLog.Debug?.Write($"Removing flareup at {system.ID} because it flipped owner from an event");
+                modLog.Debug?.Write($"Removing flareup at {system.ID}");
                 flareups.Remove(system.ID);
             }
 
