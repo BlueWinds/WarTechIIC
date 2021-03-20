@@ -81,7 +81,7 @@
   "daysBetweenMissions": 3,
   "combatForceLossMin": 2,
   "combatForceLossMax": 5,
-  "attackBonusPerHalfSkull": 50000,
+  "attackBonusPerHalfSkull": 30000,
   "attackBonusSalvage": 0,
   "raidBonusPerHalfSkull": 5000,
   "raidBonusSalvage": 1,
