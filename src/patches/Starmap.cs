@@ -24,7 +24,7 @@ namespace WarTechIIC {
                         FactionValue ownerFromTag = Utilities.controlFromTag(WIIC.systemControl[system.ID]);
                         WIIC.modLog.Info?.Write($"Found new owner {ownerFromTag.Name} at {system.Name}");
 
-                        Utilities.applyOwner(system, ownerFromTag);
+                        Utilities.applyOwner(system, ownerFromTag, false);
                         controlCount++;
                     }
                     count++;

@@ -79,7 +79,6 @@ namespace WarTechIIC {
 
             Flareup flareup = new Flareup(system, attacker, type, WIIC.sim);
             WIIC.flareups[system.ID] = flareup;
-            flareup.addToMap();
         }
 
         public static List<string> getTargets(StarSystem system) {
@@ -91,7 +90,7 @@ namespace WarTechIIC {
             targets.Add(system.OwnerValue.Name);
 
             foreach (string faction in factionActivityTags.Keys) {
-                if (system.Tags.ContainsAny(factionActivityTags[faction])) {
+                if (system.Tags.ContainsAny(factionActivityTags[faction], false)) {
                     targets.Add(faction);
                 }
             }
@@ -128,7 +127,7 @@ namespace WarTechIIC {
                     continue;
                 }
 
-                if (system.Tags.ContainsAny(cantBeAttackedTags)) {
+                if (system.Tags.ContainsAny(cantBeAttackedTags, false)) {
                     continue;
                 }
 
@@ -173,19 +172,20 @@ namespace WarTechIIC {
                 };
 
                 foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
+
                     considerAttacker(neighbor.OwnerValue);
                 }
 
                 if (type == "Attack") {
                     foreach (string faction in factionInvasionTags.Keys) {
-                        if (system.Tags.ContainsAny(factionInvasionTags[faction])) {
+                        if (system.Tags.ContainsAny(factionInvasionTags[faction], false)) {
                             considerAttacker(FactionEnumeration.GetFactionByName(faction));
                         }
                     }
                 }
                 if (type == "Raid") {
                     foreach (string faction in factionActivityTags.Keys) {
-                        if (system.Tags.ContainsAny(factionActivityTags[faction])) {
+                        if (system.Tags.ContainsAny(factionActivityTags[faction], false)) {
                             considerAttacker(FactionEnumeration.GetFactionByName(faction));
                         }
                     }
