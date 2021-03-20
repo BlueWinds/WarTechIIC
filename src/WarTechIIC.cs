@@ -64,6 +64,8 @@ namespace WarTechIIC
                 modLog.Debug?.Write($"Reverting map description for {system.ID}");
                 AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(system.Def.Description, new object[] { fluffDescriptions[system.ID] });
             }
+
+            Utilities.redrawMap();
         }
 
         internal static void serializeToJson() {

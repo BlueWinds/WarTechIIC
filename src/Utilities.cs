@@ -43,13 +43,18 @@ namespace WarTechIIC {
           return tag.StartsWith("WIIC_control_");
         }
 
-        public static void applyOwner(StarSystem system, FactionValue newOwner) {
+        public static void applyOwner(StarSystem system, FactionValue newOwner, bool refresh = true) {
             WIIC.modLog.Trace?.Write($"Flipping control of {system.Name} to {newOwner.Name}");
             List<string> tagList = system.Tags.ToList();
             WIIC.systemControl[system.ID] = $"WIIC_control_{newOwner.Name}";
 
             methodSetOwner.Invoke(system.Def, new object[] { newOwner });
             setActiveFactions(system);
+
+            if (refresh) {
+                system.RefreshSystem();
+                system.ResetContracts();
+            }
         }
 
         public static void setActiveFactions(StarSystem system) {
@@ -105,7 +110,14 @@ namespace WarTechIIC {
         }
 
         public static bool flashpointInSystem(StarSystem system) {
-          return WIIC.sim.AvailableFlashpoints.Find(f => f.CurSystem == system) != null;
+            return WIIC.sim.AvailableFlashpoints.Find(f => f.CurSystem == system) != null;
+        }
+
+        public static void redrawMap() {
+            ColourfulFlashPoints.Main.clearMapMarkers();
+            foreach (Flareup flareup in WIIC.flareups.Values) {
+                flareup.addToMap();
+            }
         }
     }
 }

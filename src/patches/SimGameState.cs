@@ -20,7 +20,6 @@ namespace WarTechIIC {
                 WIIC.sim.CompanyTags.Add("WIIC_enabled");
                 WIIC.flareups.Clear();
                 WIIC.systemControl.Clear();
-                ColourfulFlashPoints.Main.clearMapMarkers();
                 WIIC.readFromJson();
 
                 if (WIIC.settings.setActiveFactionsForAllSystems) {
@@ -28,6 +27,8 @@ namespace WarTechIIC {
                         Utilities.setActiveFactions(system);
                     }
                 }
+
+                Utilities.redrawMap();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
@@ -43,7 +44,6 @@ namespace WarTechIIC {
                 WIIC.sim = __instance;
                 WIIC.flareups.Clear();
                 WIIC.sim.CompanyTags.Add("WIIC_enabled");
-                ColourfulFlashPoints.Main.clearMapMarkers();
                 foreach (StarSystem system in __instance.StarSystems) {
                     string tag = system.Tags.ToList().Find(Flareup.isSerializedFlareup);
                     if (tag != null) {
@@ -52,7 +52,6 @@ namespace WarTechIIC {
 
                         Flareup flareup = Flareup.Deserialize(tag, __instance);
                         WIIC.flareups[system.ID] = flareup;
-                        flareup.addToMap();
                     }
 
                     tag = system.Tags.ToList().Find(Utilities.isControlTag);
@@ -61,6 +60,8 @@ namespace WarTechIIC {
                         WIIC.systemControl[system.ID] = tag;
                     }
                 }
+
+                Utilities.redrawMap();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
@@ -85,7 +86,6 @@ namespace WarTechIIC {
                     if (finished) {
                         WIIC.cleanupSystem(flareup.location);
                     } else {
-                        flareup.addToMap();
                         if (activeItems.TryGetValue(flareup.workOrder, out var taskManagementElement)) {
                             taskManagementElement.UpdateItem(0);
                         }
@@ -93,6 +93,7 @@ namespace WarTechIIC {
                 }
 
                 WhoAndWhere.checkForNewFlareup();
+                Utilities.redrawMap();
 
                 WIIC.sim.RoomManager.RefreshTimeline(false);
             } catch (Exception e) {
