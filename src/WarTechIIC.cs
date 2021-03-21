@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Harmony;
 using IRBTModUtils.Logging;
 using BattleTech;
+using BattleTech.UI;
 using HBS.Collections;
 using UnityEngine;
 

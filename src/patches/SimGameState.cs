@@ -23,6 +23,10 @@ namespace WarTechIIC {
                 WIIC.systemControl.Clear();
                 WIIC.readFromJson();
 
+                var playPause = (SGTimePlayPause)AccessTools.Field(typeof(SGRoomController_Ship), "TimePlayPause").GetValue(__instance.RoomManager.ShipRoom);
+                var floatyStack = (SGTimeFloatyStack)AccessTools.Field(typeof(SGTimePlayPause), "eventFloatyToasts").GetValue(playPause);
+                floatyStack.timeBetweenFloaties = 0.75f;
+
                 if (WIIC.settings.setActiveFactionsForAllSystems) {
                     foreach (StarSystem system in __instance.StarSystems) {
                         Utilities.setActiveFactions(system);
@@ -93,14 +97,15 @@ namespace WarTechIIC {
                     }
                 }
 
+                WhoAndWhere.checkForNewFlareup();
+
                 if (Utilities.deferredToasts.Count > 0) {
                     foreach (var toast in Utilities.deferredToasts) {
                         WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
                     }
-                    Utilities.deferredToasts = new List<string>();
+                    Utilities.deferredToasts.Clear();
                 }
 
-                WhoAndWhere.checkForNewFlareup();
                 Utilities.redrawMap();
 
                 WIIC.sim.RoomManager.RefreshTimeline(false);
@@ -116,11 +121,12 @@ namespace WarTechIIC {
         public static bool ParticipateInFlareupPrefix(SimGameState __instance, out bool __state) {
             __state = false;
             try {
-                if (__instance.ActiveTravelContract.Override.ID == "wiic_help_attacker") {
+                string id = __instance.ActiveTravelContract.Override.ID;
+                if (id == "wiic_help_attacker" || id == "wiic_raid_attacker") {
                     WIIC.modLog.Debug?.Write($"Added company tag for helping attacker");
                     __instance.CompanyTags.Add("WIIC_helping_attacker");
                     __state = true;
-                } else if (__instance.ActiveTravelContract.Override.ID == "wiic_help_defender") {
+                } else if (id == "wiic_help_defender" || id == "wiic_raid_defender") {
                     WIIC.modLog.Debug?.Write($"Added company tag for helping defender");
                     __instance.CompanyTags.Add("WIIC_helping_defender");
                     __state = true;

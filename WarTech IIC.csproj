@@ -111,7 +111,7 @@
       SkipUnchangedFiles="false"
     />
     <Copy
-      SourceFiles="src/data/contracts/wiic_help_attacker.json;src/data/contracts/wiic_help_defender.json"
+      SourceFiles="src/data/contracts/wiic_help_attacker.json;src/data/contracts/wiic_help_defender.json;src/data/contracts/wiic_raid_attacker.json;src/data/contracts/wiic_raid_defender.json"
       DestinationFolder="$(BTPATH)/Mods/WarTechIIC/contracts/"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="false"

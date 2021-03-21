@@ -75,9 +75,9 @@ namespace WarTechIIC {
 
             string text = type == "Raid" ? "{0} launches raid on {1} at {2}" : "{0} attacks {1} for control of {2}";
             text = Strings.T(text, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName, location.Name);
-            WIIC.modLog.Info?.Write(text);
-            WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+            Utilities.deferredToasts.Add(text);
 
+            WIIC.modLog.Info?.Write(text);
             if (location == sim.CurSystem) {
                 spawnParticipationContracts();
             }
@@ -115,6 +115,12 @@ namespace WarTechIIC {
 
         public bool passDay() {
             Settings s = WIIC.settings;
+
+            if (attackerStrength <= 0 || defenderStrength <= 0) {
+              conclude();
+              return true;
+            }
+
             if (countdown > 0) {
                 countdown--;
                 return false;
@@ -135,11 +141,6 @@ namespace WarTechIIC {
 
             daysUntilMission = s.daysBetweenMissions;
 
-            if (attackerStrength <= 0 || defenderStrength <= 0) {
-              conclude();
-              return true;
-            }
-
             if (employer != null) {
                 launchMission();
             }
@@ -151,13 +152,12 @@ namespace WarTechIIC {
 
             removeParticipationContracts();
 
+            string text = "";
             if (type == "Attack") {
                 if (attackerStrength <= 0) {
-                    string text = Strings.T("Battle for {0} concludes - {1} holds off the {2} attack", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
-                    sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+                    text = Strings.T("Battle for {0} concludes - {1} holds off the {2} attack", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
                 } else if (defenderStrength <= 0) {
-                    string text = Strings.T("Battle for {0} concludes - {1} takes the system from {2}", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
-                    sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+                    text = Strings.T("Battle for {0} concludes - {1} takes the system from {2}", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
 
                     Utilities.applyOwner(location, attacker);
                 }
@@ -168,15 +168,13 @@ namespace WarTechIIC {
                 result.ResultDuration = WIIC.settings.raidResultDuration;
 
                 if (attackerStrength <= 0) {
-                    string text = Strings.T("Raid on {0} concludes - {1} drives off the {2} forces", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
-                    sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+                    text = Strings.T("Raid on {0} concludes - {1} drives off the {2} forces", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
 
                     SimGameStat attackStat =  new SimGameStat($"WIIC_{attacker.Name}_attack_strength", 1, false);
                     SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", -1, false);
                     result.Stats = new SimGameStat[] { attackStat, defenseStat };
                 } else if (defenderStrength <= 0) {
-                    string text = Strings.T("Raid on {0} concludes - {1} weakens {2} control", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
-                    sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+                    text = Strings.T("Raid on {0} concludes - {1} weakens {2} control", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
 
                     SimGameStat attackStat = new SimGameStat($"WIIC_{attacker.Name}_attack_strength", -1, false);
                     SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", 1, false);
@@ -185,6 +183,22 @@ namespace WarTechIIC {
 
                 SimGameEventResult[] results = {result};
                 SimGameState.ApplySimGameEventResult(new List<SimGameEventResult>(results));
+
+            }
+
+            // At the current location, a flareup gets a popup - whether or not the player was involved, it's important.
+            if (WIIC.sim.CurSystem == location) {
+                SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
+                string title = Strings.T($"{type} Complete");
+                string primaryButtonText = Strings.T("Acknowledged");
+
+                queue.QueuePauseNotification(title, text, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, null, primaryButtonText);
+                if (!queue.IsOpen) {
+                    queue.DisplayIfAvailable();
+                }
+            // Things happening elsewhere in the galaxy just get an event toast.
+            } else {
+                sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
             }
         }
 

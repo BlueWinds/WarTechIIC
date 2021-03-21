@@ -60,9 +60,6 @@ namespace WarTechIIC {
                                 continue;
                             }
 
-                            string text = Strings.T("{0} attacking {1} at {2}.", faction.FactionDef.ShortName, system.OwnerValue.FactionDef.ShortName, system.Name);
-                            Utilities.deferredToasts.Add(text);
-
                             WIIC.cleanupSystem(system);
                             Flareup flareup = new Flareup(system, faction, "Attack", WIIC.sim);
                             WIIC.flareups[system.ID] = flareup;
