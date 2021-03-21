@@ -12,6 +12,8 @@ namespace WarTechIIC {
         private static FieldInfo fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
         private static FieldInfo fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
 
+        public static List<string> deferredToasts = new List<string>();
+
         public static FactionValue getFactionValueByFactionID(string id) {
             return WIIC.sim.DataManager.Factions.FirstOrDefault(x => x.Value.FactionValue.Name == id).Value.FactionValue;
         }

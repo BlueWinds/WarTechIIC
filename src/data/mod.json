@@ -8,6 +8,6 @@
     "IRBTModUtils"
   ],
   "Manifest": [
-    { "Type": "ContractOverride", "Path": "contracts" }
+	  { "Type": "ContractOverride", "Path": "contracts" }
   ]
 }

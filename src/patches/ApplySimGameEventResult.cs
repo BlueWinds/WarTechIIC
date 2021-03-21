@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Harmony;
 using BattleTech;
+using Localize;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult", new Type[] {typeof(SimGameEventResult), typeof(List<object>), typeof(SimGameEventTracker)})]
@@ -51,8 +52,16 @@ namespace WarTechIIC {
                             string systemId = matches[0].Groups["system"].Value;
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
 
-                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+
+                            if (system.OwnerValue.Name == faction.Name) {
+                                WIIC.modLog.Info?.Write($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
+                                continue;
+                            }
+
+                            string text = Strings.T("{0} attacking {1} at {2}.", faction.FactionDef.ShortName, system.OwnerValue.FactionDef.ShortName, system.Name);
+                            Utilities.deferredToasts.Add(text);
 
                             WIIC.cleanupSystem(system);
                             Flareup flareup = new Flareup(system, faction, "Attack", WIIC.sim);
