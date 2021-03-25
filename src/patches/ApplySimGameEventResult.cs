@@ -24,6 +24,12 @@ namespace WarTechIIC {
         // WIIC_set_systemdef_Sol_defender_strength_10
         private static Regex DEFENDER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_defender_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
+        // WIIC_add_ives_rebellion_to_systemdef_Sol
+        private static Regex ADD_SYSTEM_TAG = new Regex("^WIIC_add_(?<faction>.*?)_to_(?<system>.*?)$", RegexOptions.Compiled);
+
+        // WIIC_remove_ives_rebellion_from_systemdef_Sol
+        private static Regex REMOVE_SYSTEM_TAG = new Regex("^WIIC_remove_(?<faction>.*?)_from_(?<system>.*?)$", RegexOptions.Compiled);
+
         public static void Prefix(ref SimGameEventResult result) {
             Settings s = WIIC.settings;
 
@@ -118,6 +124,32 @@ namespace WarTechIIC {
                             } else {
                                 WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
+
+                            result.AddedTags.Remove(addedTag);
+                            continue;
+                        }
+
+                        matches = ADD_SYSTEM_TAG.Matches(addedTag);
+                        if (matches.Count > 0) {
+                            string tag = matches[0].Groups["tag"].Value;
+                            string systemId = matches[0].Groups["system"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag {tag}, systemId {systemId}");
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            system.Tags.Add(tag);
+
+                            result.AddedTags.Remove(addedTag);
+                            continue;
+                        }
+
+                        matches = REMOVE_SYSTEM_TAG.Matches(addedTag);
+                        if (matches.Count > 0) {
+                            string tag = matches[0].Groups["tag"].Value;
+                            string systemId = matches[0].Groups["system"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {tag}, systemId {systemId}");
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            system.Tags.Remove(tag);
 
                             result.AddedTags.Remove(addedTag);
                             continue;
