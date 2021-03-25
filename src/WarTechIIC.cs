@@ -74,7 +74,7 @@ namespace WarTechIIC
                 string path = Path.Combine(modDir, settings.saveFolder, "WIIC_systemControl.json");
 
                 using (StreamWriter writer = new StreamWriter(path, false)) {
-                    writer.Write(JsonConvert.SerializeObject(systemControl));
+                    writer.Write(JsonConvert.SerializeObject(systemControl, Formatting.Indented));
                     writer.Flush();
                 }
                 modLog.Info?.Write($"Wrote {path} with {systemControl.Count} control tags");
@@ -98,7 +98,7 @@ namespace WarTechIIC
                         StarSystem system = sim.GetSystemById(id);
                         FactionValue ownerFromTag = Utilities.controlFromTag(systemControl[id]);
                         modLog.Info?.Write($"id: {id}, system: {system}, tag: {systemControl[id]}, owner: {ownerFromTag}");
-                        Utilities.applyOwner(system, ownerFromTag);
+                        Utilities.applyOwner(system, ownerFromTag, true);
                     }
                     modLog.Info?.Write($"Set control of {systemControl.Count} star systems based on {path}");
                 }

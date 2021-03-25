@@ -40,7 +40,7 @@ namespace WarTechIIC {
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
 
                             WIIC.cleanupSystem(system);
-                            Utilities.applyOwner(system, faction);
+                            Utilities.applyOwner(system, faction, true);
 
                             result.AddedTags.Remove(addedTag);
                             continue;

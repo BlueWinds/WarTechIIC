@@ -18,22 +18,18 @@ namespace WarTechIIC {
             try {
                 WIIC.sim = __instance;
                 WIIC.modLog.Debug?.Write("Clearing Flareups for new SimGameState");
-                WIIC.sim.CompanyTags.Add("WIIC_enabled");
                 WIIC.flareups.Clear();
                 WIIC.systemControl.Clear();
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+        }
+    }
+    [HarmonyPatch(typeof(SimGameState), "OnCareerModeStart")]
+    public static class SimGameState_OnCareerModeStartPatch {
+        public static void Postfix(SimGameState __instance) {
+            try {
                 WIIC.readFromJson();
-
-                var playPause = (SGTimePlayPause)AccessTools.Field(typeof(SGRoomController_Ship), "TimePlayPause").GetValue(__instance.RoomManager.ShipRoom);
-                var floatyStack = (SGTimeFloatyStack)AccessTools.Field(typeof(SGTimePlayPause), "eventFloatyToasts").GetValue(playPause);
-                floatyStack.timeBetweenFloaties = 0.75f;
-
-                if (WIIC.settings.setActiveFactionsForAllSystems) {
-                    foreach (StarSystem system in __instance.StarSystems) {
-                        Utilities.setActiveFactions(system);
-                    }
-                }
-
-                Utilities.redrawMap();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
@@ -45,10 +41,11 @@ namespace WarTechIIC {
         [HarmonyPostfix]
         public static void LoadFlareups(GameInstanceSave gameInstanceSave, SimGameState __instance) {
             try {
-                WIIC.modLog.Debug?.Write("Loading Flareups");
                 WIIC.sim = __instance;
+                WIIC.modLog.Debug?.Write("Loading Flareups");
                 WIIC.flareups.Clear();
                 WIIC.sim.CompanyTags.Add("WIIC_enabled");
+
                 foreach (StarSystem system in __instance.StarSystems) {
                     string tag = system.Tags.ToList().Find(Flareup.isSerializedFlareup);
                     if (tag != null) {
@@ -83,6 +80,7 @@ namespace WarTechIIC {
                 var timelineWidget = (TaskTimelineWidget)_getTimelineWidget.GetValue(WIIC.sim.RoomManager);
                 var activeItems = (Dictionary<WorkOrderEntry, TaskManagementElement>)_getActiveItems.GetValue(timelineWidget);
 
+                Utilities.slowDownFloaties();
                 ColourfulFlashPoints.Main.clearMapMarkers();
 
                 // ToList is used to make a copy because we may need to remove elements as we're iterating

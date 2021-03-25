@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Harmony;
 using BattleTech;
+using BattleTech.UI;
 
 namespace WarTechIIC {
     public class Utilities {
@@ -45,7 +46,7 @@ namespace WarTechIIC {
           return tag.StartsWith("WIIC_control_");
         }
 
-        public static void applyOwner(StarSystem system, FactionValue newOwner, bool refresh = true) {
+        public static void applyOwner(StarSystem system, FactionValue newOwner, bool refresh) {
             WIIC.modLog.Trace?.Write($"Flipping control of {system.Name} to {newOwner.Name}");
             List<string> tagList = system.Tags.ToList();
             WIIC.systemControl[system.ID] = $"WIIC_control_{newOwner.Name}";
@@ -120,6 +121,12 @@ namespace WarTechIIC {
             foreach (Flareup flareup in WIIC.flareups.Values) {
                 flareup.addToMap();
             }
+        }
+
+        public static void slowDownFloaties() {
+            var playPause = (SGTimePlayPause)AccessTools.Field(typeof(SGRoomController_Ship), "TimePlayPause").GetValue(WIIC.sim.RoomManager.ShipRoom);
+            var floatyStack = (SGTimeFloatyStack)AccessTools.Field(typeof(SGTimePlayPause), "eventFloatyToasts").GetValue(playPause);
+            floatyStack.timeBetweenFloaties = 0.5f;
         }
     }
 }

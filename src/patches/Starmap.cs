@@ -29,6 +29,7 @@ namespace WarTechIIC {
                     }
                     count++;
                 }
+                Utilities.redrawMap();
                 WIIC.modLog.Info?.Write($"Finished patching starmap (checked {count} systems, flipped control of {controlCount})");
 
             } catch (Exception e) {

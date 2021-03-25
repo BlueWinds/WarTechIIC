@@ -159,7 +159,7 @@ namespace WarTechIIC {
                 } else if (defenderStrength <= 0) {
                     text = Strings.T("Battle for {0} concludes - {1} takes the system from {2}", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
 
-                    Utilities.applyOwner(location, attacker);
+                    Utilities.applyOwner(location, attacker, true);
                 }
             } else if (type == "Raid") {
                 SimGameEventResult result = new SimGameEventResult();
