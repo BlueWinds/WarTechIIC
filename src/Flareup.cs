@@ -230,8 +230,8 @@ namespace WarTechIIC {
             if (daysUntilMission > 0) {
                description.AppendLine(Strings.T("{0} days until the next mission", daysUntilMission));
             }
-            description.AppendLine("\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name, Utilities.forcesToString(attackerStrength)));
-            description.AppendLine(Strings.T("{0} forces: {1}", location.OwnerValue.FactionDef.Name, Utilities.forcesToString(defenderStrength)));
+            description.AppendLine("\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(attackerStrength)));
+            description.AppendLine(Strings.T("{0} forces: {1}", location.OwnerValue.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(defenderStrength)));
 
             return description.ToString();
         }
@@ -284,7 +284,7 @@ namespace WarTechIIC {
             string title = Strings.T("Flareup Mission");
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
-            string message = $"{employer.FactionDef.Name} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
+            string message = $"{employer.FactionDef.Name.Replace("the ", "The ")} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
             WIIC.modLog.Debug?.Write(message);
 
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
