@@ -58,6 +58,11 @@ namespace WarTechIIC {
                 system.RefreshSystem();
                 system.ResetContracts();
             }
+
+            // Refreshes the system description with appropriate defender name
+            if (WIIC.flareups.ContainsKey(system.ID)) {
+                WIIC.flareups[system.ID].addToMap();
+            }
         }
 
         public static void setActiveFactions(StarSystem system) {
