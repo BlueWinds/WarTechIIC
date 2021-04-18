@@ -11,15 +11,13 @@ namespace WarTechIIC {
     public static class GameInstanceSave_PreSerialization_Patch {
         [HarmonyPrefix]
         public static void SaveFlareups() {
-            WIIC.modLog.Debug?.Write("Saving active flareups in system tags, funds: {WIIC.sim.Funds}");
+            WIIC.modLog.Debug?.Write($"Saving {WIIC.flareups.Keys.Count} flareups and {WIIC.systemControl.Keys.Count} system control tags");
 
             try {
                 foreach (Flareup flareup in WIIC.flareups.Values) {
-                    WIIC.modLog.Debug?.Write($"    {flareup.Serialize()}");
                     flareup.location.Tags.Add(flareup.Serialize());
                 }
                 foreach (KeyValuePair<string, string> control in WIIC.systemControl) {
-                    WIIC.modLog.Debug?.Write($"    {control.Key}: {control.Value}");
                     WIIC.sim.GetSystemById(control.Key).Tags.Add(control.Value);
                 }
                 WIIC.serializeToJson();

@@ -49,7 +49,6 @@ namespace WarTechIIC {
                 foreach (StarSystem system in __instance.StarSystems) {
                     string tag = system.Tags.ToList().Find(Flareup.isSerializedFlareup);
                     if (tag != null) {
-                        WIIC.modLog.Debug?.Write($"    {tag}");
                         system.Tags.Remove(tag);
 
                         Flareup flareup = Flareup.Deserialize(tag, __instance);
@@ -63,6 +62,7 @@ namespace WarTechIIC {
                     }
                 }
 
+                WIIC.modLog.Debug?.Write($"Loaded {WIIC.flareups.Keys.Count} flareups and {WIIC.systemControl.Keys.Count} system control tags");
                 Utilities.redrawMap();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

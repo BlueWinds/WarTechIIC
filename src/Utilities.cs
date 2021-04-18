@@ -76,9 +76,7 @@ namespace WarTechIIC {
 
         public static FactionValue controlFromTag(string tag) {
             if (tag != null) {
-                WIIC.modLog.Trace?.Write($"controlFromTag tag: {tag}, substr: {tag.Substring(13)}");
                 if (tag.StartsWith("WIIC_control_")) {
-                    WIIC.modLog.Trace?.Write($"Faction: {FactionEnumeration.GetFactionByName(tag.Substring(13))}");
                     return FactionEnumeration.GetFactionByName(tag.Substring(13));
                 }
             }

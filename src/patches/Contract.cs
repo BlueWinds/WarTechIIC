@@ -25,9 +25,6 @@ namespace WarTechIIC {
                 bonus = flareup.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
                 WIIC.modLog.Info?.Write($"Addng salvage. FinalSalvageCount: {__instance.FinalSalvageCount}, bonus: {bonus}");
                 Traverse.Create(__instance).Property("FinalSalvageCount").SetValue(__instance.FinalSalvageCount + bonus);
-
-                ContractManager.employer = null;
-                ContractManager.target = null;
             }
             catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

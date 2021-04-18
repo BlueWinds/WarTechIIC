@@ -10,9 +10,6 @@ using Newtonsoft.Json;
 
 namespace WarTechIIC {
     public class ContractManager {
-        public static FactionValue employer;
-        public static FactionValue target;
-
         private static readonly int[] contractTypes = new int[]
         {
             (int)ContractType.AmbushConvoy, (int)ContractType.Assassinate, (int)ContractType.CaptureBase,
@@ -32,10 +29,24 @@ namespace WarTechIIC {
         private static MethodInfo _fillMapEncounterContractData = AccessTools.Method(typeof(SimGameState), "FillMapEncounterContractData");
         private static MethodInfo _createProceduralContract = AccessTools.Method(typeof(SimGameState), "CreateProceduralContract");
 
-        public static Contract getNewProceduralContract(StarSystem system, FactionValue emp, FactionValue tar) {
-            employer = emp;
-            target = tar;
+        private static FieldInfo _fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
+        private static FieldInfo _fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
+
+        public static Contract getNewProceduralContract(StarSystem system, FactionValue employer, FactionValue target) {
+            var oldEmployers = (List<string>)_fieldSetContractEmployers.GetValue(system.Def);
+            var oldTargets = (List<string>)_fieldSetContractTargets.GetValue(system.Def);
+            _fieldSetContractEmployers.SetValue(system.Def, new List<string>(){ employer.Name });
+            _fieldSetContractTargets.SetValue(system.Def, new List<string>(){ target.Name });
+
+            WIIC.modLog.Debug?.Write($"getNewProceduralContract: SimGameMode {WIIC.sim.SimGameMode}, GlobalDifficulty {WIIC.sim.GlobalDifficulty}");
             var difficultyRange = _getContractRangeDifficultyRange.Invoke(WIIC.sim, new object[] { system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty });
+
+            Type Diff = difficultyRange.GetType();
+            int min = (int)AccessTools.Field(Diff, "MinDifficulty").GetValue(difficultyRange);
+            int max = (int)AccessTools.Field(Diff, "MaxDifficulty").GetValue(difficultyRange);
+            int minClamped = (int)AccessTools.Field(Diff, "MinDifficultyClamped").GetValue(difficultyRange);
+            int maxClamped = (int)AccessTools.Field(Diff, "MaxDifficultyClamped").GetValue(difficultyRange);
+            WIIC.modLog.Debug?.Write($"difficultyRange: MinDifficulty {min}, MaxDifficulty {max}, MinClamped {minClamped}, MaxClamped {maxClamped}");
 
             var validTypes = contractTypes.AddRangeToArray(WIIC.settings.customContractEnums.ToArray());
 
@@ -86,30 +97,9 @@ namespace WarTechIIC {
 
             Contract contract = (Contract)_createProceduralContract.Invoke(WIIC.sim, new object[] { system, true, level, MapEncounterContractData, gameContext });
 
+            _fieldSetContractEmployers.SetValue(system.Def, oldEmployers);
+            _fieldSetContractTargets.SetValue(system.Def, oldTargets);
             return contract;
-        }
-    }
-
-    [HarmonyPatch(typeof(SimGameState), "PrepContract")]
-    public static class SimGameState_PrepContract_Patch {
-        [HarmonyPriority(Priority.First)]
-        static void Prefix(Contract contract, ref FactionValue employer, ref FactionValue employersAlly, ref FactionValue target, ref FactionValue targetsAlly, ref FactionValue NeutralToAll, ref FactionValue HostileToAll) {
-            try {
-                WIIC.modLog.Debug?.Write($"Prepping contract. employer: {ContractManager.employer}, arg: {employer}. name: {contract.Name}");
-                if (WIIC.sim == null) {
-                    return;
-                }
-
-                if (ContractManager.employer != null) {
-                    employer = ContractManager.employer;
-                    employersAlly = ContractManager.employer;
-                    target = ContractManager.target;
-                    targetsAlly = ContractManager.target;
-                }
-            }
-            catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
-            }
         }
     }
 }
