@@ -210,4 +210,16 @@ namespace WarTechIIC {
             }
         }
     }
+
+    [HarmonyPatch(typeof(SimGameState), "BuildSimGameStatsResults")]
+    public static class SimGameState_BuildSimGameStatsResults_Patch {
+        public static void Prefix(ref SimGameStat[] stats) {
+            try {
+                stats = stats.Where(s => !s.name.StartsWith("WIIC")).ToArray();
+            }
+            catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+        }
+    }
 }

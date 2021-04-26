@@ -31,7 +31,7 @@ namespace WarTechIIC
                     settings = JsonConvert.DeserializeObject<Settings>(jdata);
                 }
                 modLog = new DeferringLogger(modDirectory, "WarTechIIC", "WIIC", settings.debug, settings.trace);
-                modLog.Debug?.Write($"Loaded settings from {modDir}/settings.json");
+                modLog.Debug?.Write($"Loaded settings from {modDir}/settings.json. Version {typeof(Settings).Assembly.GetName().Version}");
             }
 
             catch (Exception e) {

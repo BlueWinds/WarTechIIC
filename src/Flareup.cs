@@ -284,6 +284,7 @@ namespace WarTechIIC {
             string title = Strings.T("Flareup Mission");
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
+
             string message = $"{employer.FactionDef.Name.Replace("the ", "The ")} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
             WIIC.modLog.Debug?.Write(message);
 

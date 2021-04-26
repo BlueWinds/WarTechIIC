@@ -10,8 +10,8 @@ namespace WarTechIIC {
     public class Utilities {
         public static Random rng = new Random();
         private static MethodInfo methodSetOwner = AccessTools.Method(typeof(StarSystemDef), "set_OwnerValue");
-        private static FieldInfo fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
-        private static FieldInfo fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
+        private static FieldInfo _fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
+        private static FieldInfo _fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
 
         public static List<string> deferredToasts = new List<string>();
 
@@ -70,8 +70,8 @@ namespace WarTechIIC {
                 return;
             }
 
-            fieldSetContractEmployers.SetValue(system.Def, WhoAndWhere.getEmployers(system));
-            fieldSetContractTargets.SetValue(system.Def, WhoAndWhere.getTargets(system));
+            _fieldSetContractEmployers.SetValue(system.Def, WhoAndWhere.getEmployers(system));
+            _fieldSetContractTargets.SetValue(system.Def, WhoAndWhere.getTargets(system));
         }
 
         public static FactionValue controlFromTag(string tag) {

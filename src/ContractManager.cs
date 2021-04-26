@@ -33,10 +33,19 @@ namespace WarTechIIC {
         private static FieldInfo _fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
 
         public static Contract getNewProceduralContract(StarSystem system, FactionValue employer, FactionValue target) {
+            // In order to force a given employer and target, we have to temoporarily munge the system we're in, such that
+            // our employer/target are the only valid ones. We undo this at the end of getNewProceduralContract.
             var oldEmployers = (List<string>)_fieldSetContractEmployers.GetValue(system.Def);
             var oldTargets = (List<string>)_fieldSetContractTargets.GetValue(system.Def);
             _fieldSetContractEmployers.SetValue(system.Def, new List<string>(){ employer.Name });
             _fieldSetContractTargets.SetValue(system.Def, new List<string>(){ target.Name });
+
+            // In addition, we have to make sure that our target is a valid enemy for the employer - otherwise the base game's
+            // `GenerateContractParticipants` will return an empty list and the contract will fail to generate.
+            string[] oldEnemies = employer.FactionDef.Enemies;
+            List<string> enemies = oldEnemies.ToList();
+            enemies.Add(target.Name);
+            Traverse.Create(employer.FactionDef).Property("Enemies").SetValue(enemies.ToArray());
 
             WIIC.modLog.Debug?.Write($"getNewProceduralContract: SimGameMode {WIIC.sim.SimGameMode}, GlobalDifficulty {WIIC.sim.GlobalDifficulty}");
             var difficultyRange = _getContractRangeDifficultyRange.Invoke(WIIC.sim, new object[] { system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty });
@@ -97,8 +106,10 @@ namespace WarTechIIC {
 
             Contract contract = (Contract)_createProceduralContract.Invoke(WIIC.sim, new object[] { system, true, level, MapEncounterContractData, gameContext });
 
+            // Restore system and faction to previous values, now that we've forced the game to generate our desired contract.
             _fieldSetContractEmployers.SetValue(system.Def, oldEmployers);
             _fieldSetContractTargets.SetValue(system.Def, oldTargets);
+            Traverse.Create(employer.FactionDef).Property("Enemies").SetValue(oldEnemies);
             return contract;
         }
     }
