@@ -35,8 +35,9 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write($"attackerStrength -= {flareup.currentContractForceLoss}");
                 }
 
-                MissionObjectiveResult objective = new MissionObjectiveResult(objectiveString, GUID, false, true, ObjectiveStatus.Succeeded, false);
+                MissionObjectiveResult objective = new MissionObjectiveResult(objectiveString, GUID, false, true, ObjectiveStatus.Ignored, false);
                 Traverse.Create(__instance).Method("AddObjective", objective).GetValue();
+
                 WIIC.modLog.Info?.Write($"MoneyResults from ARR: {contract.MoneyResults}, funds: {WIIC.sim.Funds}");
 
                 flareup.currentContractForceLoss = 0;

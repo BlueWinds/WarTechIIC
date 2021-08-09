@@ -11,6 +11,7 @@ namespace WarTechIIC {
         public double dailyAttackChance = 0;
         public double dailyRaidChance = 0;
         public bool setActiveFactionsForAllSystems = false;
+        public List<string> clearEmployersAndTargetsForSystemTags = new List<string>();
         public List<string> ignoreFactions = new List<string>();
 
         public Dictionary<string, double> reputationMultiplier = new Dictionary<string, double>();

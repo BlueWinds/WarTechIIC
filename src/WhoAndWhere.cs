@@ -11,12 +11,14 @@ namespace WarTechIIC {
         private static Dictionary<string, TagSet> factionActivityTags = new Dictionary<string, TagSet>();
         private static Dictionary<string, TagSet> factionInvasionTags = new Dictionary<string, TagSet>();
         private static TagSet cantBeAttackedTags;
+        public static TagSet clearEmployersTags;
 
         public static void init() {
             Settings s = WIIC.settings;
             FactionValue invalid = FactionEnumeration.GetInvalidUnsetFactionValue();
 
             cantBeAttackedTags = new TagSet(s.cantBeAttackedTags);
+            clearEmployersTags = new TagSet(s.clearEmployersAndTargetsForSystemTags);
 
             // Initializing tagsets for use when creating flareups
             foreach (string faction in s.factionActivityTags.Keys) {
@@ -84,6 +86,10 @@ namespace WarTechIIC {
         public static List<string> getTargets(StarSystem system) {
             Settings s = WIIC.settings;
             List<string> targets = new List<string>();
+
+            if (system.Tags.ContainsAny(clearEmployersTags, false)) {
+                return targets;
+            }
 
             // Owning faction and locals are always valid targets
             targets.Add("Locals");

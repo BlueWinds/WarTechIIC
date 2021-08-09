@@ -285,7 +285,12 @@ namespace WarTechIIC {
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
 
-            string message = $"{employer.FactionDef.Name.Replace("the ", "The ")} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
+            string message;
+            try {
+              message = $"{employer.FactionDef.Name.Replace("the ", "The ")} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
+            } catch (Exception e) {
+              message = $"Our employer has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
+            }
             WIIC.modLog.Debug?.Write(message);
 
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();

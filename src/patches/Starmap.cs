@@ -14,8 +14,14 @@ namespace WarTechIIC {
                 WIIC.modLog.Info?.Write($"Patching starmap with new owners (setActiveFactionsForAllSystems: {WIIC.settings.setActiveFactionsForAllSystems})");
                 int count = 0;
                 int controlCount = 0;
+                int clearCount = 0;
+
                 foreach (StarSystem system in WIIC.sim.StarSystems) {
-                    if (WIIC.settings.setActiveFactionsForAllSystems) {
+
+                    if (system.Tags.ContainsAny(WhoAndWhere.clearEmployersTags, false)) {
+                        clearCount++;
+                        Utilities.setActiveFactions(system);
+                    } else if (WIIC.settings.setActiveFactionsForAllSystems) {
                         Utilities.setActiveFactions(system);
                     }
 
@@ -30,7 +36,7 @@ namespace WarTechIIC {
                     count++;
                 }
                 Utilities.redrawMap();
-                WIIC.modLog.Info?.Write($"Finished patching starmap (checked {count} systems, flipped control of {controlCount})");
+                WIIC.modLog.Info?.Write($"Finished patching starmap (checked {count} systems, flipped control of {controlCount}, cleared targets and employers for {clearCount})");
 
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
