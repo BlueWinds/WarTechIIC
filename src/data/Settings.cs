@@ -47,6 +47,11 @@ namespace WarTechIIC {
         public int raidBonusSalvage = 0;
         public int raidResultDuration = 360;
 
+        public string defaultAttackReward = "itemCollection_loot_ItemTriple_uncommon";
+        public string defaultRaidReward = "itemCollection_loot_ItemTriple_uncommon";
+        public Dictionary<string, string> factionAttackReward = new Dictionary<string, string>();
+        public Dictionary<string, string> factionRaidReward = new Dictionary<string, string>();
+
         public Dictionary<string, List<string>> factionActivityTags = new Dictionary<string, List<string>>();
         public Dictionary<string, List<string>> factionInvasionTags = new Dictionary<string, List<string>>();
 

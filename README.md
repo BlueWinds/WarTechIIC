@@ -62,9 +62,14 @@ Well, when they enter the star system where a flareup is occurring, each faction
 
 If the player accepts the contract, the "countdown" is immediately set to 0, and the next mission is set to begin tomorrow. They get a task in the timeline telling them when the next mission will occur.
 
-On the same interval as automatic force loss, every `daysBetweenMissions` days, the player will be offered a mission with nothing more than the mission name. There's no penalty for passing, but if they accept, they *must* drop - no accepting the mission and then backing out! If they complete the mission, then the faction they fought against loses between `combatForceLossMin` and `combatForceLossMax` points, and the player gets a `attackBonusPerHalfSkull * (difficulty of mission)` cbill bonus (or `raidBonusPerHalfSkull`). Their non-priority salvage is increased by `attackBonusSalvage` / `raidBonusSalvage`.
+On the same interval as automatic force loss, every `daysBetweenMissions` days, the player will be offered a mission with nothing more than the mission name. If they accept, they *must* drop - no accepting the mission and then backing out! If they complete the mission, then the faction they fought against loses between `combatForceLossMin` and `combatForceLossMax` points, and the player gets a `attackBonusPerHalfSkull * (difficulty of mission)` cbill bonus (or `raidBonusPerHalfSkull`). Their non-priority salvage is increased by `attackBonusSalvage` / `raidBonusSalvage`.
+
+If they don't accept the mission, fail it, or evac without completing it, their employer loses forces between `combatForceLossMin` and `combatForceLossMax` (equal to what the target would have taken if the player had succeeded).
 
 While participating in a flareup, the player has to stay in the star system - if they attempt to leave, they will get a popup warning them of the consequences of breaking the contract. These aren't actually terribly severe, just reputation loss with the employer equal to one bad faith withdrawal from a mission.
+
+### When the flareup ends
+When a Flareup ends, if the player signed on with the winning faction and they dropped into combat at least once, they'll receive an extra reward. The itemCollection given to the player is determined by `defaultAttackReward` / `defaultRaidReward`, or overridden by an entry in `factionAttackRewards` / `factionRaidRewards`.
 
 # Exporting / Importing map control
 Every time a career saves, WIIC writes out `{savePath}/WIIC_systemControl.json`, which contains a list of all systems that have flipped control during the current career. If you copy this into the mod directory (`WarTechIIC/WIIC_systemControl.json`), then when you start a fresh career, WIIC will import the list. Bam, you can persist your map across careers!
@@ -91,3 +96,8 @@ For all company stats, `-1` is a magic value - "ignore this". If present, we'll 
 * `WIIC_{attacker}_hates_{defender}` (float) If present, this overrides `hatred[attacker][defender]` from settings.json. -1 will use the value from settings.json.
 * `WIIC_{faction}_attack_strength` (int) Adds to the attack strength of any flareups or raids the faction engages in. Can be negative. Note that this is *additive* - it does not override that faction's default values. If you modify this from events, please add or subtract rather than set a value - Raids also adjust this, so setting a value would overwrite the raid history.
 * `WIIC_{faction}_defense_strength` (int) Adds to the attack strength of any flareups or raids the faction engages in. Can be negative. Note that this is *additive* - it does not override that faction's values. If you modify this from events, please add or subtract rather than set a value - Raids also adjust this, so setting a value would overwrite the raid history.
+
+# Misc functionality
+WarTechIIC modifies several base-game features.
+* Contracts in the current system refresh every time the month rolls over.
+* Contracts in the command center are sorted by difficulty (with travel contracts at the bottom and priority contracts at the top).

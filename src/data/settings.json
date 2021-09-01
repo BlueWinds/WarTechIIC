@@ -43,28 +43,28 @@
   "limitTargetsToFactionEnemies": true,
 
   "attackMarker": {
-      "useHmAnimation": true,
-      "flashpointPrefix": "",
-      "swapColour": true,
-      "keepAlpha": true,
-      "useOnlyInner": true,
-      "autoDetectContracts": false,
-      "useContractColourOverride": false,
-      "innerCircle": {
-          "Colour": "#8904B1"
-      }
+    "useHmAnimation": true,
+    "flashpointPrefix": "",
+    "swapColour": true,
+    "keepAlpha": true,
+    "useOnlyInner": true,
+    "autoDetectContracts": false,
+    "useContractColourOverride": false,
+    "innerCircle": {
+      "Colour": "#8904B1"
+    }
   },
   "raidMarker": {
-      "useHmAnimation": true,
-      "flashpointPrefix": "",
-      "swapColour": true,
-      "keepAlpha": true,
-      "useOnlyInner": true,
-      "autoDetectContracts": false,
-      "useContractColourOverride": false,
-      "innerCircle": {
-          "Colour": "#1904B1"
-      }
+    "useHmAnimation": true,
+    "flashpointPrefix": "",
+    "swapColour": true,
+    "keepAlpha": true,
+    "useOnlyInner": true,
+    "autoDetectContracts": false,
+    "useContractColourOverride": false,
+    "innerCircle": {
+      "Colour": "#1904B1"
+    }
   },
 
   "minCountdown": 30,
@@ -90,24 +90,34 @@
   "raidBonusSalvage": 1,
   "raidResultDuration": 360,
 
+  "defaultAttackReward": "itemCollection_loot_ItemTriple_uncommon",
+  "factionAttackReward": {
+    "ClanJadeFalcon": "itemCollection_loot_ItemTriple_SLDF",
+  },
+
+  "defaultRaidReward": "itemCollection_loot_ItemTriple_uncommon",
+  "factionRaidReward": {
+    "ClanJadeFalcon": "itemCollection_loot_ItemTriple_SLDF",
+  },
+
   "factionActivityTags": {
-      "AuriganPirates": [
-          "planet_other_pirate",
-          "planet_pirate_lord",
-          "planet_other_prison",
-          "planet_other_blackmarket"
-      ],
-      "ComStar": [
-          "planet_other_comstar"
-      ],
-      "Tortuga": [
-          "planet_tortugan_raids"
-      ]
+    "AuriganPirates": [
+      "planet_other_pirate",
+      "planet_pirate_lord",
+      "planet_other_prison",
+      "planet_other_blackmarket"
+    ],
+    "ComStar": [
+      "planet_other_comstar"
+    ],
+    "Tortuga": [
+      "planet_tortugan_raids"
+    ]
   },
   "factionInvasionTags": {
-      "ClanJadeFalcon": [
-          "falcon_invasion_corridor"
-      ]
+    "ClanJadeFalcon": [
+      "falcon_invasion_corridor"
+    ]
   },
   "customContractEnums": [
     10000,

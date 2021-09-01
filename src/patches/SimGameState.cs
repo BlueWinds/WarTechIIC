@@ -25,6 +25,7 @@ namespace WarTechIIC {
             }
         }
     }
+
     [HarmonyPatch(typeof(SimGameState), "OnCareerModeStart")]
     public static class SimGameState_OnCareerModeStartPatch {
         public static void Postfix(SimGameState __instance) {
@@ -113,6 +114,18 @@ namespace WarTechIIC {
         }
     }
 
+    [HarmonyPatch(typeof(SimGameState), "OnNewQuarterBegin")]
+    public static class SimGameStateOnNewQuarterBeginPatch {
+        private static void Postfix() {
+            try {
+                WIIC.modLog.Debug?.Write($"Refreshing contracts in current system at start of month");
+                WIIC.sim.CurSystem.ResetContracts();
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(SimGameState), "FinishCompleteBreadcrumbProcess")]
     public static class SimGameState_FinishCompleteBreadcrumbProcessPatch {
         [HarmonyPrefix]
@@ -176,16 +189,13 @@ namespace WarTechIIC {
 
                 if (WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     WIIC.modLog.Debug?.Write($"Found flareup from previous system, cleaning up contracts");
-                    // Clean up participation contracts for the system we've just left
                     Flareup prevFlareup = WIIC.flareups[WIIC.sim.CurSystem.ID];
                     prevFlareup.removeParticipationContracts();
                 }
 
                 if (WIIC.flareups.ContainsKey(system.ID)) {
                     WIIC.modLog.Debug?.Write($"Found flareup for new system, adding contracts");
-                    // Create new participation contracts for the system we're entering
-                    Flareup flareup = WIIC.flareups[system.ID];
-                    flareup.spawnParticipationContracts();
+                    WIIC.flareups[system.ID].spawnParticipationContracts();
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

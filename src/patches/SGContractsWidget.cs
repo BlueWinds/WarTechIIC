@@ -1,5 +1,7 @@
 using System;
 using Harmony;
+using BattleTech;
+using BattleTech.Framework;
 using BattleTech.UI;
 
 namespace WarTechIIC {
@@ -38,6 +40,32 @@ namespace WarTechIIC {
             catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(SGContractsWidget), "GetContractComparePriority")]
+    public static class SGContractsWidget_GetContractComparePriority_Patch {
+        static bool Prefix(SGContractsWidget __instance, ref int __result, Contract contract) {
+            try {
+                int difficulty = contract.Override.GetUIDifficulty();
+                if (WIIC.sim.ContractUserMeetsReputation(contract)) {
+                    if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignRestoration) {
+                        __result = 0;
+                    } else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory) {
+                        __result = 1;
+                    } else if (contract.TargetSystem.Replace("starsystemdef_", "").Equals(WIIC.sim.CurSystem.Name)) {
+                        __result = difficulty + 1;
+                    } else {
+                        __result = difficulty + 11;
+                    }
+                } else {
+                    __result = difficulty + 21;
+                }
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+
+            return false;
         }
     }
 }

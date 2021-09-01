@@ -27,7 +27,8 @@ namespace WarTechIIC {
                 string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus, {3} additional salvage", flareup.target.FactionDef.ShortName, loss, bonusMoney, bonusSalvage);
                 WIIC.modLog.Debug?.Write(objectiveString);
 
-                if (flareup.employer == flareup.attacker) {
+                bool won = contract.State == Contract.ContractState.Complete;
+                if ((flareup.employer == flareup.attacker && won) || (flareup.employer == flareup.target && !won)) {
                     flareup.defenderStrength -= flareup.currentContractForceLoss;
                     WIIC.modLog.Debug?.Write($"defenderStrength -= {flareup.currentContractForceLoss}");
                 } else {
@@ -40,6 +41,7 @@ namespace WarTechIIC {
 
                 WIIC.modLog.Info?.Write($"MoneyResults from ARR: {contract.MoneyResults}, funds: {WIIC.sim.Funds}");
 
+                flareup.playerDrops += 1;
                 flareup.currentContractForceLoss = 0;
                 flareup.currentContractName = "";
             } catch (Exception e) {

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Harmony;
 using BattleTech;
 using BattleTech.UI;
+using UnityEngine;
 using Localize;
 using ColourfulFlashPoints;
 using ColourfulFlashPoints.Data;
@@ -27,6 +28,9 @@ namespace WarTechIIC {
         public string attackerName;
 
         [JsonProperty]
+        public int playerDrops = 0;
+
+        [JsonProperty]
         public int countdown;
         [JsonProperty]
         public int daysUntilMission;
@@ -43,6 +47,17 @@ namespace WarTechIIC {
 
         public Flareup() {
             // Empty constructor used for deserialization.
+        }
+
+        public enum CompletionResult {
+            AttackerWonUnemployed,
+            AttackerWonEmployerLost,
+            AttackerWonReward,
+            AttackerWonNoReward,
+            DefenderWonUnemployed,
+            DefenderWonEmployerLost,
+            DefenderWonReward,
+            DefenderWonNoReward,
         }
 
         public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, string flareupType, SimGameState __instance) {
@@ -147,35 +162,115 @@ namespace WarTechIIC {
             return false;
         }
 
+        public CompletionResult getCompletionResult() {
+            if (attackerStrength <= 0) {
+              if (employer == null) { return CompletionResult.DefenderWonUnemployed; }
+              if (employer == attacker) { return CompletionResult.DefenderWonEmployerLost; }
+              if (playerDrops > 0) { return CompletionResult.DefenderWonReward; }
+              return CompletionResult.DefenderWonNoReward;
+            } else {
+              if (employer == null) { return CompletionResult.AttackerWonUnemployed; }
+              if (employer == location.OwnerValue) { return CompletionResult.AttackerWonEmployerLost; }
+              if (playerDrops > 0) { return CompletionResult.AttackerWonReward; }
+              return CompletionResult.AttackerWonNoReward;
+            }
+        }
+
+        public string completionText() {
+            CompletionResult result = getCompletionResult();
+
+            if (type == "Attack") {
+                switch (result) {
+                    case CompletionResult.AttackerWonUnemployed: return "{0} takes control of {2} from {1}.";
+                    case CompletionResult.AttackerWonEmployerLost: return "{0} takes control of {2}. {1} withdraws their forces in haste, your contract ending with their defeat.";
+                    case CompletionResult.AttackerWonReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                    case CompletionResult.AttackerWonNoReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                    case CompletionResult.DefenderWonUnemployed: return "{1} drives the invasion by {0} from {2}.";
+                    case CompletionResult.DefenderWonEmployerLost: return "{1} drives the forces {0} sent to invade {2}. Your contract ends on a sour note with the invasion's defeat.";
+                    case CompletionResult.DefenderWonReward: return "{1} drives the forces {0} sent to invade {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                    case CompletionResult.DefenderWonNoReward: return "{1} drives the forces {0} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                }
+            } else {
+                switch (result) {
+                    case CompletionResult.AttackerWonUnemployed: return "{0} weakens {1} control of {2}.";
+                    case CompletionResult.AttackerWonEmployerLost: return "{0} smashes through the forces {1} has defending {2}, withdrawing before a counter attack can be mounted. Your contract ends on a sour note.";
+                    case CompletionResult.AttackerWonReward: return "{0} smashes through the forces {1} has defending {2}, withdrawing before they can mount a proper counter attack. They depart the system swiftly, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                    case CompletionResult.AttackerWonNoReward: return "{0} smashes through the force s{1} has defending {2}, withdrawing before they can mount a proper counter attack. They depart the system swiftly, but your contact informs you that there will be no bonus forthcoming since you never participated in a mission.";
+                    case CompletionResult.DefenderWonUnemployed: return "{1} drives off the {0} raid on {2}.";
+                    case CompletionResult.DefenderWonEmployerLost: return "{1} drives the remaining forces {0} had on the surface of {2}. Your contract ends on a sour note with the invasion's defeat.";
+                    case CompletionResult.DefenderWonReward: return "{1} drives the remaining forces {0} had on the surface of {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                    case CompletionResult.DefenderWonNoReward: return "{1} drives the remaining forces {0} had on the surface of {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                }
+            }
+
+            return "Something went wrong. Type: {type}. Attacker: {0}. Defender: {1}. Location: {2}.";
+        }
+
+        public string reward() {
+            Settings s = WIIC.settings;
+            CompletionResult result = getCompletionResult();
+
+            if (result == CompletionResult.AttackerWonReward || result == CompletionResult.DefenderWonReward) {
+                if (type == "Attack") {
+                    return s.factionAttackReward.ContainsKey(employer.Name) ? s.factionAttackReward[employer.Name] : s.defaultAttackReward;
+                } else {
+                    return s.factionRaidReward.ContainsKey(employer.Name) ? s.factionRaidReward[employer.Name] : s.defaultRaidReward;
+                }
+            }
+            return null;
+        }
+
         public void conclude() {
-            WIIC.modLog.Info?.Write($"{type} finished at {location.Name}.");
+            Settings s = WIIC.settings;
 
             removeParticipationContracts();
+            string text = Strings.T(completionText(), attacker.FactionDef.Name, location.OwnerValue.FactionDef.Name, location.Name);
+            // Because shortnames can start with a lowercase 'the' ("the Aurigan Coalition", for example), we have to fix the capitalization or the result can look weird.
+            text = text.Replace(". the ", ". The ");
+            text = char.ToUpper(text[0]) + text.Substring(1);
 
-            string text = "";
-            if (type == "Attack") {
-                if (attackerStrength <= 0) {
-                    text = Strings.T("Battle for {0} concludes - {1} holds off the {2} attack", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
-                } else if (defenderStrength <= 0) {
-                    text = Strings.T("Battle for {0} concludes - {1} takes the system from {2}", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
+            // At the current location, a flareup gets a popup - whether or not the player was involved, it's important.
+            if (WIIC.sim.CurSystem == location) {
+                SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
+                string title = Strings.T($"{type} Complete");
+                string primaryButtonText = Strings.T("Acknowledged");
+                string itemCollection = reward();
 
-                    Utilities.applyOwner(location, attacker, true);
+                WIIC.modLog.Info?.Write(text);
+                WIIC.modLog.Info?.Write($"Reward: {itemCollection} for {employer.Name}");
+
+                Sprite sprite = attackerStrength > 0 ? attacker.FactionDef.GetSprite() : location.OwnerValue.FactionDef.GetSprite();
+                queue.QueuePauseNotification(title, text, sprite, string.Empty, delegate {
+                    try {
+                        if (itemCollection != null) {
+                            queue.QueueRewardsPopup(itemCollection);
+                        }
+                    } catch (Exception e) {
+                        WIIC.modLog.Error?.Write(e);
+                    }
+                }, primaryButtonText);
+                if (!queue.IsOpen) {
+                    queue.DisplayIfAvailable();
                 }
+            // Things happening elsewhere in the galaxy just get an event toast.
+            } else {
+                sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+            }
+
+            // Now apply the owner or stat changes
+            if (type == "Attack" && defenderStrength <= 0 && attackerStrength > 0) {
+                Utilities.applyOwner(location, attacker, true);
             } else if (type == "Raid") {
                 SimGameEventResult result = new SimGameEventResult();
                 result.Scope = EventScope.Company;
                 result.TemporaryResult = true;
-                result.ResultDuration = WIIC.settings.raidResultDuration;
+                result.ResultDuration = s.raidResultDuration;
 
                 if (attackerStrength <= 0) {
-                    text = Strings.T("Raid on {0} concludes - {1} drives off the {2} forces", location.Name, location.OwnerValue.FactionDef.ShortName, attacker.FactionDef.ShortName);
-
                     SimGameStat attackStat =  new SimGameStat($"WIIC_{attacker.Name}_attack_strength", 1, false);
                     SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", -1, false);
                     result.Stats = new SimGameStat[] { attackStat, defenseStat };
                 } else if (defenderStrength <= 0) {
-                    text = Strings.T("Raid on {0} concludes - {1} weakens {2} control", location.Name, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName);
-
                     SimGameStat attackStat = new SimGameStat($"WIIC_{attacker.Name}_attack_strength", -1, false);
                     SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", 1, false);
                     result.Stats = new SimGameStat[] { attackStat, defenseStat };
@@ -183,22 +278,6 @@ namespace WarTechIIC {
 
                 SimGameEventResult[] results = {result};
                 SimGameState.ApplySimGameEventResult(new List<SimGameEventResult>(results));
-
-            }
-
-            // At the current location, a flareup gets a popup - whether or not the player was involved, it's important.
-            if (WIIC.sim.CurSystem == location) {
-                SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
-                string title = Strings.T($"{type} Complete");
-                string primaryButtonText = Strings.T("Acknowledged");
-
-                queue.QueuePauseNotification(title, text, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, null, primaryButtonText);
-                if (!queue.IsOpen) {
-                    queue.DisplayIfAvailable();
-                }
-            // Things happening elsewhere in the galaxy just get an event toast.
-            } else {
-                sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
             }
         }
 
@@ -280,6 +359,7 @@ namespace WarTechIIC {
 
         public void launchMission() {
             Contract contract = ContractManager.getNewProceduralContract(location, employer, target);
+            currentContractForceLoss = Utilities.rng.Next(WIIC.settings.combatForceLossMin, WIIC.settings.combatForceLossMax);
 
             string title = Strings.T("Flareup Mission");
             string primaryButtonText = Strings.T("Launch mission");
@@ -287,10 +367,12 @@ namespace WarTechIIC {
 
             string message;
             try {
-              message = $"{employer.FactionDef.Name.Replace("the ", "The ")} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
+                message = $"{employer.FactionDef.Name.Replace("the ", "The ")} has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
             } catch (Exception e) {
-              message = $"Our employer has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
+                WIIC.modLog.Error?.Write(e);
+                message = $"Our employer has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
             }
+            message += "\nIf we pass, they'll have to dedicate one of their own units to it, weakening their war effort.";
             WIIC.modLog.Debug?.Write(message);
 
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
@@ -298,7 +380,6 @@ namespace WarTechIIC {
                 try {
                     WIIC.modLog.Info?.Write($"Accepted {type} mission {contract.Name}.");
                     currentContractName = contract.Name;
-                    currentContractForceLoss = Utilities.rng.Next(WIIC.settings.combatForceLossMin, WIIC.settings.combatForceLossMax);
 
                     WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
                     WIIC.sim.ForceTakeContract(contract, false);
@@ -306,7 +387,14 @@ namespace WarTechIIC {
                     WIIC.modLog.Error?.Write(e);
                 }
             }, primaryButtonText, delegate {
-                  WIIC.modLog.Info?.Write($"Passed on {type} mission.");
+                WIIC.modLog.Info?.Write($"Passed on {type} mission.");
+                if (employer == attacker) {
+                    attackerStrength -= currentContractForceLoss;
+                    WIIC.modLog.Debug?.Write($"defenderStrength -= {currentContractForceLoss}");
+                } else {
+                    defenderStrength -= currentContractForceLoss;
+                    WIIC.modLog.Debug?.Write($"attackerStrength -= {currentContractForceLoss}");
+                }
             }, cancel);
 
             if (!queue.IsOpen) {
