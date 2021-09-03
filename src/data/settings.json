@@ -8,6 +8,7 @@
   "ignoreFactions": [
     "SolarisVII",
     "NoFaction",
+    "SelfEmployed"
   ],
 
   "dailyAttackChance": 0.15,
@@ -15,16 +16,14 @@
 
   "aggression": {
     "NoFaction": 0.0,
-    "AuriganRestoration": 0.5,
-    "ClanJadeFalcon": 2.0,
-    "ClanWolf": 2.0,
-    "ClanGhostBear": 2.0
+    "AuriganRestoration": 0.5
   },
   "hatred": {
     "ClanJadeFalcon": {}
   },
   "cantBeAttacked": [
-    "ComStar"
+    "ComStar",
+    "ClanDiamondShark"
   ],
   "cantBeAttackedTags": [
     "planet_Sol"
@@ -73,11 +72,30 @@
   "defaultAttackStrength": 20,
   "defaultDefenseStrength": 15,
   "strengthVariation": 10,
-  "attackStrength": {},
-  "defenseStrength": {},
+  "attackStrength": {
+    "ClanWolf": 22,
+    "ClanJadeFalcon": 23,
+    "ClanGhostBear": 22,
+    "ClanNovaCat": 21,
+    "Marian": 22,
+    "Circinus": 21,
+    "WordOfBlake": 25
+  },
+  "defenseStrength": {
+    "JarnFolk": 20,
+    "Rasalhague": 20,
+    "Locals": 17,
+    "Marian": 13,
+    "Circinus": 12,
+    "TaurianConcordat": 17,
+    "Rim": 16,
+    "Outworld": 19,
+    "Ives": 21,
+    "WordOfBlake": 25
+  },
   "raidStrengthMultiplier": 0.75,
 
-  "minReputationToHelpAttack": "INDIFFERENT",
+  "minReputationToHelpAttack": "DISLIKED",
   "minReputationToHelpRaid": "HATED",
   "wontHirePlayer": [],
 
@@ -112,9 +130,18 @@
     ],
     "Tortuga": [
       "planet_tortugan_raids"
+    ],
+    "Hanse": [
+      "planet_hanseatic_raids"
+    ],
+    "Davion": [
+      "planet_davion_raids"
     ]
   },
   "factionInvasionTags": {
+    "Ives": [
+      "ives_rebellion"
+    ],
     "ClanJadeFalcon": [
       "falcon_invasion_corridor"
     ]

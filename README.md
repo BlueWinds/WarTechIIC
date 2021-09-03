@@ -49,9 +49,10 @@ When at attack concludes, the winner takes (or retains) control of the system, a
 When a system flips control - or every system on game load, if `setActiveFactionsForAllSystems` is true - WIIC adjusts the planet's tags using the following steps:
 
 The system's employers and targets are set with the following logic:
-1) The system owner and Locals are always included.
-2) If the system has any tag from `pirateTags`, then the Aurigan Pirates are added as active.
-3) Any faction that shares a border with this world is added as active, unless they're in `ignoreFactions`.
+1) If the system has any tags included in `clearEmployersAndTargetsForSystemTags`, then employers and targets are emptied, and all other steps ignored.
+2) The system owner and Locals are always included.
+3) If the system has any tag from `pirateTags`, then the Aurigan Pirates are added as active.
+4) Any faction that shares a border with this world is added as active, unless they're in `ignoreFactions`.
 
 ## How the player gets involved
 So that's cool and all, but what do players do?
