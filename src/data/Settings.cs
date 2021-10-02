@@ -15,6 +15,7 @@ namespace WarTechIIC {
         public List<string> ignoreFactions = new List<string>();
 
         public Dictionary<string, double> reputationMultiplier = new Dictionary<string, double>();
+        public int distanceFactor = 100;
         public Dictionary<string, double> aggression = new Dictionary<string, double>();
 
         public List<string> cantBeAttacked = new List<string>();

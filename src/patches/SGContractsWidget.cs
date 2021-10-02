@@ -51,15 +51,17 @@ namespace WarTechIIC {
                 if (WIIC.sim.ContractUserMeetsReputation(contract)) {
                     if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignRestoration) {
                         __result = 0;
-                    } else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory) {
+                    } else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.HeavyMetalFlashpointCampaign) {
                         __result = 1;
+                    } else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory) {
+                        __result = 2;
                     } else if (contract.TargetSystem.Replace("starsystemdef_", "").Equals(WIIC.sim.CurSystem.Name)) {
-                        __result = difficulty + 1;
+                        __result = difficulty + 2;
                     } else {
-                        __result = difficulty + 11;
+                        __result = difficulty + 12;
                     }
                 } else {
-                    __result = difficulty + 21;
+                    __result = difficulty + 22;
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

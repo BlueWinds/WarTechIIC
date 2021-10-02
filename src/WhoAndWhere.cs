@@ -122,6 +122,11 @@ namespace WarTechIIC {
             var reputations = new Dictionary<FactionValue, double>();
             var aggressions = new Dictionary<FactionValue, double>();
             var hatred = new Dictionary<(FactionValue, FactionValue), double>();
+
+            FactionValue mag = FactionEnumeration.GetFactionByName("MagistracyOfCanopus");
+            bool allied = WIIC.sim.IsFactionAlly(mag);
+            WIIC.modLog.Debug?.Write($"Mag: {mag.Name}, allied: {allied}");
+
             foreach (StarSystem system in WIIC.sim.StarSystems) {
                 FactionValue defender = system.OwnerValue;
 
@@ -140,11 +145,15 @@ namespace WarTechIIC {
                 if (!reputations.ContainsKey(defender)) {
                     SimGameReputation reputation = WIIC.sim.GetReputation(defender);
                     reputations[defender] = s.reputationMultiplier[reputation.ToString()];
+                    // The enum for "ALLIED" is the same as "HONORED". HBS_why.
+                    if (WIIC.sim.IsFactionAlly(defender)) {
+                        reputations[defender] = s.reputationMultiplier["ALLIED"];
+                    }
                 }
 
                 FakeVector3 p1 = system.Def.Position;
                 FakeVector3 p2 = WIIC.sim.CurSystem.Def.Position;
-                double distanceMult = 1 / (100 + Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)));
+                double distanceMult = 1 / (s.distanceFactor + Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)));
 
                 Action<FactionValue> considerAttacker = (FactionValue attacker) => {
                     if (s.ignoreFactions.Contains(attacker.Name)) {
@@ -159,6 +168,10 @@ namespace WarTechIIC {
                     if (!reputations.ContainsKey(attacker)) {
                         SimGameReputation reputation = WIIC.sim.GetReputation(attacker);
                         reputations[attacker] = s.reputationMultiplier[reputation.ToString()];
+                        // The enum for "ALLIED" is the same as "HONORED". HBS_why.
+                        if (WIIC.sim.IsFactionAlly(defender)) {
+                            reputations[attacker] = s.reputationMultiplier["ALLIED"];
+                        }
                     }
                     if (!aggressions.ContainsKey(attacker)) {
                         double aggression = s.aggression.ContainsKey(attacker.Name) ? s.aggression[attacker.Name] : 1;

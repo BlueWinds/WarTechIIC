@@ -11,12 +11,14 @@
     "SelfEmployed"
   ],
 
-  "dailyAttackChance": 0.15,
-  "dailyRaidChance": 0.1,
+  "dailyAttackChance": 0.175,
+  "dailyRaidChance": 0.075,
 
+  "distanceFactor": 75,
   "aggression": {
     "NoFaction": 0.0,
-    "AuriganRestoration": 0.5
+    "AuriganRestoration": 0.5,
+    "MagistracyOfCanopus": 1.5
   },
   "hatred": {
     "ClanJadeFalcon": {}

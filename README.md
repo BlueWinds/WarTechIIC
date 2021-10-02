@@ -17,7 +17,7 @@ WIIC first decides who will be the attacker and where they'll attack by iteratin
 2) If it's controlled by a faction in `cantBeAttacked` or `ignoreFactions`, it's also skipped.
 3) Each faction that controls a neighboring system and isn't in `ignoreFactions` might attack, if they're either the owner's enemy or `limitTargetsToFactionEnemies` is `false`. The weight for that attacker on this star system is the following items multiplied together:
     1) The number of bordering systems the attacker controls (within one jump)
-    2) The distance multipilier: `1 / sqrt(100 + distanceInLyFromPlayer)`. Systems near the player are more likely to be attacked than those far across the map.
+    2) The distance multipilier: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`. Systems near the player are more likely to be attacked than those far across the map.
     3) `aggression[attacker]`, read from the settings, defaulting to 1.
     4) `reputationMultiplier[attacker] + reputationMultiplier[defender]`.
     5) `hates[attacker][defender]`, defaulting to 1.
