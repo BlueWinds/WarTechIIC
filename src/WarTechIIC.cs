@@ -74,7 +74,8 @@ namespace WarTechIIC
                 string path = Path.Combine(modDir, settings.saveFolder, "WIIC_systemControl.json");
 
                 using (StreamWriter writer = new StreamWriter(path, false)) {
-                    writer.Write(JsonConvert.SerializeObject(systemControl, Formatting.Indented));
+                    GalaxyData data = new GalaxyData(systemControl, flareups);
+                    writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
                     writer.Flush();
                 }
                 modLog.Info?.Write($"Wrote {path} with {systemControl.Count} control tags");
@@ -83,28 +84,68 @@ namespace WarTechIIC
             }
         }
 
-        internal static void readFromJson() {
+        internal static void readFromJson(string filename, bool deleteAfterImport) {
             try {
-                string path = Path.Combine(modDir, "WIIC_systemControl.json");
+                string path = Path.Combine(modDir, filename);
                 if (!File.Exists(path)) {
-                    modLog.Info?.Write($"No {path} found, doing nothing.");
+                    modLog.Info?.Write($"No {path} found, doing nothing");
                     return;
                 }
 
                 using (StreamReader reader = new StreamReader(path)) {
+                    modLog.Info?.Write($"Reading GalaxyData from {path}");
+
+                    GalaxyData data;
                     string jdata = reader.ReadToEnd();
-                    Dictionary<string, string> systemControl = JsonConvert.DeserializeObject<Dictionary<string, string>>(jdata);
-                    foreach (string id in systemControl.Keys) {
-                        StarSystem system = sim.GetSystemById(id);
-                        FactionValue ownerFromTag = Utilities.controlFromTag(systemControl[id]);
-                        modLog.Info?.Write($"id: {id}, system: {system}, tag: {systemControl[id]}, owner: {ownerFromTag}");
-                        Utilities.applyOwner(system, ownerFromTag, true);
+                        // Current serialization format
+                        data = JsonConvert.DeserializeObject<GalaxyData>(jdata);
+                    if (data.systemControl == null) {
+                        modLog.Info?.Write($"Failed to read GalaxyData, attempting to interpret as old format");
+
+                        // Older serialization format, for backwards compatibility
+                        Dictionary<string, string> control = JsonConvert.DeserializeObject<Dictionary<string, string>>(jdata);
+                        data = new GalaxyData(control, new Dictionary<string, Flareup>());
                     }
-                    modLog.Info?.Write($"Set control of {systemControl.Count} star systems based on {path}");
+
+                    data.apply();
+
+                    if (deleteAfterImport) {
+                        modLog.Info?.Write($"Deleting {path}");
+                        File.Delete(path);
+                    }
                 }
             } catch (Exception e) {
                 modLog.Error?.Write(e);
             }
+        }
+    }
+
+    public class GalaxyData {
+        public Dictionary<string, string> systemControl = new Dictionary<string, string>();
+        public Dictionary<string, Flareup> flareups = new Dictionary<string, Flareup>();
+
+        public GalaxyData(Dictionary<string, string> control, Dictionary<string, Flareup> flares) {
+            systemControl = control;
+            flareups = flares;
+        }
+
+        public void apply() {
+            foreach (string id in systemControl.Keys) {
+                StarSystem system = WIIC.sim.GetSystemById(id);
+                FactionValue ownerFromTag = Utilities.controlFromTag(systemControl[id]);
+                Utilities.applyOwner(system, ownerFromTag, true);
+            }
+
+            WIIC.modLog.Info?.Write($"Set control of {systemControl.Count} star systems based on GalaxyData");
+
+            foreach (string id in flareups.Keys) {
+                WIIC.flareups[id] = flareups[id];
+                WIIC.flareups[id].initAfterDeserialization();
+            }
+
+            Utilities.redrawMap();
+
+            WIIC.modLog.Info?.Write($"Created {flareups.Count} flareups based on GalaxyData");
         }
     }
 }

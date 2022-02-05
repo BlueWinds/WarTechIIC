@@ -14,8 +14,6 @@ using ColourfulFlashPoints.Data;
 namespace WarTechIIC {
     [JsonObject(MemberSerialization.OptIn)]
     public class Flareup {
-        public SimGameState sim;
-
         public StarSystem location;
         [JsonProperty]
         public string locationID;
@@ -60,10 +58,9 @@ namespace WarTechIIC {
             DefenderWonNoReward,
         }
 
-        public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, string flareupType, SimGameState __instance) {
+        public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, string flareupType) {
             Settings s = WIIC.settings;
 
-            sim = __instance;
             location = flareupLocation;
             locationID = flareupLocation.ID;
             attacker = attackerFaction;
@@ -79,9 +76,9 @@ namespace WarTechIIC {
             defenderStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
 
             string stat = $"WIIC_{attacker.Name}_attack_strength";
-            attackerStrength += sim.CompanyStats.ContainsStatistic(stat) ? sim.CompanyStats.GetValue<int>(stat) : 0;
+            attackerStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
             stat = $"WIIC_{location.OwnerValue.Name}_defense_strength";
-            defenderStrength += sim.CompanyStats.ContainsStatistic(stat) ? sim.CompanyStats.GetValue<int>(stat) : 0;
+            defenderStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
 
             if (type == "Raid") {
                 attackerStrength = (int) Math.Ceiling(attackerStrength * s.raidStrengthMultiplier);
@@ -93,7 +90,7 @@ namespace WarTechIIC {
             Utilities.deferredToasts.Add(text);
 
             WIIC.modLog.Info?.Write(text);
-            if (location == sim.CurSystem) {
+            if (location == WIIC.sim.CurSystem) {
                 spawnParticipationContracts();
             }
         }
@@ -254,7 +251,7 @@ namespace WarTechIIC {
                 }
             // Things happening elsewhere in the galaxy just get an event toast.
             } else {
-                sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+                WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
             }
 
             // Now apply the owner or stat changes
@@ -325,9 +322,9 @@ namespace WarTechIIC {
             int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
             string contractPrefix = type == "Attack" ? "wiic_help" : "wiic_raid";
 
-            if (!WIIC.settings.wontHirePlayer.Contains(attacker.Name) && sim.GetReputation(attacker) >= minRep) {
+            if (!WIIC.settings.wontHirePlayer.Contains(attacker.Name) && WIIC.sim.GetReputation(attacker) >= minRep) {
                 WIIC.modLog.Info?.Write($"Adding contract {contractPrefix}_attacker. Target={location.OwnerValue.Name}, Employer={attacker.Name}, TargetSystem={location.ID}, Difficulty={location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
-                Contract attackContract = sim.AddContract(new SimGameState.AddContractData {
+                Contract attackContract = WIIC.sim.AddContract(new SimGameState.AddContractData {
                     ContractName = $"{contractPrefix}_attacker",
                     Target = location.OwnerValue.Name,
                     Employer = attacker.Name,
@@ -337,9 +334,9 @@ namespace WarTechIIC {
                 attackContract.SetFinalDifficulty(diff);
             }
 
-            if (!WIIC.settings.wontHirePlayer.Contains(location.OwnerValue.Name) && sim.GetReputation(location.OwnerValue) >= minRep) {
+            if (!WIIC.settings.wontHirePlayer.Contains(location.OwnerValue.Name) && WIIC.sim.GetReputation(location.OwnerValue) >= minRep) {
                 WIIC.modLog.Info?.Write($"Adding contract {contractPrefix}_defender. Target={attacker.Name}, Employer={location.OwnerValue.Name}, TargetSystem={location.ID}, Difficulty={location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
-                Contract defendContract = sim.AddContract(new SimGameState.AddContractData {
+                Contract defendContract = WIIC.sim.AddContract(new SimGameState.AddContractData {
                     ContractName = $"{contractPrefix}_defender",
                     Target = attacker.Name,
                     Employer = location.OwnerValue.Name,
@@ -424,14 +421,16 @@ namespace WarTechIIC {
             return tag.StartsWith("WIIC:");
         }
 
-        public static Flareup Deserialize(string tag, SimGameState __instance) {
+        public static Flareup Deserialize(string tag) {
             Flareup newFlareup = JsonConvert.DeserializeObject<Flareup>(tag.Substring(5));
-
-            newFlareup.sim = __instance;
-            newFlareup.location = __instance.GetSystemById(newFlareup.locationID);
-            newFlareup.attacker = FactionEnumeration.GetFactionByName(newFlareup.attackerName);
+            newFlareup.initAfterDeserialization();
 
             return newFlareup;
+        }
+
+        public void initAfterDeserialization() {
+            location = WIIC.sim.GetSystemById(locationID);
+            attacker = FactionEnumeration.GetFactionByName(attackerName);
         }
     }
 }

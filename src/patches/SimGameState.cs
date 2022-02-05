@@ -30,7 +30,7 @@ namespace WarTechIIC {
     public static class SimGameState_OnCareerModeStartPatch {
         public static void Postfix(SimGameState __instance) {
             try {
-                WIIC.readFromJson();
+                WIIC.readFromJson("WIIC_systemControl.json", false);
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
@@ -47,12 +47,14 @@ namespace WarTechIIC {
                 WIIC.flareups.Clear();
                 WIIC.sim.CompanyTags.Add("WIIC_enabled");
 
+                WIIC.readFromJson("WIIC_ephemeralSystemControl.json", true);
+
                 foreach (StarSystem system in __instance.StarSystems) {
                     string tag = system.Tags.ToList().Find(Flareup.isSerializedFlareup);
                     if (tag != null) {
                         system.Tags.Remove(tag);
 
-                        Flareup flareup = Flareup.Deserialize(tag, __instance);
+                        Flareup flareup = Flareup.Deserialize(tag);
                         WIIC.flareups[system.ID] = flareup;
                     }
 
@@ -118,8 +120,11 @@ namespace WarTechIIC {
     public static class SimGameStateOnNewQuarterBeginPatch {
         private static void Postfix() {
             try {
-                WIIC.modLog.Debug?.Write($"Refreshing contracts in current system at start of month");
-                WIIC.sim.CurSystem.ResetContracts();
+                // If we're in the middle of initializing a new career no need to do anything.
+                if (WIIC.sim != null) {
+                    WIIC.modLog.Debug?.Write($"Refreshing contracts in current system at start of month");
+                    WIIC.sim.CurSystem.ResetContracts();
+                }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }

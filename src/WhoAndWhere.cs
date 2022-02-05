@@ -79,7 +79,7 @@ namespace WarTechIIC {
 
             (StarSystem system, FactionValue attacker) = getAttackerAndLocation(type);
 
-            Flareup flareup = new Flareup(system, attacker, type, WIIC.sim);
+            Flareup flareup = new Flareup(system, attacker, type);
             WIIC.flareups[system.ID] = flareup;
         }
 

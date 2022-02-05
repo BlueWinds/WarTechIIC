@@ -67,7 +67,7 @@ namespace WarTechIIC {
                             }
 
                             WIIC.cleanupSystem(system);
-                            Flareup flareup = new Flareup(system, faction, "Attack", WIIC.sim);
+                            Flareup flareup = new Flareup(system, faction, "Attack");
                             WIIC.flareups[system.ID] = flareup;
                             Utilities.redrawMap();
 
@@ -85,7 +85,7 @@ namespace WarTechIIC {
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             WIIC.cleanupSystem(system);
-                            Flareup flareup = new Flareup(system, faction, "Raid", WIIC.sim);
+                            Flareup flareup = new Flareup(system, faction, "Raid");
                             WIIC.flareups[system.ID] = flareup;
                             Utilities.redrawMap();
 
