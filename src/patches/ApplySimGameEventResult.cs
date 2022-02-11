@@ -159,6 +159,19 @@ namespace WarTechIIC {
                     }
                 }
             }
+
+
+            if (result.Scope == EventScope.Company && result.Stats != null) {
+                WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Searching for WIIC stats from {result.Stats.Length}");
+                foreach (SimGameStat stat in result.Stats) {
+                    if (stat.name.StartsWith("WIIC")) {
+                        WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Applying {stat.name} and removing from stats");
+                        SimGameState.SetSimGameStat(stat, WIIC.sim.CompanyStats);
+                    }
+                }
+
+                result.Stats = result.Stats.Where(stat => !stat.name.StartsWith("WIIC")).ToArray();
+            }
         }
     }
 }
