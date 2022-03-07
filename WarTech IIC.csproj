@@ -105,7 +105,7 @@
   </PropertyGroup>
   <Target Name="AfterBuild">
     <Copy
-      SourceFiles="$(TargetPath);src/data/mod.json;src/data/modstate.json;src/data/settings.json"
+      SourceFiles="$(TargetPath);src/data/mod.json;src/data/modstate.json;src/data/settings.json;LICENSE;README.md"
       DestinationFolder="$(BTPATH)/Mods/WarTechIIC/"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="false"
