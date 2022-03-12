@@ -1,4 +1,6 @@
-WarTech IIC (WIIC) is a mod for HBS's Battletech computer game. It's inspired by the likes of WarTech, GalaxyAtWar, and RogueTech's PersistantMap.
+WarTech IIC (WIIC) is a mod for HBS's Battletech computer game. It's inspired by the likes of WarTech, GalaxyAtWar, and RogueTech's PersistantMap. The mod's homepage is https://github.com/BlueWinds/WarTechIIC, where you can always find the most up to date source code.
+
+WIIC is distributed under the GNU General Public License v3.0 license. Special permission is granted to Battletech Advanced: 3062 and Roguetech to distribute this alongside Custom Bundle and other proprietary code. Please reach out to BlueWinds on github, or the BTA/RogueTech discords for more details.
 
 # Flareups
 WIIC adds Flareups to the map - conflicts between factions for control of entire planets. They play out similarly to Flashpoints, where the player travels to the system, accepts a contract to participate in the campaign, and is then offered a series of missions to help their side take (or retain) control of the planet. Here's the basic flow, and how it relates to the settings in `settings.json`.
@@ -51,7 +53,7 @@ When a system flips control - or every system on game load, if `setActiveFaction
 The system's employers and targets are set with the following logic:
 1) If the system has any tags included in `clearEmployersAndTargetsForSystemTags`, then employers and targets are emptied, and all other steps ignored.
 2) The system owner and Locals are always included.
-3) If the system has any tag from `pirateTags`, then the Aurigan Pirates are added as active.
+3) If the system has any tag from `factionActivityTags`, then the matching factions are added as active.
 4) Any faction that shares a border with this world is added as active, unless they're in `ignoreFactions`.
 
 ## How the player gets involved

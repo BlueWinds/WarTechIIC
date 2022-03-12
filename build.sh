@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o errexit
 
-export BTPATH=../BATTLETECH/game
+export BTPATH=../game
 dir=$(pwd)
 
 RED='\033[0;31m'
