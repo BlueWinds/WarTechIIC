@@ -14,10 +14,13 @@ using UnityEngine;
 namespace WarTechIIC
 {
     public class WIIC {
+        public static Dictionary<string, ExtendedContractType> extendedContractTypes = new Dictionary<string, ExtendedContractType>();
+
         internal static DeferringLogger modLog;
         internal static string modDir;
         internal static Settings settings;
         internal static Dictionary<string, Flareup> flareups = new Dictionary<string, Flareup>();
+        internal static Dictionary<string, ExtendedContract> extendedContracts = new Dictionary<string, ExtendedContract>();
         internal static Dictionary<string, string> systemControl = new Dictionary<string, string>();
         internal static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
         internal static SimGameState sim;
@@ -44,7 +47,23 @@ namespace WarTechIIC
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
-        public static void FinishedLoading() {
+        public static void FinishedLoading(List<string> loadOrder, Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources) {
+            if (customResources != null && customResources.ContainsKey("ExtendedContractType")) {
+                foreach (VersionManifestEntry entry in customResources["ExtendedContractType"].Values) {
+                    WIIC.modLog.Info?.Write($"Loading ExtendedContractType from {entry.FilePath}.");
+                    try {
+                        string jdata;
+                        using (StreamReader reader = new StreamReader(entry.FilePath)) {
+                            jdata = reader.ReadToEnd();
+                        }
+                        ExtendedContractType ect = JsonConvert.DeserializeObject<ExtendedContractType>(jdata);
+                        extendedContractTypes[ect.name] = ect;
+                    } catch (Exception e) {
+                        WIIC.modLog.Error?.Write(e);
+                    }
+                }
+            }
+
             WhoAndWhere.init();
         }
 

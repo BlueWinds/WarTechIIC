@@ -12,22 +12,7 @@ using ColourfulFlashPoints;
 using ColourfulFlashPoints.Data;
 
 namespace WarTechIIC {
-    [JsonObject(MemberSerialization.OptIn)]
-    public class Flareup {
-        public StarSystem location;
-        [JsonProperty]
-        public string locationID;
-
-        [JsonProperty]
-        public string type = "Attack";
-
-        public FactionValue attacker;
-        [JsonProperty]
-        public string attackerName;
-
-        [JsonProperty]
-        public int playerDrops = 0;
-
+    public class Flareup : ExtendedContract {
         [JsonProperty]
         public int countdown;
         [JsonProperty]
@@ -37,11 +22,7 @@ namespace WarTechIIC {
         [JsonProperty]
         public int defenderStrength;
         [JsonProperty]
-        public string currentContractName = "";
-        [JsonProperty]
         public int currentContractForceLoss = 0;
-
-        public bool droppingForContract = false;
 
         public Flareup() {
             // Empty constructor used for deserialization.
@@ -58,14 +39,11 @@ namespace WarTechIIC {
             DefenderWonNoReward,
         }
 
-        public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, string flareupType) {
-            Settings s = WIIC.settings;
+        public static ExtendedContractType Attack = new ExtendedContractType("Attack");
+        public static ExtendedContractType Raid = new ExtendedContractType("Raid");
 
-            location = flareupLocation;
-            locationID = flareupLocation.ID;
-            attacker = attackerFaction;
-            attackerName = attackerFaction.Name;
-            type = flareupType;
+        public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, ExtendedContractType flareupType) : ExtendedContract(flareupLocation, attackerFaction, flareupType) {
+            Settings s = WIIC.settings;
             countdown = Utilities.rng.Next(s.minCountdown, s.maxCountdown);
 
             int v;
@@ -83,15 +61,6 @@ namespace WarTechIIC {
             if (type == "Raid") {
                 attackerStrength = (int) Math.Ceiling(attackerStrength * s.raidStrengthMultiplier);
                 defenderStrength = (int) Math.Ceiling(defenderStrength * s.raidStrengthMultiplier);
-            }
-
-            string text = type == "Raid" ? "{0} launches raid on {1} at {2}" : "{0} attacks {1} for control of {2}";
-            text = Strings.T(text, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName, location.Name);
-            Utilities.deferredToasts.Add(text);
-
-            WIIC.modLog.Info?.Write(text);
-            if (location == WIIC.sim.CurSystem) {
-                spawnParticipationContracts();
             }
         }
 
@@ -234,7 +203,9 @@ namespace WarTechIIC {
                 string itemCollection = reward();
 
                 WIIC.modLog.Info?.Write(text);
-                WIIC.modLog.Info?.Write($"Reward: {itemCollection} for {employer.Name}");
+                if (employer != null) {
+                    WIIC.modLog.Info?.Write($"Reward: {itemCollection} for {employer.Name}");
+                }
 
                 Sprite sprite = attackerStrength > 0 ? attacker.FactionDef.GetSprite() : location.OwnerValue.FactionDef.GetSprite();
                 queue.QueuePauseNotification(title, text, sprite, string.Empty, delegate {
@@ -313,6 +284,16 @@ namespace WarTechIIC {
         }
 
         public void spawnParticipationContracts() {
+            string text = type == "Raid" ? "{0} launches raid on {1} at {2}" : "{0} attacks {1} for control of {2}";
+            text = Strings.T(text, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName, location.Name);
+            Utilities.deferredToasts.Add(text);
+
+            WIIC.modLog.Info?.Write(text);
+
+            if (location != WIIC.sim.CurSystem) {
+                return;
+            }
+
             SimGameReputation minRep = SimGameReputation.INDIFFERENT;
             if (type == "Attack") {
                 Enum.TryParse(WIIC.settings.minReputationToHelpAttack, out minRep);
@@ -401,15 +382,15 @@ namespace WarTechIIC {
 
         private WorkOrderEntry_Notification _workOrder;
         public WorkOrderEntry_Notification workOrder {
-          get {
-            if (_workOrder == null) {
-              string title = Strings.T($"{type} contract");
-              _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "nextflareupContract", title);
-            }
+            get {
+                if (_workOrder == null) {
+                    string title = Strings.T($"{type} contract");
+                    _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "nextflareupContract", title);
+                }
 
-            _workOrder.SetCost(daysUntilMission);
-            return _workOrder;
-          }
+                _workOrder.SetCost(daysUntilMission);
+                return _workOrder;
+            }
         }
 
         public string Serialize() {

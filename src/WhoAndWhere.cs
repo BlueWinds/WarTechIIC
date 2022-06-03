@@ -60,7 +60,7 @@ namespace WarTechIIC {
             }
         }
 
-        public static void checkForNewFlareup() {
+        public static bool checkForNewFlareup() {
             double rand = Utilities.rng.NextDouble();
             double flareupChance = Utilities.statOrDefault("WIIC_dailyAttackChance", WIIC.settings.dailyAttackChance);
             double raidChance = Utilities.statOrDefault("WIIC_dailyRaidChance", WIIC.settings.dailyRaidChance);
@@ -74,13 +74,44 @@ namespace WarTechIIC {
             }
 
             if (type == "") {
-                return;
+                return false;
             }
 
-            (StarSystem system, FactionValue attacker) = getAttackerAndLocation(type);
+            string[] attackers = WIIC.settings.limitTargetsToFactionEnemies ? (new string[] {"Enemy"}) : (new string[] {"Any"});
+            (StarSystem system, FactionValue attacker) = getAttackerAndLocation(type, attackers, null);
 
             Flareup flareup = new Flareup(system, attacker, type);
             WIIC.flareups[system.ID] = flareup;
+            return true;
+        }
+
+        public static bool checkForNewExtendedContract() {
+            Settings s = WIIC.settings;
+
+            if (WIIC.extendedContracts.Count >= s.maxAvailableExtendedContracts) {
+                return false;
+            }
+
+            double rand = Utilities.rng.NextDouble();
+            if (WIIC.extendedContracts.Count == 0 && rand > s.dailyExtConChanceIfNoneAvailable) { return false; }
+            if (WIIC.extendedContracts.Count > 0 && rand > s.dailyExtConChanceIfSomeAvailable) { return false; }
+
+            Dictionary<string, double> weightedTypes = new Dictionary<string, double>();
+            foreach (ExtendedContractType possibleType in WIIC.extendedContractTypes.Values) {
+                if (possibleType.requirementList.Where(r => r.Scope != EventScope.StarSystem).All(r => WIIC.sim.MeetsRequirements(r))) {
+                    weightedTypes[possibleType.name] = (double)possibleType.weight;
+                }
+            }
+
+            if (weightedTypes.Count == 0) { return false; }
+
+            ExtendedContractType type = WIIC.extendedContractTypes[Utilities.WeightedChoice(weightedTypes)];
+            (StarSystem system, FactionValue attacker) = getAttackerAndLocation("Raid", type.attacker, type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray());
+
+            ExtendedContract contract = new ExtendedContract(system, attacker, type);
+            WIIC.extendedContracts[system.ID] = contract;
+
+            return true;
         }
 
         public static List<string> getTargets(StarSystem system) {
@@ -116,21 +147,17 @@ namespace WarTechIIC {
             return employers;
         }
 
-        public static (StarSystem, FactionValue) getAttackerAndLocation(string type) {
+        public static (StarSystem, FactionValue) getAttackerAndLocation(string type, string[] potentialAttackers, RequirementDef[] requirementList) {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
             var reputations = new Dictionary<FactionValue, double>();
             var aggressions = new Dictionary<FactionValue, double>();
             var hatred = new Dictionary<(FactionValue, FactionValue), double>();
 
-            FactionValue mag = FactionEnumeration.GetFactionByName("MagistracyOfCanopus");
-            bool allied = WIIC.sim.IsFactionAlly(mag);
-            WIIC.modLog.Debug?.Write($"Mag: {mag.Name}, allied: {allied}");
-
             foreach (StarSystem system in WIIC.sim.StarSystems) {
                 FactionValue defender = system.OwnerValue;
 
-                if (WIIC.flareups.ContainsKey(system.ID) || Utilities.flashpointInSystem(system)) {
+                if (WIIC.flareups.ContainsKey(system.ID) || Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
                     continue;
                 }
 
@@ -139,6 +166,11 @@ namespace WarTechIIC {
                 }
 
                 if (system.Tags.ContainsAny(cantBeAttackedTags, false)) {
+                    continue;
+                }
+
+                // ExtendedContractTypes may have a requirementList, while Flareups don't havy any option to configure one.
+                if (requirementList != null && !requirementList.All(r => SimGameState.MeetsRequirements(r, system.Tags, system.Stats))) {
                     continue;
                 }
 
@@ -160,8 +192,7 @@ namespace WarTechIIC {
                         return;
                     }
 
-                    // Factions only attack themselves if they are their own enemy (eg, extremely fractured factions).
-                    if ((s.limitTargetsToFactionEnemies || attacker == system.OwnerValue) && !attacker.FactionDef.Enemies.Contains(defender.Name)) {
+                    if (!matchesAttackers(attacker, potentialAttackers, system.OwnerValue)) {
                         return;
                     }
 
@@ -191,7 +222,6 @@ namespace WarTechIIC {
                 };
 
                 foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
-
                     considerAttacker(neighbor.OwnerValue);
                 }
 
@@ -210,7 +240,18 @@ namespace WarTechIIC {
                     }
                 }
             }
+
             return Utilities.WeightedChoice(weightedLocations);
+        }
+
+        public static bool matchesAttackers(FactionValue attacker, string[] potentialAttackers, FactionValue defender) {
+            foreach (string attackerOption in potentialAttackers) {
+                if (attackerOption == "Self" && attacker == defender) { return true; }
+                if (attackerOption == "Enemy" && attacker.FactionDef.Enemies.Contains(defender.Name)) { return true; }
+                if (attackerOption == "Any" && attacker != defender) { return true; }
+                if (attackerOption == attacker.Name) { return true; }
+            }
+            return false;
         }
     }
 }

@@ -15,7 +15,8 @@ Every day that passes, there is a `dailyAttackChance` chance that a new Flareup 
 
 ### Deciding attacker and location
 WIIC first decides who will be the attacker and where they'll attack by iterating through all star systems on the map.
-1) If the star system already has a flareup or flashpoint present, it's ignored. Similarly if it has one of the `cantBeAttackedTags`.
+
+1) If the star system already has a flareup, flashpoint or extended contract present, it's ignored. Similarly if it has one of the `cantBeAttackedTags`.
 2) If it's controlled by a faction in `cantBeAttacked` or `ignoreFactions`, it's also skipped.
 3) Each faction that controls a neighboring system and isn't in `ignoreFactions` might attack, if they're either the owner's enemy or `limitTargetsToFactionEnemies` is `false`. The weight for that attacker on this star system is the following items multiplied together:
     1) The number of bordering systems the attacker controls (within one jump)
@@ -26,7 +27,9 @@ WIIC first decides who will be the attacker and where they'll attack by iteratin
 4) For attacks, `factionInvasionTags` are always considered adjacent to the appropriate faction (that is to say, Jade Falcon can always attack planets with the falcon_invasion_corridor tag, if such is set in settings.json). For raids, `factionActivityTags` is used instead (eg, Pirates can always raid planet_other_pirate worlds in the default settings).
     * The weight uses the same rules as above. Each tag the planet has is equivalent to one 'border world'.
 
-Factions will only attack or raid themselves if they are set to be their own enemy (regardless of `limitTargetsToFactionEnemies`). With the weight for each target system and each faction which could attack it figured out, one is selected at random.
+Factions will only attack or raid themselves if they are set to be their own enemy (regardless of `limitTargetsToFactionEnemies`).
+
+With the weight for each target system and each faction which could attack it figured out, one is selected at random.
 
 ### Initial setup
 A border world controlled by the defender and near the attacker is chosen at random. The flareup is now visible as a blip to the starmap, appearance controlled by the `attackMarker` or `raidMarker` as appropriate. See [ColourfulFlashpoints](https://github.com/wmtorode/ColourfulFlashPoints) for details on the settings.
@@ -104,3 +107,78 @@ For all company stats, `-1` is a magic value - "ignore this". If present, we'll 
 WarTechIIC modifies several base-game features.
 * Contracts in the current system refresh every time the month rolls over.
 * Contracts in the command center are sorted by difficulty (with travel contracts at the bottom and priority contracts at the top).
+
+# Extended Contracts
+In addition to existing Raids and Attacks, there are now "extended contracts", as defined by `ContractOverride` definitions. These are loaded via modtek, like other things that modtek can load. Though similar in some ways to flareups, extended contracts do not use / track combat forces, nor do they appear on the map of have lasting effects on the galactic stage.
+
+## Extended Contract Types
+Extended Contract Types are defined each in their own json files, loaded as any other ModTek resource. Any mod can include them by having an entry in its mod.json similar to
+
+```
+"Manifest": [
+  { "Type": "ExtendedContractType", "Path": "extendedContracts" }
+]
+```
+
+All the top-level properties explained below are required.
+
+- The `name` is displayed to the player in various ways as the contract progresses.
+- This type of extended contract can only spawn if `companyRequirements` is met. **Only `Company` scope requirements are supported - all others will be ignored.**
+- When WIIC decides to spawn a extended contract, it does so based on their `weight`s. Higher weights are more likely to be selected.
+- `employer` determines who might potentially hire the player, and is an array of one or more of:
+  - `Any`: Any faction not in WIIC's settings.json `ignoreFactions` or `wontHirePlayer`.
+  - `Allied`: Any faction the player is allied to, other than those in `ignoreFactions` or `wontHirePlayer`.
+  - Any faction ID (eg. `ClanJadeFalcon`). They can potentially hire the player even if they're in `ignoreFactions` / `wontHirePlayer`.
+- Each ExtendedContractType has a `spawnLocation`, which is an array of one or more of:
+  - `OwnSystem`: This extended contract can spawns on a world the employer controls.
+  - `EnemySystem`: This extended contract can spawn on a world controlled by the employer's enemy (within one jump of a system the employer controls).
+  - Any system tag (eg. `planet_other_pirate`). This ignores jump distance / planetary control.
+- And finally, there is `target` - this is determined after employer and system are chosen, and is one of:
+  - `Employer`: The OpFor will be your employer.
+  - `SystemOwner`: The OpFor will be the whoever owns the system.
+  - `NearbyEnemy`: The OpFor will be randomly chosen from
+    - A random enemy of your employer that controls a system within one jump
+    - Locals.
+  - Any faction ID (eg. `ClanJadeFalcon`). The target will be this faction, even if they don't control any systems in the area.
+  - `availableFor` determines how long the travel contract will be available, min and max days. Once it expires, the extended contract disappears, never to be seen again.
+  - `schedule` is an array of strings, each one referencing an item in `entries` (see below). These occur each day in order, and when the player reaches the end, the extended contract is over.
+  - `entries` is an object of "day definitions", expanding on what each entry in the `schedule` means. These objects have a large number of options, described below in their own section.
+
+### `entries`
+Each entry is defined by an ID (the key, used in the extended contract type's `schedule` to say when this entry occurs), and a value with a large number of possible properties. All properties are optional - just leave out any that you don't need. An entry of `{}` is perfectly valid.
+
+  - `triggerEvent` is an array of event IDs. Starting at the beginning, WIIC finds the first event with matching conditions and triggers it. If an event triggers, then everything else that could happen on the day is ignored - no contract or lootbox will be generated.
+    - If none of the events trigger, other properties will be checked as normal.
+
+  - If no event occurred, here is a `contractChance` chance that a contract will be offered to the player on this day. This defaults to 0 - if you want a contract to spawn, set it! The rest of the options control what sort of contract will be generated.
+    - `contract`: A list of contracts to choose between at random, ignoring planetary difficulty. If empty or not present, then a contract will be chosen by vanilla logic (respecting `allowedContractTypes` below).
+    - `allowedContractTypes`: A list of contract types the extended contract will select between. If the list is empty, then any contract type (including those from vanilla and in WIIC's settings.json `customContractEnums`) is valid.
+    - `contractPayoutMultiplier`: Pay for this contract is multiplied by this amount.
+    - `contractBonusSalvage`: Added to the salvage this contract pays out. Can be negative. The final value will be clamped between 0 and 28 (so as not to break the UI).
+    - `contractMessage`: A string to display in the popup offering the mission to the user. You do not need to explain the `declinePenalty` in here - WIIC will display that to the user separately.
+    - If the player declines a generated contract, they're given the `declinePenalty`, which is one of:
+      - No `declinePenalty` defined: No penalty for declining.
+      - `BadFaith`: Reputation penalty as if they'd performed a bad-faith withdrawal.
+      - `GoodFaith`: Reputation penalty as if they'd performed a good-faith withdrawal.
+      - `BreakContract`: Declining this mission terminates the extended contract as if the player had flown away.
+
+  - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that. If the player is given a lootbox, no contract will be generated.
+
+  - Garrison Duty, which lasts 30 days and pays out at the end. It has a 20% chance of generating a contract every three days.
+  - Covert Operations, which lasts 15 days (with no contracts) and then three contracts separated by one day each at the end.
+  - Dueling Circuit, which lasts 35 days and spawns a new duel every 7 days.
+  - Training Contract, which works like a normal Flareup except you only fight your employer, and your units are repaired after each contract. No salvage, reduced cash payout.
+
+## Generating Extended Contracts
+Each day, after checking for flareups and raids if there are fewer than `maxAvailableExtendedContracts` available, WIIC decides if it should generate a new one. If there are currently no extended contracts available, it uses `dailyExtConChanceIfNoneAvailable` as the chance. If one or more already exist, it instead uses `dailyExtConChanceIfSomeAvailable`.
+
+If it decides to offer the player a new extended contract, it generates a list of all the extended contract types for which the player qualifies (based on their `companyRequirements`s), weighted by their `weight`s, and picks one.
+
+With that configured, it works like so:
+  - Determine the list of valid employers, based on `Employer`.
+  - Iterates over every system on the map. For each one, it may be the location of the contract if:
+    - `spawnLocation` contains `EnemySystem` and a system within one jump is controlled by a valid employer who considers the owner an enemy.
+    - `spawnLocation` contains `OwnSystem`, and the owner is a valid employer.
+    - `spawnLocation` contains a system tag that the system has.
+  - The location is chosen from the list of valid planets, weighted systems near the player with the same math as for Flareups: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`. If `spawnLocation` is `EnemySystem`, this is also weighted by number of nearby enemy systems.
+  - Finally, the OpFor of the extended contract is chosen based on the `target` of the ExtendedContractType.

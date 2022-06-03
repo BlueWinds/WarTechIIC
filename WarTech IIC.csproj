@@ -11,7 +11,7 @@
     <AssemblyName>WarTechIIC</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
+    <Deterministic>false</Deterministic>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -80,6 +80,7 @@
     <Compile Include="src/ContractManager.cs" />
     <Compile Include="src/WhoAndWhere.cs" />
     <Compile Include="src/Flareup.cs" />
+    <Compile Include="src/ExtendedContract.cs" />
     <Compile Include="src/patches/AAR_ContractObjectivesWidget.cs" />
     <Compile Include="src/patches/ApplySimGameEventResult.cs" />
     <Compile Include="src/patches/Contract.cs" />

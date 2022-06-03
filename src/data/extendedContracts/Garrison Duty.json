@@ -1,0 +1,49 @@
+{
+  "name": "Garrison Duty",
+  "requirementList": [],
+  "weight": 1,
+  "employer": ["Any"],
+  "spawnLocation": ["OwnSystem"],
+  "target": ["NearbyEnemy", "AuriganPirates"],
+  "hireContract": "wiic_garrison_duty",
+  "availableFor": [20, 30],
+    "schedule": [
+    "",
+    "",
+    "myMission1",
+    "",
+    "",
+    "myMission2",
+    "",
+    "",
+    "myMission1",
+    "",
+    "",
+    "myEvent",
+    "giveAManAFish"
+  ],
+  "entries": {
+    "myEvent": { "triggerEvent": ["event_co_blackMarket_Membership0"]},
+    "myMission1": {
+      "contractChance": 0.15,
+      "allowedContractTypes": [10000, 10001, 10002],
+      "declinePenalty": "BadFaith",
+      "contractMessage": "{TEAM_EMP.FactionDef.ShortName} has a mission for us, Commander: {CONTRACT.Name}. Details will be provided en-route, but it seems to be a {CONTRACT.ContractTypeValue.FriendlyName} mission. Sounds urgent."
+    },
+    "myMission2": {
+      "contractChance": 0.15,
+      "declinePenalty": "BreakContract",
+      "contractPayoutMultiplier": 0,
+      "contractBonusSalvage": 0,
+      "contract": ["Assassinate_EscapingSpy", "Assassinate_Flyswatter_Alt"],
+      "contractMessage": "Time to assassinate our target! Good luck."
+    },
+    "giveAManAFish": {
+      "rewardByDifficulty": {
+        "0": "itemCollection_loot_ItemTriple_common",
+        "5": "itemCollection_loot_ItemTriple_uncommon",
+        "8": "itemCollection_loot_ItemTriple_rare"
+      }
+    }
+  }
+}

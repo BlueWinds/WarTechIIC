@@ -98,7 +98,10 @@ namespace WarTechIIC {
                     }
                 }
 
-                WhoAndWhere.checkForNewFlareup();
+                bool newFlareup = WhoAndWhere.checkForNewFlareup();
+                if (!newFlareup) {
+//                     WhoAndWhere.checkForNewExtendedContract();
+                }
 
                 if (Utilities.deferredToasts.Count > 0) {
                     foreach (var toast in Utilities.deferredToasts) {

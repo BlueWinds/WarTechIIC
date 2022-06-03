@@ -10,6 +10,10 @@ namespace WarTechIIC {
         public bool trace = false;
         public double dailyAttackChance = 0;
         public double dailyRaidChance = 0;
+        public double dailyExtConChanceIfNoneAvailable = 0;
+        public double dailyExtConChanceIfSomeAvailable = 0;
+        public int maxAvailableExtendedContracts = 0;
+
         public bool setActiveFactionsForAllSystems = false;
         public List<string> clearEmployersAndTargetsForSystemTags = new List<string>();
         public List<string> ignoreFactions = new List<string>();

@@ -14,6 +14,10 @@
   "dailyAttackChance": 0.175,
   "dailyRaidChance": 0.075,
 
+  "dailyExtConChanceIfNoneAvailable": 0.1,
+  "dailyExtConChanceIfSomeAvailable": 0.05,
+  "maxAvailableExtendedContracts": 3,
+
   "distanceFactor": 75,
   "aggression": {
     "NoFaction": 0.0,
