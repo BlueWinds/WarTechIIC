@@ -15,7 +15,7 @@ namespace WarTechIIC {
 
             try {
                 foreach (Flareup flareup in WIIC.flareups.Values) {
-                    WIIC.modLog.Debug?.Write(flareup.Serialize());
+                    WIIC.modLog.Trace?.Write(flareup.Serialize());
                     flareup.location.Tags.Add(flareup.Serialize());
                 }
                 foreach (KeyValuePair<string, string> control in WIIC.systemControl) {

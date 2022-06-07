@@ -17,7 +17,6 @@ namespace WarTechIIC {
                 int clearCount = 0;
 
                 foreach (StarSystem system in WIIC.sim.StarSystems) {
-
                     if (system.Tags.ContainsAny(WhoAndWhere.clearEmployersTags, false)) {
                         clearCount++;
                         Utilities.setActiveFactions(system);
@@ -28,8 +27,6 @@ namespace WarTechIIC {
                     // Check if a previous flareup flipped control of the system
                     if (WIIC.systemControl.ContainsKey(system.ID)) {
                         FactionValue ownerFromTag = Utilities.controlFromTag(WIIC.systemControl[system.ID]);
-                        WIIC.modLog.Info?.Write($"Found new owner {ownerFromTag.Name} at {system.Name}");
-
                         Utilities.applyOwner(system, ownerFromTag, false);
                         controlCount++;
                     }

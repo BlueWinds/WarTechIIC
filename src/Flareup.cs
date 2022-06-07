@@ -14,8 +14,6 @@ using ColourfulFlashPoints.Data;
 namespace WarTechIIC {
     public class Flareup : ExtendedContract {
         [JsonProperty]
-        public int countdown;
-        [JsonProperty]
         public int daysUntilMission;
         [JsonProperty]
         public int attackerStrength;
@@ -42,59 +40,75 @@ namespace WarTechIIC {
         public static ExtendedContractType Attack = new ExtendedContractType("Attack");
         public static ExtendedContractType Raid = new ExtendedContractType("Raid");
 
-        public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, ExtendedContractType flareupType) : ExtendedContract(flareupLocation, attackerFaction, flareupType) {
+        public static bool isSerializedFlareup(string tag) {
+            return tag.StartsWith("WIIC:");
+        }
+
+        public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, ExtendedContractType flareupType) : base(flareupLocation, attackerFaction, flareupLocation.OwnerValue, flareupType) {
             Settings s = WIIC.settings;
             countdown = Utilities.rng.Next(s.minCountdown, s.maxCountdown);
 
             int v;
-            attackerStrength = s.attackStrength.TryGetValue(attacker.Name, out v) ? v : s.defaultAttackStrength;
-            defenderStrength = s.defenseStrength.TryGetValue(location.OwnerValue.Name, out v) ? v : s.defaultDefenseStrength;
+            attackerStrength = s.attackStrength.TryGetValue(employer.Name, out v) ? v : s.defaultAttackStrength;
+            defenderStrength = s.defenseStrength.TryGetValue(target, out v) ? v : s.defaultDefenseStrength;
 
             attackerStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
             defenderStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
 
-            string stat = $"WIIC_{attacker.Name}_attack_strength";
+            string stat = $"WIIC_{employer.Name}_attack_strength";
             attackerStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
-            stat = $"WIIC_{location.OwnerValue.Name}_defense_strength";
+            stat = $"WIIC_{target.Name}_defense_strength";
             defenderStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
 
             if (type == "Raid") {
                 attackerStrength = (int) Math.Ceiling(attackerStrength * s.raidStrengthMultiplier);
                 defenderStrength = (int) Math.Ceiling(defenderStrength * s.raidStrengthMultiplier);
             }
+
+            string text = type == "Raid" ? "{0} launches raid on {1} at {2}" : "{0} attacks {1} for control of {2}";
+            text = Strings.T(text, employer.FactionDef.ShortName, target.FactionDef.ShortName, location.Name);
+
+            Utilities.deferredToasts.Add(text);
+            WIIC.modLog.Info?.Write(text);
         }
 
-        public FactionValue employer {
+        public bool employedByEmployer {
             get {
-                if (WIIC.sim.CurSystem != location) {
-                    return null;
-                }
-                if (WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker")) {
-                    return attacker;
-                }
-                if (WIIC.sim.CompanyTags.Contains("WIIC_helping_defender")) {
-                    return location.OwnerValue;
-                }
-                return null;
+                return WIIC.sim.CurSystem == location && WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker");
             }
         }
 
-        public FactionValue target {
+        public bool employedByTarget {
             get {
-                if (WIIC.sim.CurSystem != location) {
-                    return null;
-                }
-                if (WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker")) {
-                    return location.OwnerValue;
-                }
-                if (WIIC.sim.CompanyTags.Contains("WIIC_helping_defender")) {
-                    return attacker;
-                }
-                return null;
+                return WIIC.sim.CurSystem == location && WIIC.sim.CompanyTags.Contains("WIIC_helping_defender");
             }
         }
 
-        public bool passDay() {
+        // base.employer is the attacker in this flareup. The player might actually be employed by the defender, or by no one at all.
+        public FactionValue actualEmployer {
+            get {
+                employedByEmployer ? employer : (employedByTarget ? target : null);
+            }
+        }
+
+        // base.target is the defender in this flareup. The player might actually be attacking the employer, or by no one at all.
+        public FactionValue actualTarget {
+            get {
+                employedByEmployer ? target : (employedByTarget ? employer : null);
+            }
+        }
+
+        public override void acceptContract(string contract) {
+            base.acceptContract();
+            daysUntilMission = 1;
+
+            string tag = ("wiic_help_defender" || "wiic_raid_defender") ? "WIIC_helping_defender" : "WIIC_helping_attacker";
+            WIIC.sim.CompanyTags.Add(tag);
+            WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
+            WIIC.modLog.Info?.Write($"Replaced tag with {tag} for flareup.");
+        }
+
+        public override bool passDay() {
             Settings s = WIIC.settings;
 
             if (attackerStrength <= 0 || defenderStrength <= 0) {
@@ -122,23 +136,24 @@ namespace WarTechIIC {
 
             daysUntilMission = s.daysBetweenMissions;
 
-            if (employer != null) {
+            if (employedByEmployer || employedByTarget) {
                 launchMission();
             }
+
             return false;
         }
 
         public CompletionResult getCompletionResult() {
             if (attackerStrength <= 0) {
-              if (employer == null) { return CompletionResult.DefenderWonUnemployed; }
-              if (employer == attacker) { return CompletionResult.DefenderWonEmployerLost; }
-              if (playerDrops > 0) { return CompletionResult.DefenderWonReward; }
-              return CompletionResult.DefenderWonNoReward;
+                if (employedByEmployer) { return CompletionResult.DefenderWonEmployerLost; }
+                if (employedByTarget && playerDrops > 0) { return CompletionResult.DefenderWonReward; }
+                if (employedByTarget) { return CompletionResult.DefenderWonNoReward; }
+                return CompletionResult.DefenderWonUnemployed;
             } else {
-              if (employer == null) { return CompletionResult.AttackerWonUnemployed; }
-              if (employer == location.OwnerValue) { return CompletionResult.AttackerWonEmployerLost; }
-              if (playerDrops > 0) { return CompletionResult.AttackerWonReward; }
-              return CompletionResult.AttackerWonNoReward;
+                if (employedByTarget) { return CompletionResult.AttackerWonEmployerLost; }
+                if (employedByEmployer && playerDrops > 0) { return CompletionResult.AttackerWonReward; }
+                if (employedByEmployer) { return CompletionResult.AttackerWonNoReward; }
+                return CompletionResult.AttackerWonUnemployed;
             }
         }
 
@@ -178,9 +193,9 @@ namespace WarTechIIC {
 
             if (result == CompletionResult.AttackerWonReward || result == CompletionResult.DefenderWonReward) {
                 if (type == "Attack") {
-                    return s.factionAttackReward.ContainsKey(employer.Name) ? s.factionAttackReward[employer.Name] : s.defaultAttackReward;
+                    return s.factionAttackReward.ContainsKey(actualEmployer.Name) ? s.factionAttackReward[actualEmployer.Name] : s.defaultAttackReward;
                 } else {
-                    return s.factionRaidReward.ContainsKey(employer.Name) ? s.factionRaidReward[employer.Name] : s.defaultRaidReward;
+                    return s.factionRaidReward.ContainsKey(actualEmployer.Name) ? s.factionRaidReward[actualEmployer.Name] : s.defaultRaidReward;
                 }
             }
             return null;
@@ -189,8 +204,8 @@ namespace WarTechIIC {
         public void conclude() {
             Settings s = WIIC.settings;
 
-            removeParticipationContracts();
-            string text = Strings.T(completionText(), attacker.FactionDef.Name, location.OwnerValue.FactionDef.Name, location.Name);
+            removeParticipationContract();
+            string text = Strings.T(completionText(), employer.FactionDef.Name, target.FactionDef.Name, location.Name);
             // Because shortnames can start with a lowercase 'the' ("the Aurigan Coalition", for example), we have to fix the capitalization or the result can look weird.
             text = text.Replace(". the ", ". The ");
             text = char.ToUpper(text[0]) + text.Substring(1);
@@ -203,14 +218,12 @@ namespace WarTechIIC {
                 string itemCollection = reward();
 
                 WIIC.modLog.Info?.Write(text);
-                if (employer != null) {
-                    WIIC.modLog.Info?.Write($"Reward: {itemCollection} for {employer.Name}");
-                }
 
-                Sprite sprite = attackerStrength > 0 ? attacker.FactionDef.GetSprite() : location.OwnerValue.FactionDef.GetSprite();
+                Sprite sprite = attackerStrength > 0 ? employer.FactionDef.GetSprite() : target.FactionDef.GetSprite();
                 queue.QueuePauseNotification(title, text, sprite, string.Empty, delegate {
                     try {
                         if (itemCollection != null) {
+                            WIIC.modLog.Info?.Write($"Reward: {itemCollection} from {actualEmployer.Name}");
                             queue.QueueRewardsPopup(itemCollection);
                         }
                     } catch (Exception e) {
@@ -226,8 +239,10 @@ namespace WarTechIIC {
             }
 
             // Now apply the owner or stat changes
-            if (type == "Attack" && defenderStrength <= 0 && attackerStrength > 0) {
-                Utilities.applyOwner(location, attacker, true);
+            if (type == "Attack") {
+                if (defenderStrength <= 0 && attackerStrength > 0) {
+                    Utilities.applyOwner(location, employer, true);
+                }
             } else if (type == "Raid") {
                 SimGameEventResult result = new SimGameEventResult();
                 result.Scope = EventScope.Company;
@@ -235,13 +250,15 @@ namespace WarTechIIC {
                 result.ResultDuration = s.raidResultDuration;
 
                 if (attackerStrength <= 0) {
-                    SimGameStat attackStat =  new SimGameStat($"WIIC_{attacker.Name}_attack_strength", 1, false);
-                    SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", -1, false);
+                    SimGameStat attackStat =  new SimGameStat($"WIIC_{employer.Name}_attack_strength", 1, false);
+                    SimGameStat defenseStat =  new SimGameStat($"WIIC_{target.Name}_defense_strength", -1, false);
                     result.Stats = new SimGameStat[] { attackStat, defenseStat };
                 } else if (defenderStrength <= 0) {
-                    SimGameStat attackStat = new SimGameStat($"WIIC_{attacker.Name}_attack_strength", -1, false);
-                    SimGameStat defenseStat =  new SimGameStat($"WIIC_{location.OwnerValue.Name}_defense_strength", 1, false);
+                    SimGameStat attackStat = new SimGameStat($"WIIC_{employer.Name}_attack_strength", -1, false);
+                    SimGameStat defenseStat =  new SimGameStat($"WIIC_{target.Name}_defense_strength", 1, false);
                     result.Stats = new SimGameStat[] { attackStat, defenseStat };
+                } else {
+                    // Draw is possible for raids, if they both hit strength 0 at the same time
                 }
 
                 SimGameEventResult[] results = {result};
@@ -263,12 +280,12 @@ namespace WarTechIIC {
             AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(location.Def.Description, new object[] { description });
         }
 
-        public string getDescription() {
-            var description = new StringBuilder();
+        public override string getDescription() {
+            StringBuilder description = new StringBuilder();
             if (type == "Raid") {
-                description.AppendLine(Strings.T("<b><color=#de0202>{0} is being raided by {1}</color></b>", location.Name, attacker.FactionDef.ShortName));
+                description.AppendLine(Strings.T("<b><color=#de0202>{0} is being raided by {1}</color></b>", location.Name, employer.ShortName));
             } else {
-                description.AppendLine(Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, attacker.FactionDef.ShortName));
+                description.AppendLine(Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, employer.ShortName));
             }
 
             if (countdown > 0) {
@@ -277,19 +294,13 @@ namespace WarTechIIC {
             if (daysUntilMission > 0) {
                description.AppendLine(Strings.T("{0} days until the next mission", daysUntilMission));
             }
-            description.AppendLine("\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(attackerStrength)));
-            description.AppendLine(Strings.T("{0} forces: {1}", location.OwnerValue.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(defenderStrength)));
+            description.AppendLine("\n" + Strings.T("{0} forces: {1}", employer.Name.Replace("the ", ""), Utilities.forcesToString(attackerStrength)));
+            description.AppendLine(Strings.T("{0} forces: {1}", target.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(defenderStrength)));
 
             return description.ToString();
         }
 
-        public void spawnParticipationContracts() {
-            string text = type == "Raid" ? "{0} launches raid on {1} at {2}" : "{0} attacks {1} for control of {2}";
-            text = Strings.T(text, attacker.FactionDef.ShortName, location.OwnerValue.FactionDef.ShortName, location.Name);
-            Utilities.deferredToasts.Add(text);
-
-            WIIC.modLog.Info?.Write(text);
-
+        public override void spawnParticipationContract() {
             if (location != WIIC.sim.CurSystem) {
                 return;
             }
@@ -300,38 +311,24 @@ namespace WarTechIIC {
             } else if (type == "Raid") {
                 Enum.TryParse(WIIC.settings.minReputationToHelpRaid, out minRep);
             }
-            int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
             string contractPrefix = type == "Attack" ? "wiic_help" : "wiic_raid";
 
-            if (!WIIC.settings.wontHirePlayer.Contains(attacker.Name) && WIIC.sim.GetReputation(attacker) >= minRep) {
-                WIIC.modLog.Info?.Write($"Adding contract {contractPrefix}_attacker. Target={location.OwnerValue.Name}, Employer={attacker.Name}, TargetSystem={location.ID}, Difficulty={location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
-                Contract attackContract = WIIC.sim.AddContract(new SimGameState.AddContractData {
-                    ContractName = $"{contractPrefix}_attacker",
-                    Target = location.OwnerValue.Name,
-                    Employer = attacker.Name,
-                    TargetSystem = location.ID,
-                    Difficulty = diff
-                });
-                attackContract.SetFinalDifficulty(diff);
+            if (!WIIC.settings.wontHirePlayer.Contains(employer.Name) && WIIC.sim.GetReputation(employer) >= minRep) {
+                base.spawnParticipationContract($"{contractPrefix}_attacker", employer, target);
             }
 
             if (!WIIC.settings.wontHirePlayer.Contains(location.OwnerValue.Name) && WIIC.sim.GetReputation(location.OwnerValue) >= minRep) {
-                WIIC.modLog.Info?.Write($"Adding contract {contractPrefix}_defender. Target={attacker.Name}, Employer={location.OwnerValue.Name}, TargetSystem={location.ID}, Difficulty={location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
-                Contract defendContract = WIIC.sim.AddContract(new SimGameState.AddContractData {
-                    ContractName = $"{contractPrefix}_defender",
-                    Target = attacker.Name,
-                    Employer = location.OwnerValue.Name,
-                    TargetSystem = location.ID,
-                    Difficulty = diff
-                });
-                defendContract.SetFinalDifficulty(diff);
+                base.spawnParticipationContract($"{contractPrefix}_defender", target, employer);
             }
         }
 
-        public void removeParticipationContracts() {
-            if (location == WIIC.sim.CurSystem) {
-                WIIC.modLog.Debug?.Write($"Cleaning up participation contracts for {location.Name}.");
-                WIIC.sim.GlobalContracts.RemoveAll(c => (c.Override.ID == "wiic_help_attacker" || c.Override.ID == "wiic_help_defender" || c.Override.ID == "wiic_raid_attacker" || c.Override.ID == "wiic_raid_defender"));
+        public override void removeParticipationContract() {
+            if (type == "Attack") {
+                base.removeParticipationContract("wiic_help_attacker");
+                base.removeParticipationContract("wiic_help_defender");
+            } else {
+                base.removeParticipationContract("wiic_raid_attacker");
+                base.removeParticipationContract("wiic_raid_defender");
             }
         }
 
@@ -350,56 +347,31 @@ namespace WarTechIIC {
                 WIIC.modLog.Error?.Write(e);
                 message = $"Our employer has a mission for us, Commander: {contract.Name}. Details will be provided en-route, but it seems to be a {contract.ContractTypeValue.FriendlyName.ToLower()} mission. Sounds urgent.";
             }
-            message += "\nIf we pass, they'll have to dedicate one of their own units to it, weakening their war effort.";
-            WIIC.modLog.Debug?.Write(message);
+            message += "\n\nIf we pass, we'll lose this chance to influence the outcome of the conflict but face no penalties.";
 
-            SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
-            queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
-                try {
-                    WIIC.modLog.Info?.Write($"Accepted {type} mission {contract.Name}.");
-                    currentContractName = contract.Name;
+            launchProceduralMission(message, actualEmployer, actualTarget, null);
+        }
 
-                    WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
-                    WIIC.sim.ForceTakeContract(contract, false);
-                } catch (Exception e) {
-                    WIIC.modLog.Error?.Write(e);
-                }
-            }, primaryButtonText, delegate {
-                WIIC.modLog.Info?.Write($"Passed on {type} mission.");
-                if (employer == attacker) {
-                    attackerStrength -= currentContractForceLoss;
-                    WIIC.modLog.Debug?.Write($"defenderStrength -= {currentContractForceLoss}");
-                } else {
-                    defenderStrength -= currentContractForceLoss;
-                    WIIC.modLog.Debug?.Write($"attackerStrength -= {currentContractForceLoss}");
-                }
-            }, cancel);
-
-            if (!queue.IsOpen) {
-                queue.DisplayIfAvailable();
+        public override void applyDeclinePenalty(DeclinePenalty declinePenalty) {
+            if (employedByEmployer) {
+                attackerStrength -= currentContractForceLoss;
+                WIIC.modLog.Debug?.Write($"defenderStrength -= {currentContractForceLoss}");
+            } else {
+                defenderStrength -= currentContractForceLoss;
+                WIIC.modLog.Debug?.Write($"attackerStrength -= {currentContractForceLoss}");
             }
         }
 
-        private WorkOrderEntry_Notification _workOrder;
-        public WorkOrderEntry_Notification workOrder {
+        public override WorkOrderEntry_Notification workOrder {
             get {
                 if (_workOrder == null) {
-                    string title = Strings.T($"{type} contract");
-                    _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "nextflareupContract", title);
+                    string title = Strings.T($"{type} Contract");
+                    _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "nextlareupContract", title);
                 }
 
                 _workOrder.SetCost(daysUntilMission);
                 return _workOrder;
             }
-        }
-
-        public string Serialize() {
-            string json = JsonConvert.SerializeObject(this);
-            return $"WIIC:{json}";
-        }
-
-        public static bool isSerializedFlareup(string tag) {
-            return tag.StartsWith("WIIC:");
         }
 
         public static Flareup Deserialize(string tag) {

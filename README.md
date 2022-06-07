@@ -125,6 +125,7 @@ All the top-level properties explained below are required.
 - The `name` is displayed to the player in various ways as the contract progresses.
 - This type of extended contract can only spawn if `companyRequirements` is met. **Only `Company` scope requirements are supported - all others will be ignored.**
 - When WIIC decides to spawn a extended contract, it does so based on their `weight`s. Higher weights are more likely to be selected.
+- `hireContract` is the ID of the travel contract WIIC will use to let the player get involved. This is always spawned as a travel contract, and no actual drop will occur.
 - `employer` determines who might potentially hire the player, and is an array of one or more of:
   - `Any`: Any faction not in WIIC's settings.json `ignoreFactions` or `wontHirePlayer`.
   - `Allied`: Any faction the player is allied to, other than those in `ignoreFactions` or `wontHirePlayer`.
@@ -140,9 +141,9 @@ All the top-level properties explained below are required.
     - A random enemy of your employer that controls a system within one jump
     - Locals.
   - Any faction ID (eg. `ClanJadeFalcon`). The target will be this faction, even if they don't control any systems in the area.
-  - `availableFor` determines how long the travel contract will be available, min and max days. Once it expires, the extended contract disappears, never to be seen again.
-  - `schedule` is an array of strings, each one referencing an item in `entries` (see below). These occur each day in order, and when the player reaches the end, the extended contract is over.
-  - `entries` is an object of "day definitions", expanding on what each entry in the `schedule` means. These objects have a large number of options, described below in their own section.
+- `availableFor` determines how long the travel contract will be available, min and max days. Once it expires, the extended contract disappears, never to be seen again.
+- `schedule` is an array of strings, each one referencing an item in `entries` (see below). These occur each day in order, and when the player reaches the end, the extended contract is over.
+- `entries` is an object of "day definitions", expanding on what each entry in the `schedule` means. These objects have a large number of options, described below in their own section.
 
 ### `entries`
 Each entry is defined by an ID (the key, used in the extended contract type's `schedule` to say when this entry occurs), and a value with a large number of possible properties. All properties are optional - just leave out any that you don't need. An entry of `{}` is perfectly valid.
@@ -159,7 +160,6 @@ Each entry is defined by an ID (the key, used in the extended contract type's `s
     - If the player declines a generated contract, they're given the `declinePenalty`, which is one of:
       - No `declinePenalty` defined: No penalty for declining.
       - `BadFaith`: Reputation penalty as if they'd performed a bad-faith withdrawal.
-      - `GoodFaith`: Reputation penalty as if they'd performed a good-faith withdrawal.
       - `BreakContract`: Declining this mission terminates the extended contract as if the player had flown away.
 
   - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that. If the player is given a lootbox, no contract will be generated.

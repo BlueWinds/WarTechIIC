@@ -26,7 +26,7 @@ namespace WarTechIIC {
             }
 
             double rand = totalWeight * rng.NextDouble();
-            WIIC.modLog.Trace?.Write($"WeightedChoice totalWeight: {totalWeight}, rand: {rand}");
+            WIIC.modLog.Debug?.Write($"WeightedChoice totalWeight: {totalWeight}, rand: {rand}");
             foreach (KeyValuePair<TKey, double> entry in weights) {
                 rand -= entry.Value;
                 if (rand <= 0) {
@@ -83,24 +83,30 @@ namespace WarTechIIC {
             return null;
         }
 
-        public static Flareup currentFlareup() {
+        public static Flareup currentExtendedContract() {
             // Usually happens from skirmish bay.
             if (WIIC.sim == null) {
                 return null;
             }
 
-            if (!WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker") && !WIIC.sim.CompanyTags.Contains("WIIC_helping_defender")) {
-                return null;
-            }
-
-            if (!WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
+            if (WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker") || WIIC.sim.CompanyTags.Contains("WIIC_helping_defender")) {
+                if (WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
+                    return WIIC.flareups[WIIC.sim.CurSystem.ID];
+                }
                 WIIC.modLog.Warn?.Write($"Found company tag indicating flareup participation, but no matching flareup for {WIIC.sim.CurSystem.ID}");
                 WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
                 WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
-                return null;
             }
 
-            return WIIC.flareups[WIIC.sim.CurSystem.ID];
+            if (WIIC.sim.CompanyTags.Contains("WIIC_extended_contract")) {
+                if (WIIC.cxtendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
+                    return WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
+                }
+                WIIC.modLog.Warn?.Write($"Found company tag indicating extended contract participation, but no matching contract for {WIIC.sim.CurSystem.ID}");
+                WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
+            }
+
+            return null;
         }
 
         public static string forcesToString(int forces) {
@@ -126,10 +132,44 @@ namespace WarTechIIC {
             }
         }
 
+        public static void cleanupFlareupSystem(StarSystem system) {
+            if (WIIC.flareups.ContainsKey(system.ID)) {
+                modLog.Debug?.Write($"Removing flareup at {system.ID}");
+                flareups.Remove(system.ID);
+            }
+
+            if (system == WIIC.sim.CurSystem) {
+                modLog.Debug?.Write($"Player was participating in flareup at {system.ID}; Removing company tags");
+                WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
+                WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
+            }
+
+            // Revert system description to the default
+            if (WIIC.fluffDescriptions.ContainsKey(system.ID)) {
+                modLog.Debug?.Write($"Reverting map description for {system.ID}");
+                AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(system.Def.Description, new object[] { WIIC.fluffDescriptions[system.ID] });
+            }
+
+            redrawMap();
+        }
+
         public static void slowDownFloaties() {
             var playPause = (SGTimePlayPause)AccessTools.Field(typeof(SGRoomController_Ship), "TimePlayPause").GetValue(WIIC.sim.RoomManager.ShipRoom);
             var floatyStack = (SGTimeFloatyStack)AccessTools.Field(typeof(SGTimePlayPause), "eventFloatyToasts").GetValue(playPause);
             floatyStack.timeBetweenFloaties = 0.5f;
+        }
+
+        public static double getReputationMultiplier(FactionValue faction) {
+            // The enum for "ALLIED" is the same as "HONORED". HBS_why.
+            // Apparently the player is also allied to the locals? HBS_why_9000
+            if (WIIC.sim.IsFactionAlly(faction) && faction.Name != "Locals") {
+                WIIC.modLog.Trace?.Write($"Allied with {faction.Name}, reputationMultiplier is {WIIC.settings.reputationMultiplier["ALLIED"]}");
+                return WIIC.settings.reputationMultiplier["ALLIED"];
+            }
+
+            SimGameReputation reputation = WIIC.sim.GetReputation(faction);
+            WIIC.modLog.Trace?.Write($"{faction.Name} is {reputation.ToString()}, reputationMultiplier is {WIIC.settings.reputationMultiplier[reputation.ToString()]}");
+            return WIIC.settings.reputationMultiplier[reputation.ToString()];
         }
     }
 }

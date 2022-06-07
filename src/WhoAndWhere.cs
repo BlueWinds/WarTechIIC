@@ -66,14 +66,12 @@ namespace WarTechIIC {
             double raidChance = Utilities.statOrDefault("WIIC_dailyRaidChance", WIIC.settings.dailyRaidChance);
             WIIC.modLog.Debug?.Write($"Checking for new flareup: {rand} flareupChance: {flareupChance}, raidChance: {raidChance}");
 
-            string type = "";
+            ExtendedContractType type;
             if (rand < flareupChance) {
-                type = "Attack";
+                type = Flareup.Attack;
             } else if (rand < flareupChance + raidChance) {
-                type = "Raid";
-            }
-
-            if (type == "") {
+                type = Flareup.Raid;
+            } else {
                 return false;
             }
 
@@ -106,7 +104,7 @@ namespace WarTechIIC {
             if (weightedTypes.Count == 0) { return false; }
 
             ExtendedContractType type = WIIC.extendedContractTypes[Utilities.WeightedChoice(weightedTypes)];
-            (StarSystem system, FactionValue attacker) = getAttackerAndLocation("Raid", type.attacker, type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray());
+            (StarSystem system, FactionValue attacker) = getAttackerAndLocation(Flareup.Raid, type.attacker, type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray());
 
             ExtendedContract contract = new ExtendedContract(system, attacker, type);
             WIIC.extendedContracts[system.ID] = contract;
@@ -147,7 +145,7 @@ namespace WarTechIIC {
             return employers;
         }
 
-        public static (StarSystem, FactionValue) getAttackerAndLocation(string type, string[] potentialAttackers, RequirementDef[] requirementList) {
+        public static (StarSystem, FactionValue) getAttackerAndLocation(ExtendedContractType type, string[] potentialAttackers, RequirementDef[] requirementList) {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
             var reputations = new Dictionary<FactionValue, double>();
@@ -175,17 +173,14 @@ namespace WarTechIIC {
                 }
 
                 if (!reputations.ContainsKey(defender)) {
-                    SimGameReputation reputation = WIIC.sim.GetReputation(defender);
-                    reputations[defender] = s.reputationMultiplier[reputation.ToString()];
-                    // The enum for "ALLIED" is the same as "HONORED". HBS_why.
-                    if (WIIC.sim.IsFactionAlly(defender)) {
-                        reputations[defender] = s.reputationMultiplier["ALLIED"];
-                    }
+                    reputations[defender] = Utilities.getReputationMultiplier(defender);
                 }
 
                 FakeVector3 p1 = system.Def.Position;
                 FakeVector3 p2 = WIIC.sim.CurSystem.Def.Position;
-                double distanceMult = 1 / (s.distanceFactor + Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)));
+                double distance = Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+                double distanceMult = 1 / (s.distanceFactor + distance);
+                WIIC.modLog.Trace?.Write($"{system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, distance {distance}, defender {defender.Name}");
 
                 Action<FactionValue> considerAttacker = (FactionValue attacker) => {
                     if (s.ignoreFactions.Contains(attacker.Name)) {
@@ -197,13 +192,9 @@ namespace WarTechIIC {
                     }
 
                     if (!reputations.ContainsKey(attacker)) {
-                        SimGameReputation reputation = WIIC.sim.GetReputation(attacker);
-                        reputations[attacker] = s.reputationMultiplier[reputation.ToString()];
-                        // The enum for "ALLIED" is the same as "HONORED". HBS_why.
-                        if (WIIC.sim.IsFactionAlly(defender)) {
-                            reputations[attacker] = s.reputationMultiplier["ALLIED"];
-                        }
+                        reputations[attacker] = Utilities.getReputationMultiplier(attacker);
                     }
+
                     if (!aggressions.ContainsKey(attacker)) {
                         double aggression = s.aggression.ContainsKey(attacker.Name) ? s.aggression[attacker.Name] : 1;
                         aggressions[attacker] = Utilities.statOrDefault($"WIIC_{attacker.Name}_aggression", aggression);
@@ -218,21 +209,23 @@ namespace WarTechIIC {
                         weightedLocations[(system, attacker)] = 0;
                     }
 
-                    weightedLocations[(system, attacker)] += aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
+                    double weight = aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
+                    WIIC.modLog.Trace?.Write($"    {attacker.Name}: {weightedLocations[(system, attacker)]} + {weight} from rep[att] {reputations[attacker]}, rep[def] {reputations[defender]}, mult {distanceMult}, hatred[(att, def)] {hatred[(attacker, defender)]}");
+                    weightedLocations[(system, attacker)] += weight;
                 };
 
                 foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
                     considerAttacker(neighbor.OwnerValue);
                 }
 
-                if (type == "Attack") {
+                if (type == Flareup.Attack) {
                     foreach (string faction in factionInvasionTags.Keys) {
                         if (system.Tags.ContainsAny(factionInvasionTags[faction], false)) {
                             considerAttacker(FactionEnumeration.GetFactionByName(faction));
                         }
                     }
                 }
-                if (type == "Raid") {
+                if (type == Flareup.Raid) {
                     foreach (string faction in factionActivityTags.Keys) {
                         if (system.Tags.ContainsAny(factionActivityTags[faction], false)) {
                             considerAttacker(FactionEnumeration.GetFactionByName(faction));

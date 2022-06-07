@@ -9,8 +9,8 @@ namespace WarTechIIC {
     public static class TaskTimelineWidget_RemoveEntry_Patch {
         static bool Prefix(WorkOrderEntry entry) {
             try {
-                Flareup flareup = Utilities.currentFlareup();
-                if (flareup != null && flareup.workOrder == entry) {
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                if (extendedContract != null && extendedContract.workOrder == entry) {
                     return false;
                 }
             } catch (Exception e) {
@@ -26,12 +26,12 @@ namespace WarTechIIC {
             WIIC.modLog.Debug?.Write("TaskTimelineWidget.RegenerateEntries");
 
             try {
-                Flareup flareup = Utilities.currentFlareup();
-                if (flareup == null) {
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                if (extendedContract == null) {
                     return;
                 }
 
-                __instance.AddEntry(flareup.workOrder, false);
+                __instance.AddEntry(extendedContract.workOrder, false);
                 __instance.RefreshEntries();
             }
             catch (Exception e) {
@@ -44,13 +44,13 @@ namespace WarTechIIC {
     public static class TaskTimelineWidget_OnTaskDetailsClicked_Patch {
         static void Postfix(TaskManagementElement element) {
             try {
-                Flareup flareup = Utilities.currentFlareup();
-                if (element.Entry.ID != "nextflareupContract" || flareup == null) {
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                if (extendedContract == null || (element.Entry.ID != "nextflareupContract" && element.Entry.ID != "extendedContractComplete")) {
                     return;
                 }
 
                 WIIC.sim.SetTimeMoving(false);
-                PauseNotification.Show("Flareup Details", flareup.getDescription(), WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), "", true, null);
+                PauseNotification.Show("{extendedContract.type} Details", extendedContract.getDescription(), WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), "", true, null);
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
