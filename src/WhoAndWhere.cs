@@ -10,14 +10,12 @@ namespace WarTechIIC {
     public class WhoAndWhere {
         private static Dictionary<string, TagSet> factionActivityTags = new Dictionary<string, TagSet>();
         private static Dictionary<string, TagSet> factionInvasionTags = new Dictionary<string, TagSet>();
-        private static TagSet cantBeAttackedTags;
         public static TagSet clearEmployersTags;
 
         public static void init() {
             Settings s = WIIC.settings;
             FactionValue invalid = FactionEnumeration.GetInvalidUnsetFactionValue();
 
-            cantBeAttackedTags = new TagSet(s.cantBeAttackedTags);
             clearEmployersTags = new TagSet(s.clearEmployersAndTargetsForSystemTags);
 
             // Initializing tagsets for use when creating flareups
@@ -138,16 +136,19 @@ namespace WarTechIIC {
                     continue;
                 }
 
-                if (system.Tags.ContainsAny(cantBeAttackedTags, false)) {
-                    continue;
-                }
-
                 if (!reputations.ContainsKey(defender)) {
                     SimGameReputation reputation = WIIC.sim.GetReputation(defender);
                     reputations[defender] = s.reputationMultiplier[reputation.ToString()];
                     // The enum for "ALLIED" is the same as "HONORED". HBS_why.
                     if (WIIC.sim.IsFactionAlly(defender)) {
                         reputations[defender] = s.reputationMultiplier["ALLIED"];
+                    }
+                }
+
+                double systemMultiplier = 1;
+                foreach (string tag in s.systemAggressionByTag.Keys) {
+                    if (system.Tags.Contains(tag)) {
+                        systemMultiplier *= s.systemAggressionByTag[tag];
                     }
                 }
 
@@ -187,11 +188,10 @@ namespace WarTechIIC {
                         weightedLocations[(system, attacker)] = 0;
                     }
 
-                    weightedLocations[(system, attacker)] += aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
+                    weightedLocations[(system, attacker)] += systemMultiplier * aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
                 };
 
                 foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
-
                     considerAttacker(neighbor.OwnerValue);
                 }
 

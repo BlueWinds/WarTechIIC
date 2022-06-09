@@ -72,6 +72,13 @@ namespace WarTechIIC {
             attackerStrength = s.attackStrength.TryGetValue(attacker.Name, out v) ? v : s.defaultAttackStrength;
             defenderStrength = s.defenseStrength.TryGetValue(location.OwnerValue.Name, out v) ? v : s.defaultDefenseStrength;
 
+            foreach (string tag in s.addStrengthTags.Keys) {
+                if (location.Tags.Contains(tag)) {
+                    attackerStrength += s.addStrengthTags[tag];
+                    defenderStrength += s.addStrengthTags[tag];
+                }
+            }
+
             attackerStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
             defenderStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
 

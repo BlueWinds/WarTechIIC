@@ -27,9 +27,10 @@
     "ComStar",
     "ClanDiamondShark"
   ],
-  "cantBeAttackedTags": [
-    "planet_Sol"
-  ],
+  "systemAggressionByTag": {
+    "planet_Sol": 0,
+    "planet_factory": 2
+  },
   "reputationMultiplier": {
     "LOATHED": 5.0,
     "HATED": 3.0,
@@ -94,6 +95,9 @@
     "Outworld": 19,
     "Ives": 21,
     "WordOfBlake": 25
+  },
+  "addStrengthTags": {
+    "planet_factory": 10
   },
   "raidStrengthMultiplier": 0.75,
 
