@@ -25,10 +25,10 @@ namespace WarTechIIC {
         private static Regex DEFENDER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_defender_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
         // WIIC_add_ives_rebellion_to_systemdef_Sol
-        private static Regex ADD_SYSTEM_TAG = new Regex("^WIIC_add_(?<faction>.*?)_to_(?<system>.*?)$", RegexOptions.Compiled);
+        private static Regex ADD_SYSTEM_TAG = new Regex("^WIIC_add_(?<tag>.*?)_to_(?<system>.*?)$", RegexOptions.Compiled);
 
         // WIIC_remove_ives_rebellion_from_systemdef_Sol
-        private static Regex REMOVE_SYSTEM_TAG = new Regex("^WIIC_remove_(?<faction>.*?)_from_(?<system>.*?)$", RegexOptions.Compiled);
+        private static Regex REMOVE_SYSTEM_TAG = new Regex("^WIIC_remove_(?<tag>.*?)_from_(?<system>.*?)$", RegexOptions.Compiled);
 
         public static void Prefix(ref SimGameEventResult result) {
             Settings s = WIIC.settings;

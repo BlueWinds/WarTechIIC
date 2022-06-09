@@ -23,7 +23,7 @@ namespace WarTechIIC {
         public Dictionary<string, double> aggression = new Dictionary<string, double>();
 
         public List<string> cantBeAttacked = new List<string>();
-        public List<string> cantBeAttackedTags = new List<string>();
+        public Dictionary<string, double> systemAggressionByTag = new Dictionary<string, double>();
 
         public Dictionary<string, Dictionary<string, double>> hatred = new Dictionary<string, Dictionary<string, double>>();
         public bool limitTargetsToFactionEnemies = true;
@@ -38,6 +38,8 @@ namespace WarTechIIC {
         public int strengthVariation = 0;
         public Dictionary<string, int> attackStrength = new Dictionary<string, int>();
         public Dictionary<string, int> defenseStrength = new Dictionary<string, int>();
+        public Dictionary<string, int> addStrengthTags = new Dictionary<string, int>();
+
         public double raidStrengthMultiplier = 1.0;
 
         public string minReputationToHelpAttack = "INDIFFERENT";

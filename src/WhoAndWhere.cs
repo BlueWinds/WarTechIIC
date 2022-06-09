@@ -10,14 +10,12 @@ namespace WarTechIIC {
     public class WhoAndWhere {
         private static Dictionary<string, TagSet> factionActivityTags = new Dictionary<string, TagSet>();
         private static Dictionary<string, TagSet> factionInvasionTags = new Dictionary<string, TagSet>();
-        private static TagSet cantBeAttackedTags;
         public static TagSet clearEmployersTags;
 
         public static void init() {
             Settings s = WIIC.settings;
             FactionValue invalid = FactionEnumeration.GetInvalidUnsetFactionValue();
 
-            cantBeAttackedTags = new TagSet(s.cantBeAttackedTags);
             clearEmployersTags = new TagSet(s.clearEmployersAndTargetsForSystemTags);
 
             // Initializing tagsets for use when creating flareups
@@ -163,10 +161,6 @@ namespace WarTechIIC {
                     continue;
                 }
 
-                if (system.Tags.ContainsAny(cantBeAttackedTags, false)) {
-                    continue;
-                }
-
                 // ExtendedContractTypes may have a requirementList, while Flareups don't havy any option to configure one.
                 if (requirementList != null && !requirementList.All(r => SimGameState.MeetsRequirements(r, system.Tags, system.Stats))) {
                     continue;
@@ -174,6 +168,13 @@ namespace WarTechIIC {
 
                 if (!reputations.ContainsKey(defender)) {
                     reputations[defender] = Utilities.getReputationMultiplier(defender);
+                }
+
+                double systemMultiplier = 1;
+                foreach (string tag in s.systemAggressionByTag.Keys) {
+                    if (system.Tags.Contains(tag)) {
+                        systemMultiplier *= s.systemAggressionByTag[tag];
+                    }
                 }
 
                 FakeVector3 p1 = system.Def.Position;
@@ -209,8 +210,8 @@ namespace WarTechIIC {
                         weightedLocations[(system, attacker)] = 0;
                     }
 
-                    double weight = aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
-                    WIIC.modLog.Trace?.Write($"    {attacker.Name}: {weightedLocations[(system, attacker)]} + {weight} from rep[att] {reputations[attacker]}, rep[def] {reputations[defender]}, mult {distanceMult}, hatred[(att, def)] {hatred[(attacker, defender)]}");
+                    double weight = systemMultiplier * aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
+                    WIIC.modLog.Trace?.Write($"    {attacker.Name}: {weightedLocations[(system, attacker)]} + {weight} from systemMultiplier {systemMultiplier}, rep[att] {reputations[attacker]}, rep[def] {reputations[defender]}, mult {distanceMult}, hatred[(att, def)] {hatred[(attacker, defender)]}");
                     weightedLocations[(system, attacker)] += weight;
                 };
 
