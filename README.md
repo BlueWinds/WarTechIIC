@@ -124,24 +124,31 @@ Extended Contract Types are defined each in their own json files, loaded as any 
 All the top-level properties explained below are required.
 
 - The `name` is displayed to the player in various ways as the contract progresses.
-- This type of extended contract can only spawn if `companyRequirements` is met. **Only `Company` scope requirements are supported - all others will be ignored.**
+- This type of extended contract can only spawn if `companyRequirements` is met. `StarSystem` scope requirements are checked against the location of the extended contract, not against the player's current location.
 - When WIIC decides to spawn a extended contract, it does so based on their `weight`s. Higher weights are more likely to be selected.
-- `hireContract` is the ID of the travel contract WIIC will use to let the player get involved. This is always spawned as a travel contract, and no actual drop will occur.
-- `employer` determines who might potentially hire the player, and is an array of one or more of:
-  - `Any`: Any faction not in WIIC's settings.json `ignoreFactions` or `wontHirePlayer`.
-  - `Allied`: Any faction the player is allied to, other than those in `ignoreFactions` or `wontHirePlayer`.
-  - Any faction ID (eg. `ClanJadeFalcon`). They can potentially hire the player even if they're in `ignoreFactions` / `wontHirePlayer`.
-- Each ExtendedContractType has a `spawnLocation`, which is an array of one or more of:
-  - `OwnSystem`: This extended contract can spawns on a world the employer controls.
-  - `EnemySystem`: This extended contract can spawn on a world controlled by the employer's enemy (within one jump of a system the employer controls).
-  - Any system tag (eg. `planet_other_pirate`). This ignores jump distance / planetary control.
-- And finally, there is `target` - this is determined after employer and system are chosen, and is one of:
-  - `Employer`: The OpFor will be your employer.
+- `employer` is a list of strings, with exact meaning determined by `spawnLocation`. See below.
+- Each ExtendedContractType has a `spawnLocation`, which describes the *relationship between the owner of the star system and the* `employer`. It is one of:
+  - `Any`: The employer doesn't need any specific relation to the system controller. Valid entries in `employer` are:
+    - `Any` is not a valid `employer` when `spawnLocation` is also `Any`.
+    - `OwnSystem`: The extended contract can spawn on any world, and the employer will be the system owner.
+    - `Allied`: The extended contract can spawn on any world. The employer will be any faction faction the player is allied to.
+    - Any faction ID (eg. `ClanJadeFalcon`): The extended contract can spawn on any world, and this faction will be the employer.
+  - `OwnSystem`: The system owner and the employer are the same faction. Valid entries in `employer` are:
+    - `Any`: Any system owner not in `ignoreFactions` / `wontHirePlayer` can hire the player.
+    - `OwnSystem` is not a valid `employer` when `spawnLocation` is also `OwnSystem`.
+    - `Allied`: The extended contract can spawn on any world whose controller is allied to the player.
+    - Any faction ID (eg. `ClanJadeFalcon`): The extended contract can spawn on any world controlled by this faction.
+  - `NearbyEnemy`: The employer must be an enemy of the system owner who controls a system nearby (within one jump of a system the employer controls). Valid entries in `employer` are:
+    - `Any`: Any enemy of the system owner that controls a nearby system and isn't in `ignoreFactions` / `wontHirePlayer` can be the employer.
+    - `OwnSystem` is not a valid `employer` when `spawnLocation` is `NearbyEnemy`.
+    - `Allied`: Any enemy of the system owner that controls a nearby system and is allied to the player can be the employer.
+    - Any faction ID (eg. `ClanJadeFalcon`): If the system owner is an enemy of the listed faction, and the listed faction controls a world within one jump, they can be the employer.
+- And finally, there is `target` - this is determined after employer and system are chosen, and is an array of one or more of:
+  - `Employer`: The OpFor will be the same as the employer.
   - `SystemOwner`: The OpFor will be the whoever owns the system.
-  - `NearbyEnemy`: The OpFor will be randomly chosen from
-    - A random enemy of your employer that controls a system within one jump
-    - Locals.
+  - `NearbyEnemy`: The OpFor will be randomly chosen enemies of your employer that control a system within one jump
   - Any faction ID (eg. `ClanJadeFalcon`). The target will be this faction, even if they don't control any systems in the area.
+- `hireContract` is the ID of the travel contract WIIC will use to let the player get involved. This is always spawned as a travel contract, and no actual drop will occur.
 - `availableFor` determines how long the travel contract will be available, min and max days. Once it expires, the extended contract disappears, never to be seen again.
 - `schedule` is an array of strings, each one referencing an item in `entries` (see below). These occur each day in order, and when the player reaches the end, the extended contract is over.
 - `entries` is an object of "day definitions", expanding on what each entry in the `schedule` means. These objects have a large number of options, described below in their own section.
@@ -173,13 +180,6 @@ Each entry is defined by an ID (the key, used in the extended contract type's `s
 ## Generating Extended Contracts
 Each day, after checking for flareups and raids if there are fewer than `maxAvailableExtendedContracts` available, WIIC decides if it should generate a new one. If there are currently no extended contracts available, it uses `dailyExtConChanceIfNoneAvailable` as the chance. If one or more already exist, it instead uses `dailyExtConChanceIfSomeAvailable`.
 
-If it decides to offer the player a new extended contract, it generates a list of all the extended contract types for which the player qualifies (based on their `companyRequirements`s), weighted by their `weight`s, and picks one.
-
-With that configured, it works like so:
-  - Determine the list of valid employers, based on `Employer`.
-  - Iterates over every system on the map. For each one, it may be the location of the contract if:
-    - `spawnLocation` contains `EnemySystem` and a system within one jump is controlled by a valid employer who considers the owner an enemy.
-    - `spawnLocation` contains `OwnSystem`, and the owner is a valid employer.
-    - `spawnLocation` contains a system tag that the system has.
-  - The location is chosen from the list of valid planets, weighted systems near the player with the same math as for Flareups: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`. If `spawnLocation` is `EnemySystem`, this is also weighted by number of nearby enemy systems.
-  - Finally, the OpFor of the extended contract is chosen based on the `target` of the ExtendedContractType.
+- If it decides to offer the player a new extended contract, it generates a list of all the extended contract types for which the player qualifies (based on their `companyRequirements`s), weighted by their `weight`s, and picks one.
+- Builds a list of all valid employer and location pairs, as described by `spawnLocation` and the `employer` array. These are weighted by the distance multiplier, as Flareups: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`. Systems near the player are more likely to be chosen than those far across the map.
+- Finally, it determines the target of the contract based on the `target` array.

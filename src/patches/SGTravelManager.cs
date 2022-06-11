@@ -19,7 +19,7 @@ namespace WarTechIIC {
 
                 Flareup flareup = WIIC.flareups[WIIC.sim.CurSystem.ID];
 
-                string text = Strings.T("We've arrived at {0}, Commander. The system is currently controlled by {1}, but {2} will attack it soon. If we have good enough reputation with one or both factions, they may have a contract for us to sign on with their side.", flareup.location.Name, flareup.location.OwnerValue.FactionDef.ShortName, flareup.attacker.FactionDef.ShortName);
+                string text = Strings.T("We've arrived at {0}, Commander. The system is currently controlled by {1}, but {2} will attack it soon. If we have good enough reputation with one or both factions, they may have a contract for us to sign on with their side.", flareup.location.Name, flareup.location.OwnerValue.FactionDef.ShortName, flareup.employer.FactionDef.ShortName);
                 WIIC.modLog.Debug?.Write(text);
 
 

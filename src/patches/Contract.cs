@@ -10,7 +10,7 @@ namespace WarTechIIC {
                 Settings s = WIIC.settings;
                 WIIC.modLog.Debug?.Write($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}");
 
-                Flareup flareup = Utilities.currentFlareup();
+                Flareup flareup = Utilities.currentExtendedContract() as Flareup;
                 if (flareup == null || __instance.Name != flareup.currentContractName) {
                     return;
                 }

@@ -57,11 +57,15 @@ namespace WarTechIIC
                             jdata = reader.ReadToEnd();
                         }
                         ExtendedContractType ect = JsonConvert.DeserializeObject<ExtendedContractType>(jdata);
+                        ect.validate();
                         extendedContractTypes[ect.name] = ect;
                     } catch (Exception e) {
                         WIIC.modLog.Error?.Write(e);
                     }
                 }
+
+                extendedContractTypes["Attack"] = Flareup.Attack;
+                extendedContractTypes["Raid"] = Flareup.Raid;
             }
 
             WhoAndWhere.init();

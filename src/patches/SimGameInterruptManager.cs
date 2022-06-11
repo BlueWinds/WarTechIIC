@@ -7,8 +7,8 @@ namespace WarTechIIC {
     public static class SimGameInterruptManager_IsOpen_Patch {
         public static void Postfix(ref bool __result) {
             try {
-                Flareup flareup = Utilities.currentFlareup();
-                if (flareup != null && flareup.currentContractName != "") {
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                if (extendedContract != null && extendedContract.currentContractName != "") {
                     __result = true;
                 }
             }

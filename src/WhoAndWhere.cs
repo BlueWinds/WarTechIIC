@@ -73,10 +73,9 @@ namespace WarTechIIC {
                 return false;
             }
 
-            string[] attackers = WIIC.settings.limitTargetsToFactionEnemies ? (new string[] {"Enemy"}) : (new string[] {"Any"});
-            (StarSystem system, FactionValue attacker) = getAttackerAndLocation(type, attackers, null);
+            (StarSystem system, FactionValue employer) = getFlareupEmployerAndLocation(type);
 
-            Flareup flareup = new Flareup(system, attacker, type);
+            Flareup flareup = new Flareup(system, employer, type);
             WIIC.flareups[system.ID] = flareup;
             return true;
         }
@@ -102,9 +101,11 @@ namespace WarTechIIC {
             if (weightedTypes.Count == 0) { return false; }
 
             ExtendedContractType type = WIIC.extendedContractTypes[Utilities.WeightedChoice(weightedTypes)];
-            (StarSystem system, FactionValue attacker) = getAttackerAndLocation(Flareup.Raid, type.attacker, type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray());
+            RequirementDef[] systemReqs = type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray();
+            (StarSystem system, FactionValue employer) = getExtendedEmployerAndLocation(type.employer, type.spawnLocation, systemReqs);
+            FactionValue target = getExtendedTarget(system, employer, type.target);
 
-            ExtendedContract contract = new ExtendedContract(system, attacker, type);
+            ExtendedContract contract = new ExtendedContract(system, employer, target, type);
             WIIC.extendedContracts[system.ID] = contract;
 
             return true;
@@ -143,7 +144,14 @@ namespace WarTechIIC {
             return employers;
         }
 
-        public static (StarSystem, FactionValue) getAttackerAndLocation(ExtendedContractType type, string[] potentialAttackers, RequirementDef[] requirementList) {
+        public static double getDistanceMultiplier(StarSystem system) {
+            FakeVector3 p1 = system.Def.Position;
+            FakeVector3 p2 = WIIC.sim.CurSystem.Def.Position;
+            double distance = Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+            return 1 / (WIIC.settings.distanceFactor + distance);
+        }
+
+        public static (StarSystem, FactionValue) getFlareupEmployerAndLocation(ExtendedContractType type) {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
             var reputations = new Dictionary<FactionValue, double>();
@@ -151,23 +159,18 @@ namespace WarTechIIC {
             var hatred = new Dictionary<(FactionValue, FactionValue), double>();
 
             foreach (StarSystem system in WIIC.sim.StarSystems) {
-                FactionValue defender = system.OwnerValue;
+                FactionValue owner = system.OwnerValue;
 
                 if (WIIC.flareups.ContainsKey(system.ID) || Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
                     continue;
                 }
 
-                if (s.ignoreFactions.Contains(defender.Name) || s.cantBeAttacked.Contains(defender.Name)) {
+                if (s.ignoreFactions.Contains(owner.Name) || s.cantBeAttacked.Contains(owner.Name)) {
                     continue;
                 }
 
-                // ExtendedContractTypes may have a requirementList, while Flareups don't havy any option to configure one.
-                if (requirementList != null && !requirementList.All(r => SimGameState.MeetsRequirements(r, system.Tags, system.Stats))) {
-                    continue;
-                }
-
-                if (!reputations.ContainsKey(defender)) {
-                    reputations[defender] = Utilities.getReputationMultiplier(defender);
+                if (!reputations.ContainsKey(owner)) {
+                    reputations[owner] = Utilities.getReputationMultiplier(owner);
                 }
 
                 double systemMultiplier = 1;
@@ -177,59 +180,55 @@ namespace WarTechIIC {
                     }
                 }
 
-                FakeVector3 p1 = system.Def.Position;
-                FakeVector3 p2 = WIIC.sim.CurSystem.Def.Position;
-                double distance = Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
-                double distanceMult = 1 / (s.distanceFactor + distance);
-                WIIC.modLog.Trace?.Write($"{system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, distance {distance}, defender {defender.Name}");
+                double distanceMult = getDistanceMultiplier(system);
+                WIIC.modLog.Trace?.Write($"Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
 
-                Action<FactionValue> considerAttacker = (FactionValue attacker) => {
-                    if (s.ignoreFactions.Contains(attacker.Name)) {
+                Action<FactionValue> considerEmployer = (FactionValue employer) => {
+                    if (s.ignoreFactions.Contains(employer.Name)) {
                         return;
                     }
 
-                    if (!matchesAttackers(attacker, potentialAttackers, system.OwnerValue)) {
+                    // Factions only attack themselves if they are their own enemy (eg, extremely fractured factions).
+                    if ((s.limitTargetsToFactionEnemies || employer == system.OwnerValue) && !employer.FactionDef.Enemies.Contains(owner.Name)) {
                         return;
                     }
 
-                    if (!reputations.ContainsKey(attacker)) {
-                        reputations[attacker] = Utilities.getReputationMultiplier(attacker);
+                    if (!reputations.ContainsKey(employer)) {
+                        reputations[employer] = Utilities.getReputationMultiplier(employer);
                     }
 
-                    if (!aggressions.ContainsKey(attacker)) {
-                        double aggression = s.aggression.ContainsKey(attacker.Name) ? s.aggression[attacker.Name] : 1;
-                        aggressions[attacker] = Utilities.statOrDefault($"WIIC_{attacker.Name}_aggression", aggression);
+                    if (!aggressions.ContainsKey(employer)) {
+                        aggressions[employer] = Utilities.getAggression(employer);
                     }
 
-                    if (!hatred.ContainsKey((attacker, defender))) {
-                        double hate = s.hatred.ContainsKey(attacker.Name) && s.hatred[attacker.Name].ContainsKey(defender.Name) ? s.hatred[attacker.Name][defender.Name] : 1;
-                        hatred[(attacker, defender)] = Utilities.statOrDefault($"WIIC_{attacker.Name}_hates_{defender.Name}", hate);
+                    if (!hatred.ContainsKey((employer, owner))) {
+                        hatred[(employer, owner)] = Utilities.getHatred(employer, owner);
                     }
 
-                    if (!weightedLocations.ContainsKey((system, attacker))) {
-                        weightedLocations[(system, attacker)] = 0;
+                    if (!weightedLocations.ContainsKey((system, employer))) {
+                        weightedLocations[(system, employer)] = 0;
                     }
 
-                    double weight = systemMultiplier * aggressions[attacker] * (reputations[attacker] + reputations[defender]) * distanceMult * hatred[(attacker, defender)];
-                    WIIC.modLog.Trace?.Write($"    {attacker.Name}: {weightedLocations[(system, attacker)]} + {weight} from systemMultiplier {systemMultiplier}, rep[att] {reputations[attacker]}, rep[def] {reputations[defender]}, mult {distanceMult}, hatred[(att, def)] {hatred[(attacker, defender)]}");
-                    weightedLocations[(system, attacker)] += weight;
+                    double weight = systemMultiplier * aggressions[employer] * (reputations[employer] + reputations[owner]) * distanceMult * hatred[(employer, owner)];
+                    WIIC.modLog.Trace?.Write($"    {employer.Name}: {weightedLocations[(system, employer)]} + {weight} from systemMultiplier {systemMultiplier}, rep[att] {reputations[employer]}, rep[own] {reputations[owner]}, mult {distanceMult}, hatred[(att, own)] {hatred[(employer, owner)]}");
+                    weightedLocations[(system, employer)] += weight;
                 };
 
                 foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
-                    considerAttacker(neighbor.OwnerValue);
+                    considerEmployer(neighbor.OwnerValue);
                 }
 
                 if (type == Flareup.Attack) {
                     foreach (string faction in factionInvasionTags.Keys) {
                         if (system.Tags.ContainsAny(factionInvasionTags[faction], false)) {
-                            considerAttacker(FactionEnumeration.GetFactionByName(faction));
+                            considerEmployer(FactionEnumeration.GetFactionByName(faction));
                         }
                     }
                 }
                 if (type == Flareup.Raid) {
                     foreach (string faction in factionActivityTags.Keys) {
                         if (system.Tags.ContainsAny(factionActivityTags[faction], false)) {
-                            considerAttacker(FactionEnumeration.GetFactionByName(faction));
+                            considerEmployer(FactionEnumeration.GetFactionByName(faction));
                         }
                     }
                 }
@@ -238,14 +237,100 @@ namespace WarTechIIC {
             return Utilities.WeightedChoice(weightedLocations);
         }
 
-        public static bool matchesAttackers(FactionValue attacker, string[] potentialAttackers, FactionValue defender) {
-            foreach (string attackerOption in potentialAttackers) {
-                if (attackerOption == "Self" && attacker == defender) { return true; }
-                if (attackerOption == "Enemy" && attacker.FactionDef.Enemies.Contains(defender.Name)) { return true; }
-                if (attackerOption == "Any" && attacker != defender) { return true; }
-                if (attackerOption == attacker.Name) { return true; }
+        public static (StarSystem, FactionValue) getExtendedEmployerAndLocation(string[] potentialEmployers, SpawnLocation spawnLocation, RequirementDef[] requirementList) {
+            Settings s = WIIC.settings;
+            var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
+
+            foreach (StarSystem system in WIIC.sim.StarSystems) {
+                FactionValue owner = system.OwnerValue;
+
+                if (WIIC.flareups.ContainsKey(system.ID) || Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
+                    continue;
+                }
+
+                if (!requirementList.All(r => SimGameState.MeetsRequirements(r, system.Tags, system.Stats))) {
+                    continue;
+                }
+
+                double distanceMult = getDistanceMultiplier(system);
+                WIIC.modLog.Trace?.Write($"ExtendedCon at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
+
+                foreach (FactionValue employer in potentialExtendedEmployers(system, spawnLocation, potentialEmployers)) {
+                    weightedLocations[(system, employer)] = distanceMult;
+                }
             }
-            return false;
+
+            return Utilities.WeightedChoice(weightedLocations);
+        }
+
+        public static List<FactionValue> potentialExtendedEmployers(StarSystem system, SpawnLocation spawnLocation, string[] potentialEmployers) {
+            Settings s = WIIC.settings;
+            List<FactionValue> employers = new List<FactionValue>();
+            FactionValue owner = system.OwnerValue;
+
+            if (spawnLocation == SpawnLocation.Any) {
+                foreach (string employerOption in potentialEmployers) {
+                    if (employerOption == "Any") { throw new Exception("Any is not a valid employer for spawnLocation Any."); }
+                    else if (employerOption == "OwnSystem") { employers.Add(owner); }
+                    else if (employerOption == "Allied") { employers.AddRange(Utilities.getAllies()); }
+                    else { employers.Add(FactionEnumeration.GetFactionByName(employerOption)); }
+                }
+            } else if (spawnLocation == SpawnLocation.OwnSystem) {
+                foreach (string employerOption in potentialEmployers) {
+                    if (employerOption == "Any" && !s.ignoreFactions.Contains(owner.Name) && !s.wontHirePlayer.Contains(owner.Name)) { employers.Add(owner); }
+                    else if (employerOption == "OwnSystem") { throw new Exception("OwnSystem is not a valid employer for spawnLocation OwnSystem."); }
+                    else if (employerOption == "Allied" && WIIC.sim.IsFactionAlly(owner)) { employers.Add(owner); }
+                    else if (employerOption == owner.Name) { employers.Add(owner); }
+                }
+            } else if (spawnLocation == SpawnLocation.NearbyEnemy) {
+                foreach (string employerOption in potentialEmployers) {
+                    if (employerOption == "Any") {
+                        foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
+                            if (s.ignoreFactions.Contains(neighbor.OwnerValue.Name) || s.wontHirePlayer.Contains(neighbor.OwnerValue.Name)) { continue; }
+                            if (neighbor.OwnerValue.FactionDef.Enemies.Contains(owner.Name)) {
+                                employers.Add(neighbor.OwnerValue);
+                            }
+                        }
+                    }
+                    else if (employerOption == "OwnSystem") { throw new Exception("OwnSystem is not a valid employer for spawnLocation NearbyEnemy."); }
+                    else if (employerOption == "Allied") {
+                        foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
+                            if (neighbor.OwnerValue.FactionDef.Enemies.Contains(owner.Name) && WIIC.sim.IsFactionAlly(neighbor.OwnerValue)) {
+                                employers.Add(neighbor.OwnerValue);
+                            }
+                        }
+                    }
+                    else {
+                        foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
+                            if (neighbor.OwnerValue.Name == employerOption && neighbor.OwnerValue.FactionDef.Enemies.Contains(owner.Name)) {
+                                employers.Add(neighbor.OwnerValue);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return employers.Distinct().ToList();
+        }
+
+        public static FactionValue getExtendedTarget(StarSystem system, FactionValue employer, string[] potentialTargets) {
+            List<FactionValue> factions = new List<FactionValue>();
+            foreach (string target in potentialTargets) {
+                if (target == "Employer") { factions.Add(employer); }
+                else if (target == "SystemOwner") { factions.Add(system.OwnerValue); }
+                else if (target == "NearbyEnemy") {
+                    foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
+                        if (employer.FactionDef.Enemies.Contains(neighbor.OwnerValue.Name)) {
+                            factions.Add(neighbor.OwnerValue);
+                        }
+                    }
+                }
+                else {
+                    factions.Add(FactionEnumeration.GetFactionByName(target));
+                }
+            }
+
+            return Utilities.Choice(factions);
         }
     }
 }

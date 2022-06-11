@@ -99,7 +99,7 @@ namespace WarTechIIC {
                 foreach (Flareup flareup in WIIC.flareups.Values.ToList()) {
                     bool finished = flareup.passDay();
                     if (finished) {
-                        WIIC.cleanupFlareupSystem(flareup.location);
+                        Utilities.cleanupFlareupSystem(flareup.location);
                     } else {
                         if (activeItems.TryGetValue(flareup.workOrder, out var taskManagementElement)) {
                             taskManagementElement.UpdateItem(0);
@@ -111,7 +111,7 @@ namespace WarTechIIC {
                 foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values.ToList()) {
                     bool finished = extendedContract.passDay();
                     if (finished) {
-                        WIIC.extendedContracts.Remove(system.ID);
+                        WIIC.extendedContracts.Remove(extendedContract.locationID);
                     } else {
                         if (activeItems.TryGetValue(extendedContract.workOrder, out var taskManagementElement)) {
                             taskManagementElement.UpdateItem(0);
@@ -177,7 +177,7 @@ namespace WarTechIIC {
                     Flareup flareup = WIIC.flareups[WIIC.sim.CurSystem.ID];
                     if (__state == "wiic_help_defender" || __state == "wiic_raid_defender" || __state == "wiic_helping_defender" || __state == "Wiic_helping_attacker") {
                         __instance.ClearBreadcrumb();
-                        return flareup.acceptContract(__state);
+                        flareup.acceptContract(__state);
                     }
                 }
 
@@ -185,7 +185,7 @@ namespace WarTechIIC {
                     ExtendedContract extendedContract = WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
                     if (__state == extendedContract.extendedType.hireContract) {
                         __instance.ClearBreadcrumb();
-                        return extendedContract.acceptContract(__state);
+                        extendedContract.acceptContract(__state);
                     }
                 }
             } catch (Exception e) {

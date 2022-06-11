@@ -45,7 +45,7 @@ namespace WarTechIIC {
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
 
-                            WIIC.cleanupSystem(system);
+                            Utilities.cleanupFlareupSystem(system);
                             Utilities.applyOwner(system, faction, true);
 
                             result.AddedTags.Remove(addedTag);
@@ -66,7 +66,7 @@ namespace WarTechIIC {
                                 continue;
                             }
 
-                            WIIC.cleanupSystem(system);
+                            Utilities.cleanupFlareupSystem(system);
                             Flareup flareup = new Flareup(system, faction, Flareup.Attack);
                             WIIC.flareups[system.ID] = flareup;
                             Utilities.redrawMap();
@@ -84,7 +84,7 @@ namespace WarTechIIC {
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
-                            WIIC.cleanupSystem(system);
+                            Utilities.cleanupFlareupSystem(system);
                             Flareup flareup = new Flareup(system, faction, Flareup.Raid);
                             WIIC.flareups[system.ID] = flareup;
                             Utilities.redrawMap();

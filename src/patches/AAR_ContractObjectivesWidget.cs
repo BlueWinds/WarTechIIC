@@ -11,7 +11,7 @@ namespace WarTechIIC {
         private static string GUID = "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0";
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
-                Flareup flareup = Utilities.currentFlareup();
+                Flareup flareup = Utilities.currentExtendedContract() as Flareup;
                 Contract contract = Traverse.Create(__instance).Field("theContract").GetValue<Contract>();
 
                 if (flareup == null || flareup.currentContractName != contract.Name) {
@@ -28,7 +28,7 @@ namespace WarTechIIC {
                 WIIC.modLog.Debug?.Write(objectiveString);
 
                 bool won = contract.State == Contract.ContractState.Complete;
-                if ((flareup.employer == flareup.attacker && won) || (flareup.employer == flareup.target && !won)) {
+                if ((flareup.employer == flareup.actualEmployer && won) || (flareup.employer == flareup.target && !won)) {
                     flareup.defenderStrength -= flareup.currentContractForceLoss;
                     WIIC.modLog.Debug?.Write($"defenderStrength -= {flareup.currentContractForceLoss}");
                 } else {

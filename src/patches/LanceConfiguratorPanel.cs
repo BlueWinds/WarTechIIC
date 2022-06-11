@@ -7,9 +7,9 @@ namespace WarTechIIC {
     public static class LanceConfiguratorPanel_OnCancelClicked_Patch {
         public static bool Prefix(SGCmdCenterLanceConfigBG __instance) {
             try {
-                Flareup flareup = Utilities.currentFlareup();
-                WIIC.modLog.Debug?.Write($"LanceConfiguratorPanel.OnCancelClicked. selectedContract: {WIIC.sim.SelectedContract.Name}, flareup: {flareup}");
-                if (flareup != null && WIIC.sim.SelectedContract.Name == flareup.currentContractName) {
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                WIIC.modLog.Debug?.Write($"LanceConfiguratorPanel.OnCancelClicked. selectedContract: {WIIC.sim.SelectedContract.Name}, extendedContract: {extendedContract}");
+                if (extendedContract != null && WIIC.sim.SelectedContract.Name == extendedContract.currentContractName) {
                     return false;
                 }
             }

@@ -9,9 +9,9 @@ namespace WarTechIIC {
     public static class SGContractsWidget_HandleEscapeKeypress_Patch {
         public static bool Prefix(SGContractsWidget __instance) {
             try {
-                Flareup flareup = Utilities.currentFlareup();
-                if (flareup != null && __instance.SelectedContract.Name == flareup.currentContractName) {
-                    WIIC.modLog.Debug?.Write($"Blocking HandleEscapeKeypress. selected: {__instance.SelectedContract.Name}, selectedContract: {__instance.SelectedContract.Name}, flareupContract: {flareup.currentContractName}");
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                if (extendedContract != null && __instance.SelectedContract.Name == extendedContract.currentContractName) {
+                    WIIC.modLog.Debug?.Write($"Blocking HandleEscapeKeypress. selected: {__instance.SelectedContract.Name}, selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
                     return false;
                 }
             }
@@ -26,9 +26,9 @@ namespace WarTechIIC {
     public static class SGContractsWidget_NegotiateContract_Patch {
         public static void Postfix(SGContractsWidget __instance) {
             try {
-                Flareup flareup = Utilities.currentFlareup();
-                if (flareup != null && __instance.SelectedContract.Name == flareup.currentContractName) {
-                    WIIC.modLog.Debug?.Write($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Name}, flareupContract: {flareup.currentContractName}");
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                if (extendedContract != null && __instance.SelectedContract.Name == extendedContract.currentContractName) {
+                    WIIC.modLog.Debug?.Write($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
 
                     HBSButton backButton = (HBSButton)AccessTools.Field(typeof(SGContractsWidget), "NegotiateTitleBackButton").GetValue(__instance);
                     backButton.SetState(ButtonState.Disabled);

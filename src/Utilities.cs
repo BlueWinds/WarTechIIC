@@ -12,6 +12,7 @@ namespace WarTechIIC {
         private static MethodInfo methodSetOwner = AccessTools.Method(typeof(StarSystemDef), "set_OwnerValue");
         private static FieldInfo _fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
         private static FieldInfo _fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
+        private static FieldInfo _fieldGetAlliedFactions = AccessTools.Field(typeof(SimGameState), "AlliedFactions");
 
         public static List<string> deferredToasts = new List<string>();
 
@@ -83,7 +84,7 @@ namespace WarTechIIC {
             return null;
         }
 
-        public static Flareup currentExtendedContract() {
+        public static ExtendedContract currentExtendedContract() {
             // Usually happens from skirmish bay.
             if (WIIC.sim == null) {
                 return null;
@@ -99,7 +100,7 @@ namespace WarTechIIC {
             }
 
             if (WIIC.sim.CompanyTags.Contains("WIIC_extended_contract")) {
-                if (WIIC.cxtendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
+                if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     return WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
                 }
                 WIIC.modLog.Warn?.Write($"Found company tag indicating extended contract participation, but no matching contract for {WIIC.sim.CurSystem.ID}");
@@ -134,19 +135,19 @@ namespace WarTechIIC {
 
         public static void cleanupFlareupSystem(StarSystem system) {
             if (WIIC.flareups.ContainsKey(system.ID)) {
-                modLog.Debug?.Write($"Removing flareup at {system.ID}");
-                flareups.Remove(system.ID);
+                WIIC.modLog.Debug?.Write($"Removing flareup at {system.ID}");
+                WIIC.flareups.Remove(system.ID);
             }
 
             if (system == WIIC.sim.CurSystem) {
-                modLog.Debug?.Write($"Player was participating in flareup at {system.ID}; Removing company tags");
+                WIIC.modLog.Debug?.Write($"Player was participating in flareup at {system.ID}; Removing company tags");
                 WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
                 WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
             }
 
             // Revert system description to the default
             if (WIIC.fluffDescriptions.ContainsKey(system.ID)) {
-                modLog.Debug?.Write($"Reverting map description for {system.ID}");
+                WIIC.modLog.Debug?.Write($"Reverting map description for {system.ID}");
                 AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(system.Def.Description, new object[] { WIIC.fluffDescriptions[system.ID] });
             }
 
@@ -170,6 +171,21 @@ namespace WarTechIIC {
             SimGameReputation reputation = WIIC.sim.GetReputation(faction);
             WIIC.modLog.Trace?.Write($"{faction.Name} is {reputation.ToString()}, reputationMultiplier is {WIIC.settings.reputationMultiplier[reputation.ToString()]}");
             return WIIC.settings.reputationMultiplier[reputation.ToString()];
+        }
+
+        public static double getAggression(FactionValue faction) {
+             double aggression = WIIC.settings.aggression.ContainsKey(faction.Name) ? WIIC.settings.aggression[faction.Name] : 1;
+             return statOrDefault($"WIIC_{faction.Name}_aggression", aggression);
+        }
+
+        public static double getHatred(FactionValue faction, FactionValue target) {
+            double hate = WIIC.settings.hatred.ContainsKey(faction.Name) && WIIC.settings.hatred[faction.Name].ContainsKey(target.Name) ? WIIC.settings.hatred[faction.Name][target.Name] : 1;
+            return statOrDefault($"WIIC_{faction.Name}_hates_{target.Name}", hate);
+        }
+
+        public static List<FactionValue> getAllies() {
+            List<string> allied = (List<string>)_fieldGetAlliedFactions.GetValue(WIIC.sim);
+            return allied.Select(f => FactionEnumeration.GetFactionByName(f)).ToList();
         }
     }
 }
