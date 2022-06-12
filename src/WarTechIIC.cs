@@ -47,7 +47,7 @@ namespace WarTechIIC
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
-        public static void FinishedLoading(List<string> loadOrder, Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources) {
+        public static void FinishedLoading(Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources) {
             if (customResources != null && customResources.ContainsKey("ExtendedContractType")) {
                 foreach (VersionManifestEntry entry in customResources["ExtendedContractType"].Values) {
                     WIIC.modLog.Info?.Write($"Loading ExtendedContractType from {entry.FilePath}.");
@@ -63,9 +63,6 @@ namespace WarTechIIC
                         WIIC.modLog.Error?.Write(e);
                     }
                 }
-
-                extendedContractTypes["Attack"] = Flareup.Attack;
-                extendedContractTypes["Raid"] = Flareup.Raid;
             }
 
             WhoAndWhere.init();
@@ -120,6 +117,11 @@ namespace WarTechIIC
                 modLog.Error?.Write(e);
             }
         }
+
+        public static void removeGlobalContract(string contract) {
+            modLog.Debug?.Write($"Cleaning up contract {contract} at all locations.");
+            sim.GlobalContracts.RemoveAll(c => (c.Override.ID == contract));
+        }
     }
 
     public class GalaxyData {
@@ -150,4 +152,5 @@ namespace WarTechIIC
             WIIC.modLog.Info?.Write($"Created {flareups.Count} flareups based on GalaxyData");
         }
     }
+
 }

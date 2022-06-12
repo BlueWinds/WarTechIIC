@@ -108,6 +108,7 @@ For all company stats, `-1` is a magic value - "ignore this". If present, we'll 
 WarTechIIC modifies several base-game features.
 * Contracts in the current system refresh every time the month rolls over.
 * Contracts in the command center are sorted by difficulty (with travel contracts at the bottom and priority contracts at the top).
+* Contract descriptions can now use `{RES_OBJ}` for self-referencing descriptions ("mad libs"). For example, a contract can use its own name, `{RES_OBJ.Name}`, inside its `shortDescription`.
 
 # Extended Contracts
 In addition to existing Raids and Attacks, there are now "extended contracts", as defined by `ContractOverride` definitions. These are loaded via modtek, like other things that modtek can load. Though similar in some ways to flareups, extended contracts do not use / track combat forces, nor do they appear on the map of have lasting effects on the galactic stage.
@@ -158,24 +159,17 @@ Each entry is defined by an ID (the key, used in the extended contract type's `s
 
   - `triggerEvent` is an array of event IDs. Starting at the beginning, WIIC finds the first event with matching conditions and triggers it. If an event triggers, then everything else that could happen on the day is ignored - no contract or lootbox will be generated.
     - If none of the events trigger, other properties will be checked as normal.
-
   - If no event occurred, here is a `contractChance` chance that a contract will be offered to the player on this day. This defaults to 0 - if you want a contract to spawn, set it! The rest of the options control what sort of contract will be generated.
-    - `contract`: A list of contracts to choose between at random, ignoring planetary difficulty. If empty or not present, then a contract will be chosen by vanilla logic (respecting `allowedContractTypes` below).
-    - `allowedContractTypes`: A list of contract types the extended contract will select between. If the list is empty, then any contract type (including those from vanilla and in WIIC's settings.json `customContractEnums`) is valid.
+    - `contract`: A list of contracts to choose between at random, ignoring planetary difficulty but respecting each contract's `requirementList`. If empty or not present, then a contract will be chosen by vanilla logic (respecting `allowedContractTypes` below).
+    - `allowedContractTypes`: A list of contract types the extended contract will select between. If the list is empty or not present, then any contract type (including those from vanilla and in WIIC's settings.json `customContractEnums`) is valid.
     - `contractPayoutMultiplier`: Pay for this contract is multiplied by this amount.
     - `contractBonusSalvage`: Added to the salvage this contract pays out. Can be negative. The final value will be clamped between 0 and 28 (so as not to break the UI).
-    - `contractMessage`: A string to display in the popup offering the mission to the user. You do not need to explain the `declinePenalty` in here - WIIC will display that to the user separately.
+    - `contractMessage`: A string to display in the popup offering the mission to the user. You do not need to explain the `declinePenalty` in here - WIIC will display that to the user separately. This can contain HBS madlib replacements, such as `{TEAM_EMP.FactionDef.ShortName}` and `{TGT_SYSTEM.Name}`. Notably, you can also access the contract itself under `{RES_OBJ.Name}` and `{RES_OBJ.ContractTypeValue.FriendlyName}` and similar.
     - If the player declines a generated contract, they're given the `declinePenalty`, which is one of:
       - No `declinePenalty` defined: No penalty for declining.
       - `BadFaith`: Reputation penalty as if they'd performed a bad-faith withdrawal.
       - `BreakContract`: Declining this mission terminates the extended contract as if the player had flown away.
-
   - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that. If the player is given a lootbox, no contract will be generated.
-
-  - Garrison Duty, which lasts 30 days and pays out at the end. It has a 20% chance of generating a contract every three days.
-  - Covert Operations, which lasts 15 days (with no contracts) and then three contracts separated by one day each at the end.
-  - Dueling Circuit, which lasts 35 days and spawns a new duel every 7 days.
-  - Training Contract, which works like a normal Flareup except you only fight your employer, and your units are repaired after each contract. No salvage, reduced cash payout.
 
 ## Generating Extended Contracts
 Each day, after checking for flareups and raids if there are fewer than `maxAvailableExtendedContracts` available, WIIC decides if it should generate a new one. If there are currently no extended contracts available, it uses `dailyExtConChanceIfNoneAvailable` as the chance. If one or more already exist, it instead uses `dailyExtConChanceIfSomeAvailable`.
@@ -183,3 +177,9 @@ Each day, after checking for flareups and raids if there are fewer than `maxAvai
 - If it decides to offer the player a new extended contract, it generates a list of all the extended contract types for which the player qualifies (based on their `companyRequirements`s), weighted by their `weight`s, and picks one.
 - Builds a list of all valid employer and location pairs, as described by `spawnLocation` and the `employer` array. These are weighted by the distance multiplier, as Flareups: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`. Systems near the player are more likely to be chosen than those far across the map.
 - Finally, it determines the target of the contract based on the `target` array.
+
+## Extended Contract Ideas
+  - Garrison Duty, which lasts 30 days and pays out at the end. It has a 20% chance of generating a contract every three days.
+  - Covert Operations, which lasts 15 days (with no contracts) and then three contracts separated by one day each at the end.
+  - Dueling Circuit, which lasts 35 days and spawns a new duel every 7 days.
+  - Training Contract, which works like a normal Flareup except you only fight your employer, and your units are repaired after each contract. No salvage, reduced cash payout.

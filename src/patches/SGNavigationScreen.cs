@@ -36,25 +36,11 @@ namespace WarTechIIC {
                         ExtendedContract extendedContract2 = Utilities.currentExtendedContract();
                         WIIC.modLog.Info?.Write("ExtendedContract: {extendedContract2}");
 
-                        if (extendedContract2 != null && extendedContract2.employer.DoesGainReputation) {
-                            WIIC.modLog.Info?.Write("Employer: {extendedContract2.employer}");
 
-                            float employerRepBadFaithMod = WIIC.sim.Constants.Story.EmployerRepBadFaithMod;
-                            WIIC.modLog.Info?.Write("employerRepBadFaithMod: {employerRepBadFaithMod}");
-                            WIIC.modLog.Info?.Write("difficulty: {extendedContract2.location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
-                            int num = (int) Math.Round(extendedContract2.location.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
-
-                            WIIC.sim.SetReputation(extendedContract2.employer, num);
-                            WIIC.sim.SetReputation(FactionEnumeration.GetMercenaryReviewBoardFactionValue(), num);
+                        if (extendedContract2 != null) {
+                            extendedContract2.applyDeclinePenalty(DeclinePenalty.BreakContract);
                         }
 
-                        WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
-                        WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
-
-                        WIIC.extendedContracts.Remove(extendedContract2.location.ID);
-                        WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
-
-                        WIIC.sim.RoomManager.RefreshTimeline(false);
                         WIIC.sim.Starmap.SetActivePath();
                         WIIC.sim.SetSimRoomState(DropshipLocation.SHIP);
 

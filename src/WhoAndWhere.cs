@@ -66,9 +66,9 @@ namespace WarTechIIC {
 
             ExtendedContractType type;
             if (rand < flareupChance) {
-                type = Flareup.Attack;
+                type = WIIC.extendedContractTypes["Attack"];
             } else if (rand < flareupChance + raidChance) {
-                type = Flareup.Raid;
+                type = WIIC.extendedContractTypes["Attack"];
             } else {
                 return false;
             }
@@ -83,17 +83,18 @@ namespace WarTechIIC {
         public static bool checkForNewExtendedContract() {
             Settings s = WIIC.settings;
 
-            if (WIIC.extendedContracts.Count >= s.maxAvailableExtendedContracts) {
-                return false;
-            }
-
             double rand = Utilities.rng.NextDouble();
-            if (WIIC.extendedContracts.Count == 0 && rand > s.dailyExtConChanceIfNoneAvailable) { return false; }
+            WIIC.modLog.Debug?.Write($"Checking for new extended contract: {rand} existing contracts: {WIIC.extendedContracts.Count}, chance if 0: {s.dailyExtConChanceIfNoneAvailable}, chance if < {s.maxAvailableExtendedContracts}: {s.dailyExtConChanceIfSomeAvailable}");
+
+            if (WIIC.extendedContracts.Count >= s.maxAvailableExtendedContracts) { return false; }
             if (WIIC.extendedContracts.Count > 0 && rand > s.dailyExtConChanceIfSomeAvailable) { return false; }
+            if (WIIC.extendedContracts.Count == 0 && rand > s.dailyExtConChanceIfNoneAvailable) { return false; }
 
             Dictionary<string, double> weightedTypes = new Dictionary<string, double>();
             foreach (ExtendedContractType possibleType in WIIC.extendedContractTypes.Values) {
-                if (possibleType.requirementList.Where(r => r.Scope != EventScope.StarSystem).All(r => WIIC.sim.MeetsRequirements(r))) {
+                WIIC.modLog.Debug?.Write($"checkForNewExtendedContract {possibleType.name}");
+                WIIC.modLog.Debug?.Write($"checkForNewExtendedContract {possibleType.requirementList}");
+                if (possibleType.weight > 0 && possibleType.requirementList.Where(r => r.Scope != EventScope.StarSystem).All(r => WIIC.sim.MeetsRequirements(r))) {
                     weightedTypes[possibleType.name] = (double)possibleType.weight;
                 }
             }
@@ -181,7 +182,7 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                WIIC.modLog.Trace?.Write($"Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
+                WIIC.modLog.Trace?.Write($"Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
 
                 Action<FactionValue> considerEmployer = (FactionValue employer) => {
                     if (s.ignoreFactions.Contains(employer.Name)) {
@@ -218,14 +219,14 @@ namespace WarTechIIC {
                     considerEmployer(neighbor.OwnerValue);
                 }
 
-                if (type == Flareup.Attack) {
+                if (type == WIIC.extendedContractTypes["Attack"]) {
                     foreach (string faction in factionInvasionTags.Keys) {
                         if (system.Tags.ContainsAny(factionInvasionTags[faction], false)) {
                             considerEmployer(FactionEnumeration.GetFactionByName(faction));
                         }
                     }
                 }
-                if (type == Flareup.Raid) {
+                if (type == WIIC.extendedContractTypes["Raid"]) {
                     foreach (string faction in factionActivityTags.Keys) {
                         if (system.Tags.ContainsAny(factionActivityTags[faction], false)) {
                             considerEmployer(FactionEnumeration.GetFactionByName(faction));
@@ -253,7 +254,7 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                WIIC.modLog.Trace?.Write($"ExtendedCon at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
+                WIIC.modLog.Trace?.Write($"Potential ExtendedCon at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
 
                 foreach (FactionValue employer in potentialExtendedEmployers(system, spawnLocation, potentialEmployers)) {
                     weightedLocations[(system, employer)] = distanceMult;

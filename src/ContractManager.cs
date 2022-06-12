@@ -32,7 +32,7 @@ namespace WarTechIIC {
         private static FieldInfo _fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
         private static FieldInfo _fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
 
-        public static Contract getNewProceduralContract(StarSystem system, FactionValue employer, FactionValue target) {
+        public static Contract getNewProceduralContract(StarSystem system, FactionValue employer, FactionValue target, int[] validTypes) {
             // In order to force a given employer and target, we have to temoporarily munge the system we're in, such that
             // our employer/target are the only valid ones. We undo this at the end of getNewProceduralContract.
             var oldEmployers = (List<string>)_fieldSetContractEmployers.GetValue(system.Def);
@@ -57,7 +57,9 @@ namespace WarTechIIC {
             int maxClamped = (int)AccessTools.Field(Diff, "MaxDifficultyClamped").GetValue(difficultyRange);
             WIIC.modLog.Debug?.Write($"difficultyRange: MinDifficulty {min}, MaxDifficulty {max}, MinClamped {minClamped}, MaxClamped {maxClamped}");
 
-            var validTypes = contractTypes.AddRangeToArray(WIIC.settings.customContractEnums.ToArray());
+            if (validTypes.Length == 0) {
+                validTypes = contractTypes.AddRangeToArray(WIIC.settings.customContractEnums.ToArray());
+            }
 
             var potentialContracts = (Dictionary<int, List<ContractOverride>>)_getContractOverrides.Invoke(WIIC.sim, new object[] { difficultyRange, validTypes });
 
@@ -110,6 +112,38 @@ namespace WarTechIIC {
             _fieldSetContractEmployers.SetValue(system.Def, oldEmployers);
             _fieldSetContractTargets.SetValue(system.Def, oldTargets);
             Traverse.Create(employer.FactionDef).Property("Enemies").SetValue(oldEnemies);
+            return contract;
+        }
+
+        public static Contract getContractByName(string contractName, StarSystem location, FactionValue employer, FactionValue target) {
+            SimGameState.AddContractData addContractData = new SimGameState.AddContractData {
+                ContractName = contractName,
+                Employer = employer.Name,
+                Target = target.Name,
+                TargetSystem = location.ID
+            };
+
+            Contract contract = WIIC.sim.AddContract(addContractData);
+            location.SystemContracts.Remove(contract);
+            return contract;
+        }
+
+        public static Contract addTravelContract(string contractName, StarSystem location, FactionValue employer, FactionValue target, int difficulty) {
+            WIIC.modLog.Info?.Write($"Adding travel contract {contractName} to {location.ID}. employer: {employer.Name}, target: {target.Name}, difficulty: {difficulty}");
+
+            FactionValue inv = FactionEnumeration.GetInvalidUnsetFactionValue();
+
+            ContractOverride contractOverride = WIIC.sim.DataManager.ContractOverrides.Get(contractName).Copy();
+            contractOverride.travelSeed = WIIC.sim.NetworkRandom.Int(1, int.MaxValue);
+
+            GameContext gameContext = new GameContext(WIIC.sim.Context);
+            gameContext.SetObject(GameContextObjectTagEnum.TargetStarSystem, location);
+
+            Contract contract = new Contract(null, null, null, contractOverride.ContractTypeValue, WIIC.sim.BattleTechGame, contractOverride, gameContext, fromSim: true, 0);
+            WIIC.sim.PrepContract(contract, employer, employer, target, target, inv, inv, Biome.BIOMESKIN.generic, contractOverride.travelSeed, location);
+            WIIC.sim.GlobalContracts.Add(contract);
+            contract.SetFinalDifficulty(difficulty);
+
             return contract;
         }
     }

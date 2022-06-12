@@ -14,6 +14,8 @@ using ColourfulFlashPoints.Data;
 namespace WarTechIIC {
     public class Flareup : ExtendedContract {
         [JsonProperty]
+        public string attackerName;
+        [JsonProperty]
         public int daysUntilMission;
         [JsonProperty]
         public int attackerStrength;
@@ -37,16 +39,12 @@ namespace WarTechIIC {
             DefenderWonNoReward,
         }
 
-        public static ExtendedContractType Attack = new ExtendedContractType("Attack");
-        public static ExtendedContractType Raid = new ExtendedContractType("Raid");
-
         public static bool isSerializedFlareup(string tag) {
             return tag.StartsWith("WIIC:");
         }
 
-        public Flareup(StarSystem flareupLocation, FactionValue attackerFaction, ExtendedContractType flareupType) : base(flareupLocation, attackerFaction, flareupLocation.OwnerValue, flareupType) {
+        public Flareup(StarSystem flareupLocation, FactionValue attacker, ExtendedContractType flareupType) : base(flareupLocation, attacker, flareupLocation.OwnerValue, flareupType) {
             Settings s = WIIC.settings;
-            countdown = Utilities.rng.Next(s.minCountdown, s.maxCountdown);
 
             int v;
             attackerStrength = s.attackStrength.TryGetValue(employer.Name, out v) ? v : s.defaultAttackStrength;
@@ -59,6 +57,7 @@ namespace WarTechIIC {
                 }
             }
 
+            attackerName = attacker.Name;
             attackerStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
             defenderStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
 
@@ -79,29 +78,18 @@ namespace WarTechIIC {
             WIIC.modLog.Info?.Write(text);
         }
 
-        public bool employedByEmployer {
+        public bool isEmployedHere {
             get {
-                return WIIC.sim.CurSystem == location && WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker");
+                return WIIC.sim.CurSystem == location && (WIIC.sim.CompanyTags.Contains("WIIC_helping_defender") || WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker"));
             }
         }
 
-        public bool employedByTarget {
+        public FactionValue attacker {
             get {
-                return WIIC.sim.CurSystem == location && WIIC.sim.CompanyTags.Contains("WIIC_helping_defender");
-            }
-        }
-
-        // base.employer is the attacker in this flareup. The player might actually be employed by the defender, or by no one at all.
-        public FactionValue actualEmployer {
-            get {
-                return employedByEmployer ? employer : (employedByTarget ? target : null);
-            }
-        }
-
-        // base.target is the defender in this flareup. The player might actually be attacking the employer, or by no one at all.
-        public FactionValue actualTarget {
-            get {
-                return employedByEmployer ? target : (employedByTarget ? employer : null);
+                if (WIIC.sim.CurSystem == location && WIIC.sim.CompanyTags.Contains("WIIC_helping_defender")) {
+                    return target;
+                }
+                return employer;
             }
         }
 
@@ -109,10 +97,21 @@ namespace WarTechIIC {
             base.acceptContract(contract);
             daysUntilMission = 1;
 
-            string tag = (contract == "wiic_help_defender" || contract == "wiic_raid_defender") ? "WIIC_helping_defender" : "WIIC_helping_attacker";
-            WIIC.sim.CompanyTags.Add(tag);
+            // Before a player joins a flareup - or if they're working for the attacker - then the employer is the attacker and target is the defender.
+            // After they join, we swap these these values if they're working for the attacker.
+            if (contract == "wiic_help_defender" || contract == "wiic_raid_defender") {
+                target = employer;
+                targetName = employerName;
+                employer = location.OwnerValue;
+                employerName = location.OwnerValue.Name;
+
+                WIIC.sim.CompanyTags.Add("WIIC_helping_defender");
+            } else {
+                WIIC.sim.CompanyTags.Add("WIIC_helping_attacker");
+            }
+
             WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
-            WIIC.modLog.Info?.Write($"Replaced tag with {tag} for flareup.");
+            WIIC.modLog.Info?.Write($"Replaced tag for flareup.");
         }
 
         public override bool passDay() {
@@ -143,7 +142,7 @@ namespace WarTechIIC {
 
             daysUntilMission = s.daysBetweenMissions;
 
-            if (employedByEmployer || employedByTarget) {
+            if (isEmployedHere) {
                 launchMission();
             }
 
@@ -152,14 +151,14 @@ namespace WarTechIIC {
 
         public CompletionResult getCompletionResult() {
             if (attackerStrength <= 0) {
-                if (employedByEmployer) { return CompletionResult.DefenderWonEmployerLost; }
-                if (employedByTarget && playerDrops > 0) { return CompletionResult.DefenderWonReward; }
-                if (employedByTarget) { return CompletionResult.DefenderWonNoReward; }
+                if (isEmployedHere && employer == attacker) { return CompletionResult.DefenderWonEmployerLost; }
+                if (isEmployedHere && employer == location.OwnerValue && playerDrops > 0) { return CompletionResult.DefenderWonReward; }
+                if (isEmployedHere && employer == location.OwnerValue) { return CompletionResult.DefenderWonNoReward; }
                 return CompletionResult.DefenderWonUnemployed;
             } else {
-                if (employedByTarget) { return CompletionResult.AttackerWonEmployerLost; }
-                if (employedByEmployer && playerDrops > 0) { return CompletionResult.AttackerWonReward; }
-                if (employedByEmployer) { return CompletionResult.AttackerWonNoReward; }
+                if (isEmployedHere && employer == location.OwnerValue) { return CompletionResult.AttackerWonEmployerLost; }
+                if (isEmployedHere && employer == attacker && playerDrops > 0) { return CompletionResult.AttackerWonReward; }
+                if (isEmployedHere && employer == attacker) { return CompletionResult.AttackerWonNoReward; }
                 return CompletionResult.AttackerWonUnemployed;
             }
         }
@@ -200,9 +199,9 @@ namespace WarTechIIC {
 
             if (result == CompletionResult.AttackerWonReward || result == CompletionResult.DefenderWonReward) {
                 if (type == "Attack") {
-                    return s.factionAttackReward.ContainsKey(actualEmployer.Name) ? s.factionAttackReward[actualEmployer.Name] : s.defaultAttackReward;
+                    return s.factionAttackReward.ContainsKey(employer.Name) ? s.factionAttackReward[employer.Name] : s.defaultAttackReward;
                 } else {
-                    return s.factionRaidReward.ContainsKey(actualEmployer.Name) ? s.factionRaidReward[actualEmployer.Name] : s.defaultRaidReward;
+                    return s.factionRaidReward.ContainsKey(employer.Name) ? s.factionRaidReward[employer.Name] : s.defaultRaidReward;
                 }
             }
             return null;
@@ -216,6 +215,7 @@ namespace WarTechIIC {
             // Because shortnames can start with a lowercase 'the' ("the Aurigan Coalition", for example), we have to fix the capitalization or the result can look weird.
             text = text.Replace(". the ", ". The ");
             text = char.ToUpper(text[0]) + text.Substring(1);
+            WIIC.modLog.Info?.Write(text);
 
             // At the current location, a flareup gets a popup - whether or not the player was involved, it's important.
             if (WIIC.sim.CurSystem == location) {
@@ -224,13 +224,12 @@ namespace WarTechIIC {
                 string primaryButtonText = Strings.T("Acknowledged");
                 string itemCollection = reward();
 
-                WIIC.modLog.Info?.Write(text);
 
                 Sprite sprite = attackerStrength > 0 ? employer.FactionDef.GetSprite() : target.FactionDef.GetSprite();
                 queue.QueuePauseNotification(title, text, sprite, string.Empty, delegate {
                     try {
                         if (itemCollection != null) {
-                            WIIC.modLog.Info?.Write($"Reward: {itemCollection} from {actualEmployer.Name}");
+                            WIIC.modLog.Info?.Write($"Reward: {itemCollection} from {employer.Name}");
                             queue.QueueRewardsPopup(itemCollection);
                         }
                     } catch (Exception e) {
@@ -279,7 +278,7 @@ namespace WarTechIIC {
             ColourfulFlashPoints.Main.addMapMarker(mapMarker);
 
             if (!WIIC.fluffDescriptions.ContainsKey(location.ID)) {
-                WIIC.modLog.Debug?.Write($"Filled fluff description entry for {location.ID}: {location.Def.Description.Details}");
+                WIIC.modLog.Trace?.Write($"Filled fluff description entry for {location.ID}: {location.Def.Description.Details}");
                 WIIC.fluffDescriptions[location.ID] = location.Def.Description.Details;
             }
 
@@ -308,12 +307,11 @@ namespace WarTechIIC {
         }
 
         // ExtendedContract calls this, but we ignore what it passes in and use our own logic.
-        public void spawnParticipationContract() {
+        public override void spawnParticipationContract(string contract, FactionValue contractEmployer, FactionValue contractTarget) {
+            return;
+        }
 
-            if (location != WIIC.sim.CurSystem) {
-                return;
-            }
-
+        public void spawnParticipationContracts() {
             SimGameReputation minRep = SimGameReputation.INDIFFERENT;
             if (type == "Attack") {
                 Enum.TryParse(WIIC.settings.minReputationToHelpAttack, out minRep);
@@ -323,11 +321,11 @@ namespace WarTechIIC {
             string contractPrefix = type == "Attack" ? "wiic_help" : "wiic_raid";
 
             if (!WIIC.settings.wontHirePlayer.Contains(employer.Name) && WIIC.sim.GetReputation(employer) >= minRep) {
-                base.spawnParticipationContract($"{contractPrefix}_attacker", employerName, targetName);
+                base.spawnParticipationContract($"{contractPrefix}_attacker", employer, target);
             }
 
             if (!WIIC.settings.wontHirePlayer.Contains(location.OwnerValue.Name) && WIIC.sim.GetReputation(location.OwnerValue) >= minRep) {
-                base.spawnParticipationContract($"{contractPrefix}_defender", targetName, employerName);
+                base.spawnParticipationContract($"{contractPrefix}_defender", target, employer);
             }
         }
 
@@ -342,11 +340,11 @@ namespace WarTechIIC {
         }
 
         public void launchMission() {
-            Contract contract = ContractManager.getNewProceduralContract(location, employer, target);
+            Contract contract = ContractManager.getNewProceduralContract(location, employer, target, new int[0]);
             currentContractForceLoss = Utilities.rng.Next(WIIC.settings.combatForceLossMin, WIIC.settings.combatForceLossMax);
 
             string title = Strings.T("Flareup Mission");
-            string primaryButtonText = Strings.T("Launch mission");
+            string primaryButtonText = Strings.T($"Launch {type.ToLower()}");
             string cancel = Strings.T("Pass");
 
             string message;
@@ -358,17 +356,24 @@ namespace WarTechIIC {
             }
             message += "\n\nIf we pass, we'll lose this chance to influence the outcome of the conflict but face no penalties.";
 
-            launchProceduralMission(message, actualEmployer, actualTarget, DeclinePenalty.None);
+            launchContract(message, contract, DeclinePenalty.None);
         }
 
         public override void applyDeclinePenalty(DeclinePenalty declinePenalty) {
-            if (employedByEmployer) {
+            if (employer == attacker) {
                 attackerStrength -= currentContractForceLoss;
                 WIIC.modLog.Debug?.Write($"defenderStrength -= {currentContractForceLoss}");
             } else {
                 defenderStrength -= currentContractForceLoss;
                 WIIC.modLog.Debug?.Write($"attackerStrength -= {currentContractForceLoss}");
             }
+
+            if (declinePenalty == DeclinePenalty.BreakContract) {
+                WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
+                WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
+            }
+
+            base.applyDeclinePenalty(declinePenalty);
         }
 
         public override WorkOrderEntry_Notification workOrder {
@@ -385,8 +390,20 @@ namespace WarTechIIC {
 
         public static new Flareup Deserialize(string tag) {
             Flareup newFlareup = JsonConvert.DeserializeObject<Flareup>(tag.Substring(5));
-            newFlareup.initAfterDeserialization();
 
+            // This might be an old flareup, from before extended contracts. In that case, we populate the employer / target
+            // based on attacker / defender.
+            StarSystem location = WIIC.sim.GetSystemById(newFlareup.locationID);
+            if (newFlareup.employerName == null) { newFlareup.employerName = newFlareup.attackerName; }
+            if (newFlareup.targetName == null) { newFlareup.targetName = location.OwnerValue.Name; }
+
+            // If this is an old flareup and the player is working for the defender, we need to switch employer/target around.
+            if (WIIC.sim.CurSystem.ID == newFlareup.locationID && WIIC.sim.CompanyTags.Contains("WIIC_helping_defender")) {
+                newFlareup.targetName = newFlareup.employerName;
+                newFlareup.employerName = location.OwnerValue.Name;
+            }
+
+            newFlareup.initAfterDeserialization();
             return newFlareup;
         }
     }

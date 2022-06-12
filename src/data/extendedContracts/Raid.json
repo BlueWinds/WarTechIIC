@@ -1,0 +1,12 @@
+{
+  "name": "Raid",
+  "requirementList": [],
+  "weight": 0,
+  "spawnLocation": "NearbyEnemy",
+  "employer": ["Any"],
+  "target": ["SystemOwner"],
+  "hireContract": "wiic_raid_attacker",
+  "availableFor": [30, 45],
+  "schedule": [],
+  "entries": {}
+}

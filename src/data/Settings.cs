@@ -31,8 +31,6 @@ namespace WarTechIIC {
         public FpMarker attackMarker = new FpMarker();
         public FpMarker raidMarker = new FpMarker();
 
-        public int minCountdown = 30;
-        public int maxCountdown = 45;
         public int defaultAttackStrength = 10;
         public int defaultDefenseStrength = 10;
         public int strengthVariation = 0;

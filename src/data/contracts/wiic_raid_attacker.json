@@ -7,19 +7,7 @@
   "longDescription": "If we accept this contract we'll be in for the duration of the campaign, Commander. {TEAM_EMP.FactionDef.ShortName} will offer us a series of contracts to support their forces as they invade, and we'll take a hit to our reputation if we leave before until a resolution is reached.",
   "salvagePotential": 0,
   "requirementList": [],
-  "OnContractSuccessResults": [
-    {
-      "Scope": "Company",
-      "Requirements": null,
-      "AddedTags": {},
-      "RemovedTags": {},
-      "Stats": [],
-      "Actions": [],
-      "ForceEvents": [],
-      "TemporaryResult": false,
-      "ResultDuration": 0
-    }
-  ],
+  "OnContractSuccessResults": [],
   "OnContractFailureResults": [],
   "contractType": "TravelOnly",
   "contractDisplayStyle": "BaseCampaignStory",

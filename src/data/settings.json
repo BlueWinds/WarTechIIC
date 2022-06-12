@@ -1,6 +1,6 @@
 {
   "debug": true,
-  "trace": true,
+  "trace": false,
   "setActiveFactionsForAllSystems": false,
   "ignoreFactions": [
     "SolarisVII",
@@ -140,8 +140,6 @@
       "Colour": "#1904B1"
     }
   },
-  "minCountdown": 30,
-  "maxCountdown": 45,
   "defaultAttackStrength": 20,
   "defaultDefenseStrength": 15,
   "strengthVariation": 10,
@@ -222,5 +220,8 @@
   "customContractEnums": [
     10002
   ],
+  "dailyExtConChanceIfNoneAvailable": 1,
+  "dailyExtConChanceIfSomeAvailable": 0.33,
+  "maxAvailableExtendedContracts": 3,
   "saveFolder": "../../BTASaves"
 }

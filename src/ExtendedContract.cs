@@ -24,13 +24,13 @@ namespace WarTechIIC {
     }
 
     public class Entry {
-        public string[] triggerEvent;
+        public string[] triggerEvent = new string[0];
         public double contractChance;
-        public string[] contract;
-        public int[] allowedContractTypes;
+        public string[] contract = new string[0];
+        public int[] allowedContractTypes = new int[0];
         public DeclinePenalty declinePenalty;
-        public double contractPayoutMultiplier;
-        public int contractBonusSalvage;
+        public double contractPayoutMultiplier = 1;
+        public int contractBonusSalvage = 0;
         public string contractMessage;
         public Dictionary<int, string> rewardByDifficulty = new Dictionary<int, string>();
 
@@ -51,7 +51,7 @@ namespace WarTechIIC {
         public string[] employer;
         public string[] target;
         public string hireContract;
-        public Tuple<int, int> availableFor;
+        public int[] availableFor;
         public string[] schedule;
         public Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
 
@@ -95,13 +95,13 @@ namespace WarTechIIC {
                 entries[key].validate(name, key);
             }
 
-            bool hireContractExists = MetadataDatabase.Instance.Query<Contract_MDD>("SELECT ct.* from Contract WHERE ct.ContractID = @ID", new { ID = hireContract }).ToArray().Length > 0;
+            bool hireContractExists = MetadataDatabase.Instance.Query<Contract_MDD>("SELECT * from Contract WHERE ContractID = @ID", new { ID = hireContract }).ToArray().Length > 0;
             if (!hireContractExists) {
                 throw new Exception($"Couldn't find hireContract '{hireContract}' for ExtendedContractType {name}.");
             }
 
-            if (availableFor.Item1 < 0 || availableFor.Item1 > availableFor.Item2) {
-                throw new Exception($"Invalid availableFor '[{availableFor.Item1}, {availableFor.Item2}]' for ExtendedContractType {name}.");
+            if (availableFor.Length != 2 || availableFor[0] < 0 || availableFor[0] > availableFor[1]) {
+                throw new Exception($"Invalid availableFor availableFor for ExtendedContractType {name}.");
             }
         }
     }
@@ -161,9 +161,9 @@ namespace WarTechIIC {
 
             extendedType = contractType;
             type = contractType.name;
-            countdown = Utilities.rng.Next(extendedType.availableFor.Item1, extendedType.availableFor.Item2);
+            countdown = Utilities.rng.Next(extendedType.availableFor[0], extendedType.availableFor[1]);
 
-            spawnParticipationContract(extendedType.hireContract, employerName, targetName);
+            spawnParticipationContract(extendedType.hireContract, employer, target);
         }
 
         public virtual bool passDay() {
@@ -189,19 +189,80 @@ namespace WarTechIIC {
             return false;
         }
 
-        public void spawnParticipationContract(string contract, string contractEmployer, string contractTarget) {
+        public void runEntry(Entry entry) {
+            foreach (string eventID in entry.triggerEvent) {
+                WIIC.modLog.Debug?.Write($"Considering event {eventID}");
+                if (!WIIC.sim.DataManager.SimGameEventDefs.TryGet(eventID, out SimGameEventDef eventDef)) {
+                    throw new Exception($"Couldn't find event {eventID} on day {currentDay} of {type}");
+                }
 
+                if (WIIC.sim.MeetsRequirements(eventDef.Requirements) && WIIC.sim.MeetsRequirements(eventDef.AdditionalRequirements)) {
+                    WIIC.modLog.Info?.Write($"Triggering event {eventID} on day {currentDay} of {type}.");
+
+                    SimGameEventTracker eventTracker = new SimGameEventTracker();
+                    eventTracker.Init(new[] { EventScope.Company }, 0, 0, SimGameEventDef.SimEventType.NORMAL, WIIC.sim);
+                    WIIC.sim.GetInterruptQueue().QueueEventPopup(eventDef, EventScope.Company, eventTracker);
+
+                    return;
+                }
+            }
+
+            double rand = Utilities.rng.NextDouble();
+            if (rand <= entry.contractChance) {
+                WIIC.modLog.Info?.Write($"Triggering contract on day {currentDay} of {type} ({entry.contractChance} chance)");
+                Contract contract = null;
+                if (entry.contract.Length > 0) {
+                    foreach (string contractName in entry.contract) {
+                        WIIC.modLog.Debug?.Write($"Considering {contractName}");
+                        contract = ContractManager.getContractByName(contractName, location, employer, target);
+                        if (WIIC.sim.MeetsRequirements(contract.Override.requirementList.ToArray())) {
+                            break;
+                        } else {
+                            contract = null;
+                        }
+                    }
+                } else {
+                    WIIC.modLog.Debug?.Write($"Generating procedural contract.");
+                    contract = ContractManager.getNewProceduralContract(location, employer, target, entry.allowedContractTypes);
+                }
+
+                if (contract != null) {
+                    if (contract.Override.contractRewardOverride < 0) {
+                        contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
+                    }
+                    contract.Override.contractRewardOverride = (int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier);
+                    contract.Override.salvagePotential += entry.contractBonusSalvage;
+                    contract.Override.salvagePotential = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, contract.Override.salvagePotential));
+                    contract.SetupContext();
+
+                    string message = contract.RunMadLib(entry.contractMessage);
+                    launchContract(message, contract, entry.declinePenalty);
+
+                    return;
+                }
+            }
+
+            if (entry.rewardByDifficulty.Keys.Count > 1) {
+                int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                WIIC.modLog.Debug?.Write($"Considering rewardByDifficulty on day {currentDay} of {type}. System difficulty is {diff}");
+                string itemCollection = null;
+                for (int i = 0; i <= diff; i++) {
+                    if (entry.rewardByDifficulty.ContainsKey(i)) { itemCollection = entry.rewardByDifficulty[i]; }
+                }
+
+                WIIC.modLog.Info?.Write($"rewardByDifficulty chose {itemCollection}.");
+                if (itemCollection != null) {
+                    SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
+                    queue.QueueRewardsPopup(itemCollection);
+
+                    return;
+                }
+            }
+        }
+
+        public virtual void spawnParticipationContract(string contractName, FactionValue contractEmployer, FactionValue contractTarget) {
             int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-
-            WIIC.modLog.Info?.Write($"Adding contract {contract}. Target={contractTarget}, Employer={contractEmployer}, TargetSystem={location.ID}, Difficulty={location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
-            Contract attackContract = WIIC.sim.AddContract(new SimGameState.AddContractData {
-                ContractName = contract,
-                Target = contractTarget,
-                Employer = contractEmployer,
-                TargetSystem = location.ID,
-                Difficulty = diff
-            });
-            attackContract.SetFinalDifficulty(diff);
+            ContractManager.addTravelContract(contractName, location, contractEmployer, contractTarget, diff);
         }
 
         public virtual void acceptContract(string contract) {
@@ -220,16 +281,7 @@ namespace WarTechIIC {
             WIIC.sim.GlobalContracts.RemoveAll(c => (c.Override.ID == contract && c.TargetSystem == location.Name));
         }
 
-        public void runEntry(Entry entry) {
-            foreach (string eventID in entry.triggerEvent) {
-                WIIC.modLog.Info?.Write($"Should maybe execute {eventID}.");
-            }
-            throw new Exception("TODO");
-        }
-
-        public void launchProceduralMission(string message, FactionValue missionEmployer, FactionValue missionTarget, DeclinePenalty declinePenalty) {
-            Contract contract = ContractManager.getNewProceduralContract(location, missionEmployer, missionTarget);
-
+        public void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
             string title = Strings.T($"{extendedType.name} Mission");
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
@@ -264,7 +316,25 @@ namespace WarTechIIC {
         }
 
         public virtual void applyDeclinePenalty(DeclinePenalty declinePenalty) {
-            throw new Exception("TODO");
+            WIIC.modLog.Info?.Write("Applying DeclinePenalty {declinePenalty.ToString()} for {type} with employer {employer.Name}");
+
+            if (declinePenalty == DeclinePenalty.BadFaith || declinePenalty == DeclinePenalty.BreakContract) {
+                if (employer.DoesGainReputation) {
+                    float employerRepBadFaithMod = WIIC.sim.Constants.Story.EmployerRepBadFaithMod;
+                    WIIC.modLog.Info?.Write("employerRepBadFaithMod: {employerRepBadFaithMod}");
+                    WIIC.modLog.Info?.Write("difficulty: {location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
+                    int num = (int) Math.Round(location.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
+
+                    WIIC.sim.SetReputation(employer, num);
+                    WIIC.sim.SetReputation(FactionEnumeration.GetMercenaryReviewBoardFactionValue(), num);
+                }
+            }
+
+            if (declinePenalty == DeclinePenalty.BreakContract) {
+                WIIC.extendedContracts.Remove(location.ID);
+                WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
+                WIIC.sim.RoomManager.RefreshTimeline(false);
+            }
         }
 
         public virtual string getDescription() {

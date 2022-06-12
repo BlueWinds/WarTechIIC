@@ -75,45 +75,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src/WarTechIIC.cs" />
-    <Compile Include="src/Utilities.cs" />
-    <Compile Include="src/ContractManager.cs" />
-    <Compile Include="src/WhoAndWhere.cs" />
-    <Compile Include="src/Flareup.cs" />
-    <Compile Include="src/ExtendedContract.cs" />
-    <Compile Include="src/patches/AAR_ContractObjectivesWidget.cs" />
-    <Compile Include="src/patches/ApplySimGameEventResult.cs" />
-    <Compile Include="src/patches/Contract.cs" />
-    <Compile Include="src/patches/GameInstanceSave.cs" />
-    <Compile Include="src/patches/LanceConfiguratorPanel.cs" />
-    <Compile Include="src/patches/SimGameInterruptManager.cs" />
-    <Compile Include="src/patches/SimGameState.cs" />
-    <Compile Include="src/patches/SGCmdCenterLanceConfigBG.cs" />
-    <Compile Include="src/patches/SGContractsWidget.cs" />
-    <Compile Include="src/patches/SGNavigationScreen.cs" />
-    <Compile Include="src/patches/SGTravelManager.cs" />
-    <Compile Include="src/patches/Starmap.cs" />
-    <Compile Include="src/patches/TaskTimelineWidget.cs" />
-    <Compile Include="src/data/Settings.cs" />
+    <Compile Include="src/**/*.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src/data/mod.json" />
-    <None Include="src/data/modstate.json" />
-    <None Include="src/data/contracts/*" />
+    <ModDataFiles Include="src/data/**/*.json"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)/Microsoft.CSharp.targets" />
   <PropertyGroup>
   </PropertyGroup>
   <Target Name="AfterBuild">
     <Copy
-      SourceFiles="$(TargetPath);src/data/mod.json;src/data/modstate.json;src/data/settings.json;LICENSE;README.md"
+      SourceFiles="$(TargetPath);LICENSE;README.md"
       DestinationFolder="$(BTPATH)/Mods/WarTechIIC/"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="false"
     />
     <Copy
-      SourceFiles="src/data/contracts/wiic_help_attacker.json;src/data/contracts/wiic_help_defender.json;src/data/contracts/wiic_raid_attacker.json;src/data/contracts/wiic_raid_defender.json"
-      DestinationFolder="$(BTPATH)/Mods/WarTechIIC/contracts/"
+      SourceFiles="@(ModDataFiles)"
+      DestinationFiles="@(ModDataFiles->'$(BTPATH)/Mods/WarTechIIC/%(RecursiveDir)%(Filename)%(Extension)')"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="false"
     />

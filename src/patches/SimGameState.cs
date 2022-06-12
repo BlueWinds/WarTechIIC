@@ -55,6 +55,7 @@ namespace WarTechIIC {
                     if (tag != null) {
                         system.Tags.Remove(tag);
 
+                        WIIC.modLog.Debug?.Write($"Extended Contract for {system.ID}: {tag}");
                         ExtendedContract extendedContract = ExtendedContract.Deserialize(tag);
                         WIIC.extendedContracts[system.ID] = extendedContract;
                     }
@@ -63,6 +64,7 @@ namespace WarTechIIC {
                     if (tag != null) {
                         system.Tags.Remove(tag);
 
+                        WIIC.modLog.Debug?.Write($"Flareup for {system.ID}: {tag}");
                         Flareup flareup = Flareup.Deserialize(tag);
                         WIIC.flareups[system.ID] = flareup;
                     }
@@ -76,6 +78,14 @@ namespace WarTechIIC {
 
                 WIIC.modLog.Debug?.Write($"Loaded {WIIC.flareups.Keys.Count} flareups, {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
                 Utilities.redrawMap();
+
+
+                // Just some temporary cleanup
+                WIIC.modLog.Error?.Write($"If this makes it into the release version, poke BlueWinds.");
+                WIIC.removeGlobalContract("wiic_help_attacker");
+                WIIC.removeGlobalContract("wiic_help_defender");
+                WIIC.removeGlobalContract("wiic_raid_attacker");
+                WIIC.removeGlobalContract("wiic_raid_defender");
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
@@ -121,8 +131,7 @@ namespace WarTechIIC {
 
                 bool newFlareup = WhoAndWhere.checkForNewFlareup();
                 if (!newFlareup) {
-                    throw new Exception("TODO, fixup checkForNewExtendedContract");
-//                     WhoAndWhere.checkForNewExtendedContract();
+                    WhoAndWhere.checkForNewExtendedContract();
                 }
 
                 if (Utilities.deferredToasts.Count > 0) {
@@ -209,7 +218,7 @@ namespace WarTechIIC {
 
                 if (WIIC.flareups.ContainsKey(system.ID)) {
                     WIIC.modLog.Debug?.Write($"Found flareup for new system, adding contracts");
-                    WIIC.flareups[system.ID].spawnParticipationContract();
+                    WIIC.flareups[system.ID].spawnParticipationContracts();
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

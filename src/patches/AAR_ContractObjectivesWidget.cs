@@ -28,7 +28,7 @@ namespace WarTechIIC {
                 WIIC.modLog.Debug?.Write(objectiveString);
 
                 bool won = contract.State == Contract.ContractState.Complete;
-                if ((flareup.employer == flareup.actualEmployer && won) || (flareup.employer == flareup.target && !won)) {
+                if ((flareup.employer == flareup.attacker && won) || (flareup.employer == flareup.target && !won)) {
                     flareup.defenderStrength -= flareup.currentContractForceLoss;
                     WIIC.modLog.Debug?.Write($"defenderStrength -= {flareup.currentContractForceLoss}");
                 } else {
