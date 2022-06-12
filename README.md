@@ -42,7 +42,7 @@ The initial attacker and defender forces are calculated as follows.
 5) If it's a raid, both strengths are multiplied by `raidStrengthMultiplier`
 
 ## How Flareups proceed
-When initially generated, flareups are in "countdown", a random number of days chosen based on `minCountdown` and `maxCountdown`. Nothing will happen until that many days pass - the attacker and defender are mustering their forces, preparing for the coming confrontation.
+When initially generated, flareups are in "countdown", a random number of days chosen based on the `[min, max]` values in `availableFor` in `extendedContracts/Attack.json` / `extendedContracts/Raid.json`. Nothing will happen until that many days pass - the attacker and defender are mustering their forces, preparing for the coming confrontation.
 
 When the countdown reaches 0, the flareup begins ticking. Every `daysBetweenMissions` days, one side or the other - chosen with a coinflip - will lose between `combatForceLossMin` and `combatForceLossMax` points. When one side reaches 0, the *next time a mission would occur* the flareup ends.
 
