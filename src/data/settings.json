@@ -1,6 +1,6 @@
 {
   "debug": true,
-  "trace": false,
+  "trace": true,
   "setActiveFactionsForAllSystems": false,
   "ignoreFactions": [
     "SolarisVII",
@@ -46,8 +46,8 @@
     "ClanWolfInExile",
     "Wolfs_Dragoons"
   ],
-  "dailyAttackChance": 0.1,
-  "dailyRaidChance": 0.1,
+  "dailyAttackChance": 0.0,
+  "dailyRaidChance": 0.0,
   "distanceFactor": 40,
   "aggression": {
     "ClanNovaCat": 1.5,
@@ -116,30 +116,6 @@
     "planet_factory": 2
   },
   "limitTargetsToFactionEnemies": true,
-  "attackMarker": {
-    "useHmAnimation": true,
-    "flashpointPrefix": "",
-    "swapColour": true,
-    "keepAlpha": true,
-    "useOnlyInner": true,
-    "autoDetectContracts": false,
-    "useContractColourOverride": false,
-    "innerCircle": {
-      "Colour": "#8904B1"
-    }
-  },
-  "raidMarker": {
-    "useHmAnimation": true,
-    "flashpointPrefix": "",
-    "swapColour": true,
-    "keepAlpha": true,
-    "useOnlyInner": true,
-    "autoDetectContracts": false,
-    "useContractColourOverride": false,
-    "innerCircle": {
-      "Colour": "#1904B1"
-    }
-  },
   "defaultAttackStrength": 20,
   "defaultDefenseStrength": 15,
   "strengthVariation": 10,
@@ -221,7 +197,7 @@
     10002
   ],
   "dailyExtConChanceIfNoneAvailable": 1,
-  "dailyExtConChanceIfSomeAvailable": 0.33,
-  "maxAvailableExtendedContracts": 3,
+  "dailyExtConChanceIfSomeAvailable": 1,
+  "maxAvailableExtendedContracts": 5,
   "saveFolder": "../../BTASaves"
 }

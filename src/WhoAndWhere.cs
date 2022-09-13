@@ -18,7 +18,7 @@ namespace WarTechIIC {
 
             clearEmployersTags = new TagSet(s.clearEmployersAndTargetsForSystemTags);
 
-            // Initializing tagsets for use when creating flareups
+            // Initializing tagsets for use when creating attacks and raids
             foreach (string faction in s.factionActivityTags.Keys) {
                 if (FactionEnumeration.GetFactionByName(faction) == invalid) {
                     WIIC.modLog.Warn?.Write($"Can't find faction {faction} from factionActivityTags");
@@ -68,15 +68,18 @@ namespace WarTechIIC {
             if (rand < flareupChance) {
                 type = WIIC.extendedContractTypes["Attack"];
             } else if (rand < flareupChance + raidChance) {
-                type = WIIC.extendedContractTypes["Attack"];
+                type = WIIC.extendedContractTypes["Raid"];
             } else {
                 return false;
             }
 
             (StarSystem system, FactionValue employer) = getFlareupEmployerAndLocation(type);
 
-            Flareup flareup = new Flareup(system, employer, type);
-            WIIC.flareups[system.ID] = flareup;
+            if (type == WIIC.extendedContractTypes["Attack"]) {
+                WIIC.extendedContracts[system.ID] = new Attack(system, employer, type);
+            } else {
+                WIIC.extendedContracts[system.ID] = new Raid(system, employer, type);
+            }
             return true;
         }
 
@@ -92,8 +95,9 @@ namespace WarTechIIC {
 
             Dictionary<string, double> weightedTypes = new Dictionary<string, double>();
             foreach (ExtendedContractType possibleType in WIIC.extendedContractTypes.Values) {
-                WIIC.modLog.Debug?.Write($"checkForNewExtendedContract {possibleType.name}");
-                WIIC.modLog.Debug?.Write($"checkForNewExtendedContract {possibleType.requirementList}");
+                if (possibleType.name == "Attack" || possibleType.name == "Raid") {
+                    continue;
+                }
                 if (possibleType.weight > 0 && possibleType.requirementList.Where(r => r.Scope != EventScope.StarSystem).All(r => WIIC.sim.MeetsRequirements(r))) {
                     weightedTypes[possibleType.name] = (double)possibleType.weight;
                 }
@@ -162,7 +166,7 @@ namespace WarTechIIC {
             foreach (StarSystem system in WIIC.sim.StarSystems) {
                 FactionValue owner = system.OwnerValue;
 
-                if (WIIC.flareups.ContainsKey(system.ID) || Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
+                if (Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
                     continue;
                 }
 
@@ -242,10 +246,11 @@ namespace WarTechIIC {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
 
+            WIIC.modLog.Trace?.Write($"Checking locations for extended contract, using distanceFactor: {s.distanceFactor}");
             foreach (StarSystem system in WIIC.sim.StarSystems) {
                 FactionValue owner = system.OwnerValue;
 
-                if (WIIC.flareups.ContainsKey(system.ID) || Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
+                if (Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
                     continue;
                 }
 
@@ -254,7 +259,7 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                WIIC.modLog.Trace?.Write($"Potential ExtendedCon at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
+                WIIC.modLog.Trace?.Write($"    {system.Name}, distanceMult: {distanceMult}, owner {owner.Name}");
 
                 foreach (FactionValue employer in potentialExtendedEmployers(system, spawnLocation, potentialEmployers)) {
                     weightedLocations[(system, employer)] = distanceMult;

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Linq;
 using Newtonsoft.Json;
 using Harmony;
@@ -9,6 +10,7 @@ using Localize;
 using BattleTech;
 using BattleTech.Data;
 using BattleTech.UI;
+using ColourfulFlashPoints.Data;
 
 namespace WarTechIIC {
     public enum DeclinePenalty {
@@ -33,6 +35,8 @@ namespace WarTechIIC {
         public int contractBonusSalvage = 0;
         public string contractMessage;
         public Dictionary<int, string> rewardByDifficulty = new Dictionary<int, string>();
+        public string invokeMethod;
+        public string workOrder;
 
         public void validate(string type, string key) {
             foreach (string evt in triggerEvent) {
@@ -51,8 +55,12 @@ namespace WarTechIIC {
         public string[] employer;
         public string[] target;
         public string hireContract;
+        public string targetHireContract;
         public int[] availableFor;
         public string[] schedule;
+        public FpMarker mapMarker = null;
+        public bool travelContracts;
+        public string startToast = null;
         public Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
 
         public ExtendedContractType(string newName) {
@@ -100,8 +108,17 @@ namespace WarTechIIC {
                 throw new Exception($"Couldn't find hireContract '{hireContract}' for ExtendedContractType {name}.");
             }
 
+            bool targetHireContractExists = MetadataDatabase.Instance.Query<Contract_MDD>("SELECT * from Contract WHERE ContractID = @ID", new { ID = targetHireContract }).ToArray().Length > 0;
+            if (targetHireContract != null && !targetHireContractExists) {
+                throw new Exception($"Couldn't find targetHireContract '{targetHireContract}' for ExtendedContractType {name}.");
+            }
+
             if (availableFor.Length != 2 || availableFor[0] < 0 || availableFor[0] > availableFor[1]) {
                 throw new Exception($"Invalid availableFor availableFor for ExtendedContractType {name}.");
+            }
+
+            if (mapMarker == null && !travelContracts) {
+                throw new Exception($"No map marker found for ExtendedContractType {name}, nor does it generate travelContracts. Users won't be able to find it.");
             }
         }
     }
@@ -141,13 +158,15 @@ namespace WarTechIIC {
             // Empty constructor used for deserialization.
         }
 
-        public string Serialize() {
-            string json = JsonConvert.SerializeObject(this);
-            return $"WIIC:Extended:{json}";
+        // WIIC:Attack:{...}
+        private static Regex SERIALIZED_TAG = new Regex("^WIIC:(?<type>.*?):(?<json>.*)$", RegexOptions.Compiled);
+        public static bool isSerializedExtendedContract(string tag) {
+            return tag.StartsWith("WIIC:");
         }
 
-        public static bool isSerializedExtendedContract(string tag) {
-            return tag.StartsWith("WIIC:Extended:");
+        public string Serialize() {
+            string json = JsonConvert.SerializeObject(this);
+            return $"WIIC:{this.type}:{json}";
         }
 
         public ExtendedContract(StarSystem contractLocation, FactionValue employerFaction, FactionValue targetFaction, ExtendedContractType contractType) {
@@ -163,30 +182,67 @@ namespace WarTechIIC {
             type = contractType.name;
             countdown = Utilities.rng.Next(extendedType.availableFor[0], extendedType.availableFor[1]);
 
-            spawnParticipationContract(extendedType.hireContract, employer, target);
+            if (extendedType.travelContracts) {
+                spawnParticipationContracts();
+            }
+
+            if (extendedType.startToast != null) {
+                string text = Strings.T(extendedType.startToast, employer.FactionDef.ShortName, target.FactionDef.ShortName, location.Name);
+                Utilities.deferredToasts.Add(text);
+                WIIC.modLog.Info?.Write(text);
+            }
+        }
+
+        public bool isEmployedHere {
+            get {
+                return WIIC.sim.CurSystem == location && (WIIC.sim.CompanyTags.Contains("WIIC_extended_contract"));
+            }
+        }
+
+        public virtual void onEnterSystem() {
+            WIIC.modLog.Debug?.Write($"Entering Extended Contract system ({type}). In-system contracts: {!extendedType.travelContracts}");
+            if (!extendedType.travelContracts) {
+                this.spawnParticipationContracts();
+            }
+        }
+
+        public virtual void onLeaveSystem() {
+            WIIC.modLog.Debug?.Write($"Leaving Extended Contract system ({type}). In-system contracts: {!extendedType.travelContracts}");
+            if (!extendedType.travelContracts) {
+                this.removeParticipationContracts();
+            }
         }
 
         public virtual bool passDay() {
-            if (WIIC.sim.CompanyTags.Contains("WIIC_extended_contract") && WIIC.sim.CurSystem == location) {
-                // Player is employed at this extended contract.
-                string entryName = extendedType.schedule[currentDay];
-                if (!extendedType.entries.ContainsKey(entryName)) {
-                    throw new Exception($"ExtendedContractType references '{entryName}' at schedule[{currentDay}], but this is not present in its entries dictionary. Valid keys are {string.Join(", ", extendedType.entries.Keys)}");
-                }
-
-                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {entryName}.");
-                runEntry(extendedType.entries[entryName]);
-
-                currentDay++;
-                return currentDay == extendedType.schedule.Length;
+            if (isEmployedHere) {
+                return passDayEmployed();
             }
+
             countdown--;
+            WIIC.modLog.Trace?.Write($"Countdown {countdown} for {type} at {locationID}.");
+            // Don't remove this extended contract if the player has accepted it and is flying there to participate.
             if (countdown <= 0) {
-                removeParticipationContract(extendedType.hireContract);
-                return true;
+                if (!isParticipationContract(WIIC.sim.ActiveTravelContract)) {
+                    removeParticipationContracts();
+                    return true;
+                }
+                WIIC.modLog.Trace?.Write($"    Leaving active because participation contract has been accepted.");
             }
 
             return false;
+        }
+
+        public virtual bool passDayEmployed() {
+            string entryName = extendedType.schedule[currentDay];
+            if (!extendedType.entries.ContainsKey(entryName)) {
+                throw new Exception($"ExtendedContractType references '{entryName}' at schedule[{currentDay}], but this is not present in its entries dictionary. Valid keys are {string.Join(", ", extendedType.entries.Keys)}");
+            }
+
+            WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {entryName}.");
+            runEntry(extendedType.entries[entryName]);
+
+            currentDay++;
+            return currentDay == extendedType.schedule.Length;
         }
 
         public void runEntry(Entry entry) {
@@ -251,34 +307,51 @@ namespace WarTechIIC {
                 }
 
                 WIIC.modLog.Info?.Write($"rewardByDifficulty chose {itemCollection}.");
-                if (itemCollection != null) {
-                    SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
-                    queue.QueueRewardsPopup(itemCollection);
+                Utilities.giveReward(itemCollection);
+            }
 
-                    return;
-                }
+            if (entry.invokeMethod != null) {
+                Type thisType = this.GetType();
+                this.GetType().GetMethod(entry.invokeMethod).Invoke(this, new object[]{});
             }
         }
 
-        public virtual void spawnParticipationContract(string contractName, FactionValue contractEmployer, FactionValue contractTarget) {
+        public virtual void spawnParticipationContracts() {
             int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-            ContractManager.addTravelContract(contractName, location, contractEmployer, contractTarget, diff);
+
+            WIIC.modLog.Trace?.Write($"Spawning travel hire contract {extendedType.hireContract} at {location.Name} for {type}");
+            ContractManager.addTravelContract(extendedType.hireContract, location, employer, target, diff);
+
+            if (extendedType.targetHireContract != null) {
+                WIIC.modLog.Trace?.Write($"    Also adding {extendedType.targetHireContract} from targetHireContract");
+                ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer, diff);
+            }
+        }
+
+        public bool isParticipationContract(Contract c) {
+            if (c == null) { return false; }
+            return c != null && (c.Override.ID == extendedType.hireContract || c.Override.ID == extendedType.targetHireContract) && c.TargetSystem == locationID;
+        }
+
+        public virtual void removeParticipationContracts() {
+            WIIC.modLog.Debug?.Write($"Cleaning up participation contracts for {type} at {location.Name}.");
+            WIIC.sim.GlobalContracts.RemoveAll(isParticipationContract);
         }
 
         public virtual void acceptContract(string contract) {
             countdown = 0;
             WIIC.modLog.Info?.Write($"Player embarked on {type} at {location.Name}. Adding WIIC_extended_contract company tag and work order item.");
 
-            removeParticipationContract(extendedType.hireContract);
+            if (contract == extendedType.targetHireContract) {
+                (employer, target) = (target, employer);
+                (employerName, targetName) = (targetName, employerName);
+            }
+
+            removeParticipationContracts();
             WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
             WIIC.sim.SetSimRoomState(DropshipLocation.SHIP);
             WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
             WIIC.sim.RoomManager.RefreshTimeline(false);
-        }
-
-        public virtual void removeParticipationContract(string contract) {
-            WIIC.modLog.Debug?.Write($"Cleaning up participation contract {contract} for {location.Name}.");
-            WIIC.sim.GlobalContracts.RemoveAll(c => (c.Override.ID == contract && c.TargetSystem == location.Name));
         }
 
         public void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
@@ -340,8 +413,8 @@ namespace WarTechIIC {
         public virtual string getDescription() {
             StringBuilder description = new StringBuilder();
 
-            description.AppendLine(Strings.T("<b><color=#de0202>{0} has hired you for {1}.</color></b>", employer.FactionDef.ShortName, type));
-            description.AppendLine(Strings.T("You've been on assignment {0} out of {1} days.", currentDay, extendedType.schedule.Length));
+            description.AppendLine(Strings.T("<b><color=#de0202>{0} has hired us for {1}.</color></b>", employer.FactionDef.ShortName, type));
+            description.AppendLine(Strings.T("We've been on assignment {0} days. The contract will complete after {1}.", currentDay, extendedType.schedule.Length));
 
             return description.ToString();
         }
@@ -362,14 +435,90 @@ namespace WarTechIIC {
             }
         }
 
+        protected WorkOrderEntry_Notification _extraWorkOrder;
+        public virtual WorkOrderEntry_Notification extraWorkOrder {
+            get {
+                if (_extraWorkOrder == null) {
+                    _extraWorkOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractExtra", "");
+                    WIIC.modLog.Debug?.Write("Generated _extraWorkOrder");
+                }
+
+                int day = currentDay + 1;
+                while (day < extendedType.schedule.Length) {
+                    WIIC.modLog.Debug?.Write($"day {day}");
+                    string entryName = extendedType.schedule[currentDay];
+                    WIIC.modLog.Debug?.Write($"entryName {entryName}");
+                    if (entryName == "" || extendedType.entries.ContainsKey(entryName)) {
+                        WIIC.modLog.Debug?.Write($"No entry?");
+                        continue;
+                    }
+
+                    Entry entry = extendedType.entries[entryName];
+                    WIIC.modLog.Debug?.Write($"entry {entry}");
+                    if (entry.workOrder != null) {
+                        WIIC.modLog.Debug?.Write($"entry.workOrder {entry.workOrder}");
+                        _extraWorkOrder.SetDescription(entry.workOrder);
+                        _extraWorkOrder.SetCost(day - currentDay);
+
+                        return _extraWorkOrder;
+                    }
+                }
+
+                return null;
+            }
+            set {
+                _extraWorkOrder = value;
+            }
+        }
+
+        public virtual void addToMap() {
+            if (extendedType.mapMarker == null) {
+                return;
+            }
+
+            MapMarker mapMarker = new MapMarker(location.ID, extendedType.mapMarker);
+            ColourfulFlashPoints.Main.addMapMarker(mapMarker);
+
+            if (!WIIC.fluffDescriptions.ContainsKey(location.ID)) {
+                WIIC.modLog.Trace?.Write($"Filled fluff description entry for {location.ID}: {location.Def.Description.Details}");
+                WIIC.fluffDescriptions[location.ID] = location.Def.Description.Details;
+            }
+
+            string description = getMapDescription() + WIIC.fluffDescriptions[location.ID];
+            AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(location.Def.Description, new object[] { description });
+        }
+
+        public virtual string getMapDescription() {
+            return "";
+        }
+
         public static ExtendedContract Deserialize(string tag) {
-            ExtendedContract newExtendedContract = JsonConvert.DeserializeObject<ExtendedContract>(tag.Substring(14));
+            MatchCollection matches = SERIALIZED_TAG.Matches(tag);
+            if (matches.Count == 0) {
+                throw new Exception($"Tried to deserialize invalid Extended Contract tag: {tag}");
+            }
+
+            string type = matches[0].Groups["type"].Value;
+            string json = matches[0].Groups["json"].Value;
+
+            if (type == "Attack") {
+                Attack attack = JsonConvert.DeserializeObject<Attack>(json);
+                attack.initAfterDeserialization();
+                return attack;
+            }
+            if (type == "Raid") {
+                Raid raid = JsonConvert.DeserializeObject<Raid>(json);
+                raid.initAfterDeserialization();
+                return raid;
+            }
+
+            ExtendedContract newExtendedContract = JsonConvert.DeserializeObject<ExtendedContract>(json);
             newExtendedContract.initAfterDeserialization();
 
             return newExtendedContract;
         }
 
-        public void initAfterDeserialization() {
+        public virtual void initAfterDeserialization() {
             location = WIIC.sim.GetSystemById(locationID);
             employer = FactionEnumeration.GetFactionByName(employerName);
             target = FactionEnumeration.GetFactionByName(targetName);

@@ -7,6 +7,7 @@
   "target": ["NearbyEnemy", "AuriganPirates"],
   "hireContract": "wiic_garrison_duty",
   "availableFor": [20, 30],
+  "travelContracts": true,
   "schedule": [
     "",
     "",
@@ -28,7 +29,8 @@
       "contractChance": 1,
       "allowedContractTypes": [10000, 10001, 10002],
       "declinePenalty": "BadFaith",
-      "contractMessage": "{TEAM_EMP.FactionDef.ShortName} has a mission for us, Commander: {RES_OBJ.Name}. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent."
+      "contractMessage": "{TEAM_EMP.FactionDef.ShortName} has a mission for us, Commander: {RES_OBJ.Name}. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent.",
+      "workOrder": "Garrison Contract"
     },
     "myMission2": {
       "contractChance": 1,

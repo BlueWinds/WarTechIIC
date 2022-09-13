@@ -19,7 +19,6 @@ namespace WarTechIIC
         internal static DeferringLogger modLog;
         internal static string modDir;
         internal static Settings settings;
-        internal static Dictionary<string, Flareup> flareups = new Dictionary<string, Flareup>();
         internal static Dictionary<string, ExtendedContract> extendedContracts = new Dictionary<string, ExtendedContract>();
         internal static Dictionary<string, string> systemControl = new Dictionary<string, string>();
         internal static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
@@ -73,7 +72,7 @@ namespace WarTechIIC
                 string path = Path.Combine(modDir, settings.saveFolder, "WIIC_systemControl.json");
 
                 using (StreamWriter writer = new StreamWriter(path, false)) {
-                    GalaxyData data = new GalaxyData(systemControl, flareups);
+                    GalaxyData data = new GalaxyData(systemControl);
                     writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
                     writer.Flush();
                 }
@@ -103,7 +102,7 @@ namespace WarTechIIC
 
                         // Older serialization format, for backwards compatibility
                         Dictionary<string, string> control = JsonConvert.DeserializeObject<Dictionary<string, string>>(jdata);
-                        data = new GalaxyData(control, new Dictionary<string, Flareup>());
+                        data = new GalaxyData(control);
                     }
 
                     data.apply();
@@ -126,11 +125,9 @@ namespace WarTechIIC
 
     public class GalaxyData {
         public Dictionary<string, string> systemControl = new Dictionary<string, string>();
-        public Dictionary<string, Flareup> flareups = new Dictionary<string, Flareup>();
 
-        public GalaxyData(Dictionary<string, string> control, Dictionary<string, Flareup> flares) {
+        public GalaxyData(Dictionary<string, string> control) {
             systemControl = control;
-            flareups = flares;
         }
 
         public void apply() {
@@ -142,14 +139,7 @@ namespace WarTechIIC
 
             WIIC.modLog.Info?.Write($"Set control of {systemControl.Count} star systems based on GalaxyData");
 
-            foreach (string id in flareups.Keys) {
-                WIIC.flareups[id] = flareups[id];
-                WIIC.flareups[id].initAfterDeserialization();
-            }
-
             Utilities.redrawMap();
-
-            WIIC.modLog.Info?.Write($"Created {flareups.Count} flareups based on GalaxyData");
         }
     }
 

@@ -17,8 +17,8 @@ namespace WarTechIIC {
         public static void Postfix(SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
-                WIIC.modLog.Debug?.Write("Clearing Flareups for new SimGameState");
-                WIIC.flareups.Clear();
+                WIIC.modLog.Debug?.Write("Clearing Extended Contracts for new SimGameState");
+                WIIC.extendedContracts.Clear();
                 WIIC.systemControl.Clear();
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
@@ -39,53 +39,39 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "Rehydrate")]
     public static class SimGameState_RehydratePatch {
-        [HarmonyPostfix]
-        public static void LoadFlareups(GameInstanceSave gameInstanceSave, SimGameState __instance) {
+        public static void Postfix(GameInstanceSave gameInstanceSave, SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
-                WIIC.modLog.Info?.Write("Player currently at {__instance.CurSystem.ID}. Loading Flareups.");
+                WIIC.modLog.Info?.Write("Player currently at {__instance.CurSystem.ID}. Loading Extended Contracts.");
 
-                WIIC.flareups.Clear();
+                WIIC.extendedContracts.Clear();
                 WIIC.sim.CompanyTags.Add("WIIC_enabled");
 
                 WIIC.readFromJson("WIIC_ephemeralSystemControl.json", true);
 
                 foreach (StarSystem system in __instance.StarSystems) {
-                    string tag = system.Tags.ToList().Find(ExtendedContract.isSerializedExtendedContract);
-                    if (tag != null) {
-                        system.Tags.Remove(tag);
+                    // If one tag fails to load we don't want to break all those that come afterwards.
+                    try {
+                        string tag = system.Tags.ToList().Find(ExtendedContract.isSerializedExtendedContract);
+                        if (tag != null) {
+                            system.Tags.Remove(tag);
+                            WIIC.modLog.Debug?.Write($"    {system.ID}: {tag}");
+                            ExtendedContract extendedContract = ExtendedContract.Deserialize(tag);
+                            WIIC.extendedContracts[system.ID] = extendedContract;
+                        }
 
-                        WIIC.modLog.Debug?.Write($"Extended Contract for {system.ID}: {tag}");
-                        ExtendedContract extendedContract = ExtendedContract.Deserialize(tag);
-                        WIIC.extendedContracts[system.ID] = extendedContract;
-                    }
-
-                    tag = system.Tags.ToList().Find(Flareup.isSerializedFlareup);
-                    if (tag != null) {
-                        system.Tags.Remove(tag);
-
-                        WIIC.modLog.Debug?.Write($"Flareup for {system.ID}: {tag}");
-                        Flareup flareup = Flareup.Deserialize(tag);
-                        WIIC.flareups[system.ID] = flareup;
-                    }
-
-                    tag = system.Tags.ToList().Find(Utilities.isControlTag);
-                    if (tag != null) {
-                        system.Tags.Remove(tag);
-                        WIIC.systemControl[system.ID] = tag;
+                        tag = system.Tags.ToList().Find(Utilities.isControlTag);
+                        if (tag != null) {
+                            system.Tags.Remove(tag);
+                            WIIC.systemControl[system.ID] = tag;
+                        }
+                    } catch (Exception e) {
+                        WIIC.modLog.Error?.Write(e);
                     }
                 }
 
-                WIIC.modLog.Debug?.Write($"Loaded {WIIC.flareups.Keys.Count} flareups, {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
+                WIIC.modLog.Debug?.Write($"Loaded {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
                 Utilities.redrawMap();
-
-
-                // Just some temporary cleanup
-                WIIC.modLog.Error?.Write($"If this makes it into the release version, poke BlueWinds.");
-                WIIC.removeGlobalContract("wiic_help_attacker");
-                WIIC.removeGlobalContract("wiic_help_defender");
-                WIIC.removeGlobalContract("wiic_raid_attacker");
-                WIIC.removeGlobalContract("wiic_raid_defender");
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
@@ -104,18 +90,6 @@ namespace WarTechIIC {
 
                 Utilities.slowDownFloaties();
                 ColourfulFlashPoints.Main.clearMapMarkers();
-
-                // ToList is used to make a copy because we may need to remove elements as we're iterating
-                foreach (Flareup flareup in WIIC.flareups.Values.ToList()) {
-                    bool finished = flareup.passDay();
-                    if (finished) {
-                        Utilities.cleanupFlareupSystem(flareup.location);
-                    } else {
-                        if (activeItems.TryGetValue(flareup.workOrder, out var taskManagementElement)) {
-                            taskManagementElement.UpdateItem(0);
-                        }
-                    }
-                }
 
                 // ToList is used to make a copy because we may need to remove elements as we're iterating
                 foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values.ToList()) {
@@ -167,8 +141,7 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "FinishCompleteBreadcrumbProcess")]
     public static class SimGameState_FinishCompleteBreadcrumbProcessPatch {
-        [HarmonyPrefix]
-        public static bool ParticipateInContractPrefix(SimGameState __instance, out string __state) {
+        public static bool Prefix(SimGameState __instance, out string __state) {
             __state = null;
             try {
                 __state = __instance.ActiveTravelContract.Override.ID;
@@ -179,20 +152,13 @@ namespace WarTechIIC {
             return true;
         }
 
-        [HarmonyPostfix]
-        public static void ParticipateInContractPostfix(SimGameState __instance, string __state) {
+        public static void Postfix(SimGameState __instance, string __state) {
             try {
-                if (WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
-                    Flareup flareup = WIIC.flareups[WIIC.sim.CurSystem.ID];
-                    if (__state == "wiic_help_defender" || __state == "wiic_raid_defender" || __state == "wiic_helping_defender" || __state == "Wiic_helping_attacker") {
-                        __instance.ClearBreadcrumb();
-                        flareup.acceptContract(__state);
-                    }
-                }
-
+                WIIC.modLog.Debug?.Write($"Breadcrumb complete {WIIC.sim.CurSystem.ID} - {__state}");
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     ExtendedContract extendedContract = WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
-                    if (__state == extendedContract.extendedType.hireContract) {
+                    WIIC.modLog.Debug?.Write($"Type: {extendedContract.extendedType}, looking for {extendedContract.extendedType.hireContract} or {extendedContract.extendedType.targetHireContract}");
+                    if (__state == extendedContract.extendedType.hireContract || __state == extendedContract.extendedType.targetHireContract) {
                         __instance.ClearBreadcrumb();
                         extendedContract.acceptContract(__state);
                     }
@@ -210,15 +176,12 @@ namespace WarTechIIC {
             try {
                 WIIC.modLog.Debug?.Write($"Entering system {system.ID} from {WIIC.sim.CurSystem.ID}");
 
-                if (WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
-                    WIIC.modLog.Debug?.Write($"Found flareup from previous system, cleaning up contracts");
-                    Flareup prevFlareup = WIIC.flareups[WIIC.sim.CurSystem.ID];
-                    prevFlareup.removeParticipationContract();
+                if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
+                    WIIC.extendedContracts[WIIC.sim.CurSystem.ID].onLeaveSystem();
                 }
 
-                if (WIIC.flareups.ContainsKey(system.ID)) {
-                    WIIC.modLog.Debug?.Write($"Found flareup for new system, adding contracts");
-                    WIIC.flareups[system.ID].spawnParticipationContracts();
+                if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                    WIIC.extendedContracts[WIIC.sim.CurSystem.ID].onEnterSystem();
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

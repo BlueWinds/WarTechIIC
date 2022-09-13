@@ -6,7 +6,33 @@
   "employer": ["Any"],
   "target": ["SystemOwner"],
   "hireContract": "wiic_help_attacker",
+  "targetHireContract": "wiic_help_defender",
+  "travelContracts": false,
+  "mapMarker": {
+    "useHmAnimation": true,
+    "flashpointPrefix": "",
+    "swapColour": true,
+    "keepAlpha": true,
+    "useOnlyInner": true,
+    "autoDetectContracts": false,
+    "useContractColourOverride": false,
+    "innerCircle": {
+      "Colour": "#8904B1"
+    }
+  },
+  "startToast": "{0} attacks {1} for control of {2}",
   "availableFor": [30, 45],
-  "schedule": [],
-  "entries": {}
+  "schedule": [
+    "",
+    "",
+    "mission"
+  ],
+  "entries": {
+    "mission": {
+      "contractChance": 1,
+      "declinePenalty": "None",
+      "contractMessage": "{TEAM_EMP.FactionDef.ShortName} has a mission for us, Commander: {RES_OBJ.Name}. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent.",
+      "invokeMethod": "flareupForceLoss"
+    }
+  }
 }

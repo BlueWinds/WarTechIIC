@@ -61,8 +61,8 @@ namespace WarTechIIC {
             }
 
             // Refreshes the system description with appropriate defender name
-            if (WIIC.flareups.ContainsKey(system.ID)) {
-                WIIC.flareups[system.ID].addToMap();
+            if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                WIIC.extendedContracts[system.ID].addToMap();
             }
         }
 
@@ -88,15 +88,6 @@ namespace WarTechIIC {
             // Usually happens from skirmish bay.
             if (WIIC.sim == null) {
                 return null;
-            }
-
-            if (WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker") || WIIC.sim.CompanyTags.Contains("WIIC_helping_defender")) {
-                if (WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
-                    return WIIC.flareups[WIIC.sim.CurSystem.ID];
-                }
-                WIIC.modLog.Warn?.Write($"Found company tag indicating flareup participation, but no matching flareup for {WIIC.sim.CurSystem.ID}");
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
             }
 
             if (WIIC.sim.CompanyTags.Contains("WIIC_extended_contract")) {
@@ -128,15 +119,15 @@ namespace WarTechIIC {
 
         public static void redrawMap() {
             ColourfulFlashPoints.Main.clearMapMarkers();
-            foreach (Flareup flareup in WIIC.flareups.Values) {
-                flareup.addToMap();
+            foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
+                extendedContract.addToMap();
             }
         }
 
-        public static void cleanupFlareupSystem(StarSystem system) {
-            if (WIIC.flareups.ContainsKey(system.ID)) {
-                WIIC.modLog.Debug?.Write($"Removing flareup at {system.ID}");
-                WIIC.flareups.Remove(system.ID);
+        public static void cleanupSystem(StarSystem system) {
+            if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                WIIC.modLog.Debug?.Write($"Removing ExtendedContract at {system.ID}");
+                WIIC.extendedContracts.Remove(system.ID);
             }
 
             if (system == WIIC.sim.CurSystem) {
@@ -186,6 +177,17 @@ namespace WarTechIIC {
         public static List<FactionValue> getAllies() {
             List<string> allied = (List<string>)_fieldGetAlliedFactions.GetValue(WIIC.sim);
             return allied.Select(f => FactionEnumeration.GetFactionByName(f)).ToList();
+        }
+
+        public static void giveReward(string itemCollection) {
+            if (itemCollection != null) {
+                try {
+                    SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
+                    queue.QueueRewardsPopup(itemCollection);
+                } catch (Exception e) {
+                    WIIC.modLog.Error?.Write(e);
+                }
+            }
         }
     }
 }

@@ -11,12 +11,12 @@ namespace WarTechIIC {
     public static class GameInstanceSave_PreSerialization_Patch {
         [HarmonyPrefix]
         public static void SaveFlareups() {
-            WIIC.modLog.Debug?.Write($"Saving {WIIC.flareups.Keys.Count} flareups and {WIIC.systemControl.Keys.Count} system control tags");
+            WIIC.modLog.Debug?.Write($"Saving {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
 
             try {
-                foreach (Flareup flareup in WIIC.flareups.Values) {
-                    WIIC.modLog.Trace?.Write(flareup.Serialize());
-                    flareup.location.Tags.Add(flareup.Serialize());
+                foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
+                    WIIC.modLog.Trace?.Write("    " + extendedContract.Serialize());
+                    extendedContract.location.Tags.Add(extendedContract.Serialize());
                 }
                 foreach (KeyValuePair<string, string> control in WIIC.systemControl) {
                     WIIC.sim.GetSystemById(control.Key).Tags.Add(control.Value);
@@ -32,13 +32,13 @@ namespace WarTechIIC {
     public static class GameInstanceSave_PostSerialization_Patch {
         [HarmonyPostfix]
         public static void RemoveFlareupTags() {
-            WIIC.modLog.Debug?.Write("Clearing flareup system tags post-save");
+            WIIC.modLog.Debug?.Write("Clearing extendedContract system tags post-save");
 
             try {
-                foreach (Flareup flareup in WIIC.flareups.Values) {
-                    List<string> tagList = flareup.location.Tags.ToList().FindAll(t => t.StartsWith("WIIC:"));
+                foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
+                    List<string> tagList = extendedContract.location.Tags.ToList().FindAll(t => t.StartsWith("WIIC:"));
                     foreach (string tag in tagList) {
-                        flareup.location.Tags.Remove(tag);
+                        extendedContract.location.Tags.Remove(tag);
                     }
                 }
                 foreach (KeyValuePair<string, string> control in WIIC.systemControl) {

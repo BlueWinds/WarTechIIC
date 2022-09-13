@@ -45,7 +45,7 @@ namespace WarTechIIC {
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
 
-                            Utilities.cleanupFlareupSystem(system);
+                            Utilities.cleanupSystem(system);
                             Utilities.applyOwner(system, faction, true);
 
                             result.AddedTags.Remove(addedTag);
@@ -66,9 +66,8 @@ namespace WarTechIIC {
                                 continue;
                             }
 
-                            Utilities.cleanupFlareupSystem(system);
-                            Flareup flareup = new Flareup(system, faction, WIIC.extendedContractTypes["Attack"]);
-                            WIIC.flareups[system.ID] = flareup;
+                            Utilities.cleanupSystem(system);
+                            WIIC.extendedContracts[system.ID] = new Attack(system, faction, WIIC.extendedContractTypes["Attack"]);
                             Utilities.redrawMap();
 
                             result.AddedTags.Remove(addedTag);
@@ -84,9 +83,8 @@ namespace WarTechIIC {
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
-                            Utilities.cleanupFlareupSystem(system);
-                            Flareup flareup = new Flareup(system, faction, WIIC.extendedContractTypes["Raid"]);
-                            WIIC.flareups[system.ID] = flareup;
+                            Utilities.cleanupSystem(system);
+                            WIIC.extendedContracts[system.ID] = new Raid(system, faction, WIIC.extendedContractTypes["Raid"]);
                             Utilities.redrawMap();
 
                             result.AddedTags.Remove(addedTag);
@@ -101,8 +99,8 @@ namespace WarTechIIC {
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
-                            if (WIIC.flareups.ContainsKey(system.ID)) {
-                                WIIC.flareups[system.ID].attackerStrength = strength;
+                            if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                                (WIIC.extendedContracts[system.ID] as Attack).attackerStrength = strength;
                             } else {
                                 WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
@@ -119,8 +117,8 @@ namespace WarTechIIC {
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
-                            if (WIIC.flareups.ContainsKey(system.ID)) {
-                                WIIC.flareups[system.ID].attackerStrength = strength;
+                            if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                                (WIIC.extendedContracts[system.ID] as Attack).attackerStrength = strength;
                             } else {
                                 WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }

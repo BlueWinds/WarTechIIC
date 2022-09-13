@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using ColourfulFlashPoints.Data;
 
 namespace WarTechIIC {
     public class Settings {
@@ -27,9 +26,6 @@ namespace WarTechIIC {
 
         public Dictionary<string, Dictionary<string, double>> hatred = new Dictionary<string, Dictionary<string, double>>();
         public bool limitTargetsToFactionEnemies = true;
-
-        public FpMarker attackMarker = new FpMarker();
-        public FpMarker raidMarker = new FpMarker();
 
         public int defaultAttackStrength = 10;
         public int defaultDefenseStrength = 10;

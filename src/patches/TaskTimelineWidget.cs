@@ -10,7 +10,7 @@ namespace WarTechIIC {
         static bool Prefix(WorkOrderEntry entry) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (extendedContract != null && extendedContract.workOrder == entry) {
+                if (extendedContract != null && extendedContract.workOrder == entry || extendedContract.extraWorkOrder == entry) {
                     return false;
                 }
             } catch (Exception e) {
@@ -32,6 +32,11 @@ namespace WarTechIIC {
                 }
 
                 __instance.AddEntry(extendedContract.workOrder, false);
+                WIIC.modLog.Debug?.Write($"extraWorkOrder?");
+                if (extendedContract.extraWorkOrder != null) {
+                    WIIC.modLog.Debug?.Write($"extraWorkOrder!");
+                    __instance.AddEntry(extendedContract.extraWorkOrder, false);
+                }
                 __instance.RefreshEntries();
             }
             catch (Exception e) {
@@ -50,7 +55,7 @@ namespace WarTechIIC {
                 }
 
                 WIIC.sim.SetTimeMoving(false);
-                PauseNotification.Show("{extendedContract.type} Details", extendedContract.getDescription(), WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), "", true, null);
+                PauseNotification.Show($"{extendedContract.type} Details", extendedContract.getDescription(), WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), "", true, null);
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }

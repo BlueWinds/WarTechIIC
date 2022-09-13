@@ -13,15 +13,17 @@ namespace WarTechIIC {
         static bool Prefix(SGTravelManager __instance) {
             try {
                 WIIC.modLog.Debug?.Write($"DisplayEnteredOrbitPopup. System {WIIC.sim.CurSystem.ID}");
-                if (!WIIC.flareups.ContainsKey(WIIC.sim.CurSystem.ID)) {
+                if (!WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     return true;
                 }
 
-                Flareup flareup = WIIC.flareups[WIIC.sim.CurSystem.ID];
+                ExtendedContract extendedContract = WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
+                if (extendedContract.type != "Attack" && extendedContract.type != "Raid") {
+                    return true;
+                }
 
-                string text = Strings.T("We've arrived at {0}, Commander. The system is currently controlled by {1}, but {2} will attack it soon. If we have good enough reputation with one or both factions, they may have a contract for us to sign on with their side.", flareup.location.Name, flareup.location.OwnerValue.FactionDef.ShortName, flareup.employer.FactionDef.ShortName);
+                string text = Strings.T("We've arrived at {0}, Commander. The system is currently controlled by {1}, but {2} will attack it soon. If we have good enough reputation with one or both factions, they may have a contract for us to sign on with their side.", extendedContract.location.Name, extendedContract.location.OwnerValue.FactionDef.ShortName, extendedContract.employer.FactionDef.ShortName);
                 WIIC.modLog.Debug?.Write(text);
-
 
                 WIIC.sim.GetInterruptQueue().QueueTravelPauseNotification("Arrived", text, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), "notification_travelcomplete", delegate {
                     try {

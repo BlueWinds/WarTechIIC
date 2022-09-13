@@ -6,7 +6,31 @@
   "employer": ["Any"],
   "target": ["SystemOwner"],
   "hireContract": "wiic_raid_attacker",
+  "targetHireContract": "wiic_raid_defender",
+  "travelContracts": false,
+  "mapMarker": {
+    "useHmAnimation": true,
+    "flashpointPrefix": "",
+    "swapColour": true,
+    "keepAlpha": true,
+    "useOnlyInner": true,
+    "autoDetectContracts": false,
+    "useContractColourOverride": false,
+    "innerCircle": {
+      "Colour": "#1904B1"
+    }
+  },
+  "startToast": "{0} launches raid on {1} at {2}",
   "availableFor": [30, 45],
-  "schedule": [],
-  "entries": {}
+  "schedule": [
+    "",
+    "",
+    "mission"
+  ],
+  "entries": {
+    "mission": {
+      "contractChance": 1,
+      "invokeMethod": "flareupForceLoss",
+    }
+  }
 }

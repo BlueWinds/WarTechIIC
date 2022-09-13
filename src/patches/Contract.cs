@@ -22,7 +22,7 @@ namespace WarTechIIC {
                 Settings s = WIIC.settings;
                 WIIC.modLog.Debug?.Write($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}");
 
-                Flareup flareup = Utilities.currentExtendedContract() as Flareup;
+                Attack flareup = Utilities.currentExtendedContract() as Attack;
                 if (flareup == null || __instance.Name != flareup.currentContractName) {
                     return;
                 }
@@ -37,26 +37,6 @@ namespace WarTechIIC {
                 bonus = flareup.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
                 WIIC.modLog.Info?.Write($"Adding salvage. FinalSalvageCount: {__instance.FinalSalvageCount}, bonus: {bonus}");
                 Traverse.Create(__instance).Property("FinalSalvageCount").SetValue(__instance.FinalSalvageCount + bonus);
-            }
-            catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
-            }
-        }
-    }
-
-
-    [HarmonyPatch(typeof(ContractOverride), "RunMadLibs")]
-    public static class ContractOverride_RunMadLibs_Patch {
-        public static void Prefix(ContractOverride __instance) {
-            try {
-                WIIC.modLog.Info?.Write($"ContractOverride RunMadLibs {__instance.ID}");
-                WIIC.modLog.Info?.Write($"player1Team {__instance.player1Team.faction}");
-                WIIC.modLog.Info?.Write($"player2Team {__instance.player2Team.faction}");
-                WIIC.modLog.Info?.Write($"employerTeam {__instance.employerTeam.faction}");
-                WIIC.modLog.Info?.Write($"employersAllyTeam {__instance.employersAllyTeam.faction}");
-                WIIC.modLog.Info?.Write($"targetTeam {__instance.targetTeam.faction}");
-                WIIC.modLog.Info?.Write($"neutralToAllTeam {__instance.neutralToAllTeam.faction}");
-                WIIC.modLog.Info?.Write($"hostileToAllTeam {__instance.hostileToAllTeam.faction}");
             }
             catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
