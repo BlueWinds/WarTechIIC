@@ -26,6 +26,9 @@ namespace WarTechIIC {
         public string attackerName;
 
         [JsonProperty]
+        public string giveOnWin;
+
+        [JsonProperty]
         public int playerDrops = 0;
 
         [JsonProperty]
@@ -263,7 +266,8 @@ namespace WarTechIIC {
 
             // Now apply the owner or stat changes
             if (type == "Attack" && defenderStrength <= 0 && attackerStrength > 0) {
-                Utilities.applyOwner(location, attacker, true);
+                FactionValue giveTo = string.IsNullOrEmpty(giveOnWin) ? attacker : Utilities.getFactionValueByFactionID(giveOnWin);
+                Utilities.applyOwner(location, giveTo, true);
             } else if (type == "Raid") {
                 SimGameEventResult result = new SimGameEventResult();
                 result.Scope = EventScope.Company;

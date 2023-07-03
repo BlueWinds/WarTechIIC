@@ -85,7 +85,6 @@
     <Compile Include="src/patches/Contract.cs" />
     <Compile Include="src/patches/GameInstanceSave.cs" />
     <Compile Include="src/patches/LanceConfiguratorPanel.cs" />
-    <Compile Include="src/patches/SimGameInterruptManager.cs" />
     <Compile Include="src/patches/SimGameState.cs" />
     <Compile Include="src/patches/SGCmdCenterLanceConfigBG.cs" />
     <Compile Include="src/patches/SGContractsWidget.cs" />

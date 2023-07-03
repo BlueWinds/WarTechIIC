@@ -12,6 +12,9 @@ namespace WarTechIIC {
         // WIIC_give_systemdef_Sol_to_Clan Wolf
         private static Regex GIVE_SYSTEM = new Regex("^WIIC_give_(?<system>.*?)_to_(?<faction>.*)$", RegexOptions.Compiled);
 
+        // WIIC_give_systemdef_Sol_to_Clan Wolf_on_attacker_win
+        private static Regex GIVE_SYSTEM_ON_WIN = new Regex("^WIIC_give_(?<system>.*?)_to_(?<faction>.*)_on_attacker_win$", RegexOptions.Compiled);
+
         // WIIC_ClanJadeFalcon_attacks_systemdef_Sol
         private static Regex ATTACK_SYSTEM = new Regex("^WIIC_(?<faction>.*?)_attacks_(?<system>.*)$", RegexOptions.Compiled);
 
@@ -36,7 +39,25 @@ namespace WarTechIIC {
             if (result.Scope == EventScope.Company && result.AddedTags != null) {
                 foreach (string addedTag in result.AddedTags.ToList()) {
                     try {
-                        MatchCollection matches = GIVE_SYSTEM.Matches(addedTag);
+                        MatchCollection matches = GIVE_SYSTEM_ON_WIN.Matches(addedTag);
+                        if (matches.Count > 0) {
+                            string systemId = matches[0].Groups["system"].Value;
+                            string factionID = matches[0].Groups["faction"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+
+                            if (WIIC.flareups.ContainsKey(system.ID)) {
+                                WIIC.flareups[system.ID].giveOnWin = factionID;
+                            } else {
+                                WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
+                            }
+
+                            result.AddedTags.Remove(addedTag);
+                            continue;
+                        }
+
+                        matches = GIVE_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
                             string systemId = matches[0].Groups["system"].Value;
                             string factionID = matches[0].Groups["faction"].Value;
@@ -51,6 +72,7 @@ namespace WarTechIIC {
                             result.AddedTags.Remove(addedTag);
                             continue;
                         }
+
 
                         matches = ATTACK_SYSTEM.Matches(addedTag);
                         if (matches.Count > 0) {
