@@ -191,13 +191,11 @@
       "falcon_invasion_corridor"
     ]
   },
-  "defaultAttackReward": "BTA_standard_Major_Loot",
-  "defaultRaidReward": "BTA_standard_Major_Loot",
-  "customContractEnums": [
-    10002
-  ],
+  "defaultAttackReward": "itemCollection_loot_ItemTriple_uncommon",
+  "defaultRaidReward": "itemCollection_loot_ItemTriple_uncommon",
+  "customContractEnums": [],
   "dailyExtConChanceIfNoneAvailable": 1,
   "dailyExtConChanceIfSomeAvailable": 1,
-  "maxAvailableExtendedContracts": 5,
+  "maxAvailableExtendedContracts": 2,
   "saveFolder": "../../BTASaves"
 }

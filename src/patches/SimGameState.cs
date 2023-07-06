@@ -10,6 +10,7 @@ using BattleTech.UI;
 using BattleTech.Save;
 using BattleTech.Save.Test;
 using Localize;
+using HBS.Collections;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "Init")]
@@ -96,10 +97,17 @@ namespace WarTechIIC {
                     bool finished = extendedContract.passDay();
                     if (finished) {
                         WIIC.extendedContracts.Remove(extendedContract.locationID);
-                    } else {
-                        if (activeItems.TryGetValue(extendedContract.workOrder, out var taskManagementElement)) {
-                            taskManagementElement.UpdateItem(0);
-                        }
+                    }
+                }
+
+                ExtendedContract current = Utilities.currentExtendedContract();
+                if (current != null) {
+                    if (activeItems.TryGetValue(current.workOrder, out var taskManagementElement)) {
+                        taskManagementElement.UpdateItem(0);
+                    }
+                    if (activeItems.TryGetValue(current.extraWorkOrder, out taskManagementElement)) {
+                        taskManagementElement.UpdateItem(0);
+                        taskManagementElement.UpdateTaskInfo();
                     }
                 }
 
@@ -157,7 +165,7 @@ namespace WarTechIIC {
                 WIIC.modLog.Debug?.Write($"Breadcrumb complete {WIIC.sim.CurSystem.ID} - {__state}");
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     ExtendedContract extendedContract = WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
-                    WIIC.modLog.Debug?.Write($"Type: {extendedContract.extendedType}, looking for {extendedContract.extendedType.hireContract} or {extendedContract.extendedType.targetHireContract}");
+                    WIIC.modLog.Debug?.Write($"Type: {extendedContract.extendedType.name}, looking for {extendedContract.extendedType.hireContract}{(String.IsNullOrEmpty(extendedContract.extendedType.targetHireContract) ? " or " + extendedContract.extendedType.targetHireContract : "")}");
                     if (__state == extendedContract.extendedType.hireContract || __state == extendedContract.extendedType.targetHireContract) {
                         __instance.ClearBreadcrumb();
                         extendedContract.acceptContract(__state);

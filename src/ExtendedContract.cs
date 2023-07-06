@@ -136,8 +136,10 @@ namespace WarTechIIC {
         [JsonProperty]
         public int countdown;
 
+        // Inits to -1 because acceptContract() immediately invokes passDayEmployed()
+        // in order to run the day 0 entry.
         [JsonProperty]
-        public int currentDay = 0;
+        public int currentDay = -1;
 
         [JsonProperty]
         public int playerDrops = 0;
@@ -214,6 +216,7 @@ namespace WarTechIIC {
         }
 
         public virtual bool passDay() {
+
             if (isEmployedHere) {
                 return passDayEmployed();
             }
@@ -233,23 +236,33 @@ namespace WarTechIIC {
         }
 
         public virtual bool passDayEmployed() {
-            string entryName = extendedType.schedule[currentDay];
-            if (!extendedType.entries.ContainsKey(entryName)) {
-                throw new Exception($"ExtendedContractType references '{entryName}' at schedule[{currentDay}], but this is not present in its entries dictionary. Valid keys are {string.Join(", ", extendedType.entries.Keys)}");
+            currentDay++;
+
+            if (currentDay >= extendedType.schedule.Length) {
+                // This should never happen; on the final day, we should already have removed the contract.
+                // But in case there was an error somehow, we at least want to clean up the following day.
+                return true;
             }
 
-            WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {entryName}.");
-            runEntry(extendedType.entries[entryName]);
+            string entryName = extendedType.schedule[currentDay];
 
-            currentDay++;
-            return currentDay == extendedType.schedule.Length;
+            if (entryName == "") {
+                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, nothing happening.");
+            } else if (extendedType.entries.ContainsKey(entryName)) {
+                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {entryName}.");
+                runEntry(extendedType.entries[entryName]);
+            } else {
+                WIIC.modLog.Error?.Write($"ExtendedContractType references '{entryName}' at schedule[{currentDay}], but this is not present in its entries dictionary. Valid keys are {string.Join(", ", extendedType.entries.Keys)}");
+            }
+
+            return currentDay == extendedType.schedule.Length - 1;
         }
 
         public void runEntry(Entry entry) {
             foreach (string eventID in entry.triggerEvent) {
                 WIIC.modLog.Debug?.Write($"Considering event {eventID}");
                 if (!WIIC.sim.DataManager.SimGameEventDefs.TryGet(eventID, out SimGameEventDef eventDef)) {
-                    throw new Exception($"Couldn't find event {eventID} on day {currentDay} of {type}");
+                    WIIC.modLog.Error?.Write($"Couldn't find event {eventID} on day {currentDay} of {type}");
                 }
 
                 if (WIIC.sim.MeetsRequirements(eventDef.Requirements) && WIIC.sim.MeetsRequirements(eventDef.AdditionalRequirements)) {
@@ -272,8 +285,10 @@ namespace WarTechIIC {
                         WIIC.modLog.Debug?.Write($"Considering {contractName}");
                         contract = ContractManager.getContractByName(contractName, location, employer, target);
                         if (WIIC.sim.MeetsRequirements(contract.Override.requirementList.ToArray())) {
+                            WIIC.modLog.Debug?.Write($"Meets requirements");
                             break;
                         } else {
+                            WIIC.modLog.Debug?.Write($"Does not meet requirements");
                             contract = null;
                         }
                     }
@@ -350,6 +365,8 @@ namespace WarTechIIC {
             removeParticipationContracts();
             WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
             WIIC.sim.SetSimRoomState(DropshipLocation.SHIP);
+
+            passDayEmployed();
             WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
             WIIC.sim.RoomManager.RefreshTimeline(false);
         }
@@ -362,7 +379,7 @@ namespace WarTechIIC {
             if (declinePenalty == DeclinePenalty.BadFaith) {
                 message += "\n\nDeclining this contract is equivelent to a bad faith withdrawal. It will severely harm our reputation.";
             } else if (declinePenalty == DeclinePenalty.BreakContract) {
-                message += "\n\nDeclining this contract is will break our {type} contract with {employer.ShortName}.";
+                message += $"\n\nDeclining this contract is will break our {type} contract with {employer.FactionDef.ShortName}.";
             }
 
             WIIC.modLog.Debug?.Write(message);
@@ -389,13 +406,13 @@ namespace WarTechIIC {
         }
 
         public virtual void applyDeclinePenalty(DeclinePenalty declinePenalty) {
-            WIIC.modLog.Info?.Write("Applying DeclinePenalty {declinePenalty.ToString()} for {type} with employer {employer.Name}");
+            WIIC.modLog.Info?.Write($"Applying DeclinePenalty {declinePenalty.ToString()} for {type} with employer {employer.Name}");
 
             if (declinePenalty == DeclinePenalty.BadFaith || declinePenalty == DeclinePenalty.BreakContract) {
                 if (employer.DoesGainReputation) {
                     float employerRepBadFaithMod = WIIC.sim.Constants.Story.EmployerRepBadFaithMod;
-                    WIIC.modLog.Info?.Write("employerRepBadFaithMod: {employerRepBadFaithMod}");
-                    WIIC.modLog.Info?.Write("difficulty: {location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
+                    WIIC.modLog.Info?.Write($"employerRepBadFaithMod: {employerRepBadFaithMod}");
+                    WIIC.modLog.Info?.Write($"difficulty: {location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
                     int num = (int) Math.Round(location.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
 
                     WIIC.sim.SetReputation(employer, num);
@@ -414,7 +431,7 @@ namespace WarTechIIC {
             StringBuilder description = new StringBuilder();
 
             description.AppendLine(Strings.T("<b><color=#de0202>{0} has hired us for {1}.</color></b>", employer.FactionDef.ShortName, type));
-            description.AppendLine(Strings.T("We've been on assignment {0} days. The contract will complete after {1}.", currentDay, extendedType.schedule.Length));
+            description.AppendLine(Strings.T("We've been on assignment {0} days. The contract will complete after {1}.", currentDay, extendedType.schedule.Length - 1));
 
             return description.ToString();
         }
@@ -443,20 +460,18 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write("Generated _extraWorkOrder");
                 }
 
-                int day = currentDay + 1;
+                int day = currentDay;
                 while (day < extendedType.schedule.Length) {
-                    WIIC.modLog.Debug?.Write($"day {day}");
-                    string entryName = extendedType.schedule[currentDay];
-                    WIIC.modLog.Debug?.Write($"entryName {entryName}");
-                    if (entryName == "" || extendedType.entries.ContainsKey(entryName)) {
-                        WIIC.modLog.Debug?.Write($"No entry?");
+                    day++;
+                    string entryName = extendedType.schedule[day];
+                    WIIC.modLog.Debug?.Write($"currentDay: {currentDay}, day: {day}, entryName: {entryName}");
+                    if (entryName == "" || !extendedType.entries.ContainsKey(entryName)) {
                         continue;
                     }
 
                     Entry entry = extendedType.entries[entryName];
-                    WIIC.modLog.Debug?.Write($"entry {entry}");
                     if (entry.workOrder != null) {
-                        WIIC.modLog.Debug?.Write($"entry.workOrder {entry.workOrder}");
+                        WIIC.modLog.Debug?.Write($"Matching. {entry.workOrder}");
                         _extraWorkOrder.SetDescription(entry.workOrder);
                         _extraWorkOrder.SetCost(day - currentDay);
 

@@ -88,11 +88,12 @@ WIIC reads and sets a variety of tags and statistics on companies and star syste
 When naming star systems, remember to use the ID and not the name. You want `starsystemdef_St.Ives`, not `St. Ives`. For factions, refer to them by factionID. You want `ClanCloudCobra`, not `Clan Cloud Cobra` or `faction_ClanCloudCobra`. This is slightly inconsistent, yes, but I work with what HBS gives me.
 
 * `WIIC_helping_attacker` and `WIIC_helping_defender` - If present, the company is in the middle of a flareup, helping the attacker/defender take the current system. You can remove this from events, and nothing will break. Adding it from events will force player participation if there's already a flareup in their current system, otherwise it won't do anything.
-* `WIIC_give_{system}_to_{newOwner}` (eg: WIIC_give_systemdef_Sol_to_Clan Wolf) - Setting this will pass control of the named star system to the new owner. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_{faction}_attacks_{system}` (eg: WIIC_Clan Jade Falcon_attacks_systemdef_Sol) - Setting this will cause a new Attack to start in the given system, with the faction as the attacker, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_{faction}_raids_{system}` (eg: WIIC_Clan Jade Falcon_raids_systemdef_Sol) - Setting this will cause a new Raid to start in the given system, with the faction as the raider, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_set_{system}_{attacker|defender}_strength_{number}` (eg: WIIC_set_systemdef_Sol_defender_strength_10) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_add_{tag}_to_{system} | WIIC_remove_{tag}_from_{system}` (eg: WIIC_add_planet_other_pirate_to_systemdef_Sol or WIIC_remove_planet_other_pirate_from_systemdef_Sol) - Setting this will add or remove the given tag from the given system. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_give_{system}_to_{newOwner}` (eg: `WIIC_give_starsystemdef_Sol_to_Clan Wolf`) - Setting this will pass control of the named star system to the new owner. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_{faction}_attacks_{system}` (eg: `WIIC_Clan Jade Falcon_attacks_starsystemdef_Sol`) - Setting this will cause a new Attack to start in the given system, with the faction as the attacker, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_give_{system}_to_{newOwner}_on_attacker_win` (eg:  `WIIC_give_starsystemdef_Sol_to_Clan Wolf_on_attacker_win`) - Setting this will cause the named star system to be given to {newOwner} *rather than* the attacker when an Attack on this system ends. Win or lose, the effect is cleared after the current attack.
+* `WIIC_{faction}_raids_{system}` (eg: `WIIC_Clan Jade Falcon_raids_starsystemdef_Sol`) - Setting this will cause a new Raid to start in the given system, with the faction as the raider, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_set_{system}_{attacker|defender}_strength_{number}` (eg: `WIIC_set_starsystemdef_Sol_defender_strength_10`) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_add_{tag}_to_{system} | WIIC_remove_{tag}_from_{system}` (eg: `WIIC_add_planet_other_pirate_to_starsystemdef_Sol` or `WIIC_remove_planet_other_pirate_from_starsystemdef_Sol`) - Setting this will add or remove the given tag from the given system. The tag won't actually added to the company - WIIC 'eats' it.
 
 ### Company Stats
 For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.
@@ -157,11 +158,29 @@ All the top-level properties explained below are required. See the included `Gar
 ### `entries`
 Each entry is defined by an ID (the key, used in the extended contract type's `schedule` to say when this entry occurs), and a value with a large number of possible properties. All properties are optional - just leave out any that you don't need. An entry of `{}` is perfectly valid.
 
+The first entry occurs immediately upon accepting the extended contract - it's "Day 0".
+
   - `workOrder` is an optional string. While the extended contract is running, the first upcoming entry with a `workOrder` is shown to the user in the timeline; Use this to notify them of upcoming events / provide a greater sense of "actually doing something" to the player. It has no mechanical effect.
   - `triggerEvent` is an array of event IDs. Starting at the beginning, WIIC finds the first event with matching conditions and triggers it. If an event triggers, then everything else that could happen on the day is ignored - no contract or lootbox will be generated. If none of the events' conditions match, other properties will be checked as normal.
   - If no event occurred, here is a `contractChance` chance that a contract will be offered to the player on this day. This defaults to 0 - if you want a contract to spawn, set it! The rest of the options control what sort of contract will be generated.
     - `contract`: A list of contracts to choose between at random, ignoring planetary difficulty but respecting each contract's `requirementList`. If empty or not present, then a contract will be chosen by vanilla logic (respecting `allowedContractTypes` below).
     - `allowedContractTypes`: A list of contract types the extended contract will select between. If the list is empty or not present, then any contract type (including those from vanilla and in WIIC's settings.json `customContractEnums`) is valid.
+      Useful Vanilla contract types:
+        - AmbushConvoy: 15
+        - Assassinate: 10
+        - CaptureBase: 7
+        - CaptureEscort: 8
+        - DefendBase: 11
+        - DestroyBase: 6
+        - Rescue: 9
+        - SimpleBattle: 3
+        - FireMission: 50
+        - AttackDefend: 53
+        - ThreeWayBattle: 52
+      Mission Control contract types (may be out of date / incomplete, but included here for reference):
+        - SoloDuel: 10000
+        - DuoDuel: 10001
+        - Blackout: 10002
     - `contractPayoutMultiplier`: Pay for this contract is multiplied by this amount.
     - `contractBonusSalvage`: Added to the salvage this contract pays out. Can be negative. The final value will be clamped between 0 and 28 (so as not to break the UI).
     - `contractMessage`: A string to display in the popup offering the mission to the user. You do not need to explain the `declinePenalty` in here - WIIC will display that to the user separately. This can contain HBS madlib replacements, such as `{TEAM_EMP.FactionDef.ShortName}` and `{TGT_SYSTEM.Name}`. Notably, you can also access the contract itself under `{RES_OBJ.Name}` and `{RES_OBJ.ContractTypeValue.FriendlyName}` and similar.

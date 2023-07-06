@@ -32,9 +32,7 @@ namespace WarTechIIC {
                 }
 
                 __instance.AddEntry(extendedContract.workOrder, false);
-                WIIC.modLog.Debug?.Write($"extraWorkOrder?");
                 if (extendedContract.extraWorkOrder != null) {
-                    WIIC.modLog.Debug?.Write($"extraWorkOrder!");
                     __instance.AddEntry(extendedContract.extraWorkOrder, false);
                 }
                 __instance.RefreshEntries();

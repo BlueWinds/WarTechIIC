@@ -24,21 +24,24 @@
     "giveAManAFish"
   ],
   "entries": {
-    "myEvent": { "triggerEvent": ["event_co_blackMarket_Membership0"]},
+    "myEvent": {
+      "workOrder": "Black market offer",
+      "triggerEvent": ["event_co_blackMarket_Membership0"]
+    },
     "myMission1": {
       "contractChance": 1,
-      "allowedContractTypes": [10000, 10001, 10002],
+      "allowedContractTypes": [13, 3, 53],
       "declinePenalty": "BadFaith",
-      "contractMessage": "{TEAM_EMP.FactionDef.ShortName} has a mission for us, Commander: {RES_OBJ.Name}. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent.",
-      "workOrder": "Garrison Contract"
+      "contractMessage": "{TEAM_EMP.FactionDef.ShortName} has a mission for us, Commander: {RES_OBJ.Name}. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent."
     },
     "myMission2": {
       "contractChance": 1,
-      "declinePenalty": "BreakContract",
+      "declinePenalty": "None",
       "contractPayoutMultiplier": 0,
       "contractBonusSalvage": 0,
-      "contract": ["Assassinate_EscapingSpy", "Assassinate_Flyswatter_Alt"],
-      "contractMessage": "Time to assassinate our target! Good luck."
+      "contract": ["Assassinate_EscapingSpy", "Assassinate_Flyswatter_Alt", "Assassinate_FalseSecurity"],
+      "contractMessage": "Time to assassinate our target! Good luck.",
+      "workOrder": "Assasination coming up soon"
     },
     "giveAManAFish": {
       "rewardByDifficulty": {

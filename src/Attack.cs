@@ -21,6 +21,8 @@ namespace WarTechIIC {
         public int defenderStrength;
         [JsonProperty]
         public int currentContractForceLoss = 0;
+        [JsonProperty]
+        public string giveOnWin;
 
         public Attack() {
             // Empty constructor used for deserialization.
