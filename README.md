@@ -128,28 +128,31 @@ All the top-level properties explained below are required. See the included `Gar
   - The `name` is displayed to the player in various ways as the contract progresses.
   - This type of extended contract can only spawn if `companyRequirements` is met. `StarSystem` scope requirements are checked against the location of the extended contract, not against the player's current location.
   - When WIIC decides to spawn a extended contract, it does so based on their `weight`s. Higher weights are more likely to be selected.
-  - `employer` is a list of strings, with exact meaning determined by `spawnLocation`. See below.
-  - Each ExtendedContractType has a `spawnLocation`, which describes the *relationship between the owner of the star system and the* `employer`. It is one of:
-    - `Any`: The employer doesn't need any specific relation to the system controller. Valid entries in `employer` are:
-      - `Allied`: The extended contract can spawn on any world. The employer will be any faction faction the player is allied to.
-      - `Any` is not a valid `employer` when `spawnLocation` is also `Any`.
-      - `OwnSystem`: The extended contract can spawn on any world, and the employer will be the system owner.
-      - A faction ID (eg. `ClanJadeFalcon`): The extended contract can spawn on any world, and this faction will be the employer.
-    - `NearbyEnemy`: The employer must be an enemy of the system owner, and control a system nearby (within one jump). Valid entries in `employer` are:
-      - `Allied`: Any enemy of the system owner that controls a nearby system and is allied to the player can be the employer.
-      - `Any`: Any enemy of the system owner that controls a nearby system and isn't in `ignoreFactions` / `wontHirePlayer` can be the employer.
-      - `OwnSystem` is not a valid `employer` when `spawnLocation` is `NearbyEnemy`.
-      - A faction ID (eg. `ClanJadeFalcon`): If the system owner is an enemy of the listed faction, and the listed faction controls a world within one jump, they can be the employer.
-    - `OwnSystem`: The system owner and the employer are the same faction. Valid entries in `employer` are:
-      - `Allied`: The extended contract can spawn on any world whose controller is allied to the player.
-      - `Any`: Any system owner not in `ignoreFactions` / `wontHirePlayer` can hire the player.
-      - `OwnSystem` is not a valid `employer` when `spawnLocation` is also `OwnSystem`.
-      - A faction ID (eg. `ClanJadeFalcon`): The extended contract can spawn on any world controlled by this faction.
-  - And finally, there is `target` - this is determined after employer and system are chosen, and is an array of one or more of:
+  - `employer` is an array of one or more strings, with exact meaning determined by `spawnLocation`. See below.
+  - Each ExtendedContractType has a `spawnLocation`, which describes the *relationship between the owner of the star system and the* `employer`. Each combination is explained below.
+    - `spawnLocation: Any, employer: [Allied]`: The extended contract can spawn on any world. The employer will be any faction faction the player is allied to.
+    - `spawnLocation: Any, employer: [Any]` is not valid.
+    - `spawnLocation: Any, employer: [OwnSystem]`: The extended contract can spawn on any world. The employer will be the system owner.
+    - `spawnLocation: Any, employer: [ClanJadeFalcon]`: The extended contract can spawn on any world. The listed faction will be the employer.
+
+    - `spawnLocation: NearbyEnemy, employer: [Allied]`: The contract can spawn on any world controlled by an enemy of a faction the player is allied with. The employer will be the player's ally.
+    - `spawnLocation: NearbyEnemy, employer: [Any]`: The contract can spawn on any world whose owner has an enemy that controls a system within one jump. The employer will be an enemy of the system owner (that controls a world within one jump).
+    - `spawnLocation: NearbyEnemy, employer: [OwnSystem]` is not valid.
+    - `spawnLocation: NearbyEnemy, employer: [ClanJadeFalcon]`: The contract can spawn on any world controlled by an enemy of the given faction and within one jump of a world controlled by the faction. The listed faction will be the employer.
+
+    - `spawnLocation: OwnSystem, employer: [Allied]`: The extended contract can spawn on any world whose controller is allied to the player. The system owner will be the employer.
+    - `spawnLocation: OwnSystem, employer: [Any]`: The extended contract can spawn on any system whose owner is not in `ignoreFactions` / `wontHirePlayer`. The system owner wyll be the employer.
+    - `spawnLocation: OwnSystem, employer: [OwnSystem]` is not valid.
+    - `spawnLocation: OwnSystem, employer: [ClanJadeFalcon]`: The extended contract can spawn on any world controlled by the listed faction. They will be the employer.
+
+    If multiple `employer`s are listed, WIIC will consider all possibilities and select one at random. Eg, `spawnLocation: OwnSystem, employer: [Comstar, Allied]` will spawn at a system owned by Comstar or any faction the player is allied with.
+
+  - And finally, there is `target` - this is determined after the employer and system are chosen, and is an array of one or more of:
     - `Employer`: The OpFor will be the same as the employer.
-    - `NearbyEnemy`: The OpFor will be randomly chosen enemies of your employer that control a system within one jump
+    - `NearbyEnemy`: The OpFor will be a randomly chosen enemy of your employer that control a system within one jump.
     - `SystemOwner`: The OpFor will be the whoever owns the system.
     - A faction ID (eg. `ClanJadeFalcon`). The target will be this faction, even if they don't control any systems in the area.
+
   - `hireContract` is the ID of the travel contract WIIC will use to let the player get involved. This is always spawned as a travel contract, and no combat drop will occur.
   - `availableFor` determines how long the travel contract will be available, min and max days. Once it expires, the extended contract disappears, never to be seen again (unless the player has accepted the travel contract and is already en-route).
   - `schedule` is an array of strings, each one referencing an item in `entries` (see below). These occur each day in order, and when the player reaches the end, the extended contract is over.
