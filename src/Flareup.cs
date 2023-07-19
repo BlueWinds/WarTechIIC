@@ -267,7 +267,15 @@ namespace WarTechIIC {
             // Now apply the owner or stat changes
             if (type == "Attack" && defenderStrength <= 0 && attackerStrength > 0) {
                 FactionValue giveTo = string.IsNullOrEmpty(giveOnWin) ? attacker : Utilities.getFactionValueByFactionID(giveOnWin);
-                Utilities.applyOwner(location, giveTo, true);
+
+                // Try block in case the giveOnWin faction doesn't exist. We should validate that the
+                // faction exists when it's applied, but didn't do that initially, so we simply catch the error here
+                // so that flareups in existing saves with invalid giveOnWin factions can at least resolve.
+                try {
+                    Utilities.applyOwner(location, giveTo, true);
+                } catch (Exception e) {
+                    WIIC.modLog.Error?.Write(e);
+                }
             } else if (type == "Raid") {
                 SimGameEventResult result = new SimGameEventResult();
                 result.Scope = EventScope.Company;
