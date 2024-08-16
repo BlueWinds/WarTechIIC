@@ -193,7 +193,13 @@ namespace WarTechIIC {
         public virtual void finalEffects() {
             // Now apply the owner or stat changes
             if (defenderStrength <= 0 && attackerStrength > 0) {
-                Utilities.applyOwner(location, employer, true);
+                try {
+                    FactionValue giveTo = string.IsNullOrEmpty(giveOnWin) ? attacker : Utilities.getFactionValueByFactionID(giveOnWin);
+                    Utilities.applyOwner(location, giveTo, true);
+                } catch (Exception e) {
+                    WIIC.modLog.Error?.Write($"Tried to apply owner after attack, but got an error. giveOnWin={giveOnWin}");
+                    WIIC.modLog.Error?.Write(e);
+                }
             }
         }
 

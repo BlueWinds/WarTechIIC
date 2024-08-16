@@ -33,6 +33,9 @@ namespace WarTechIIC {
         // WIIC_remove_ives_rebellion_from_systemdef_Sol
         private static Regex REMOVE_SYSTEM_TAG = new Regex("^WIIC_remove_(?<tag>.*?)_from_(?<system>.*?)$", RegexOptions.Compiled);
 
+        // WIIC_remove_ives_rebellion_from_systemdef_Sol
+        private static Regex OFFER_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_(?<contractType>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
+
         public static void Prefix(ref SimGameEventResult result) {
             Settings s = WIIC.settings;
 
@@ -172,6 +175,20 @@ namespace WarTechIIC {
                             string tag = matches[0].Groups["tag"].Value;
                             string systemId = matches[0].Groups["system"].Value;
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {tag}, systemId {systemId}");
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            system.Tags.Remove(tag);
+
+                            result.AddedTags.Remove(addedTag);
+                            continue;
+
+                        matches = OFFER_CONTRACT_TAG.Matches(addedTag);
+                        if (matches.Count > 0) {
+                            string employerID = matches[0].Groups["employer"].Value;
+                            string systemId = matches[0].Groups["system"].Value;
+                            string contractType = matches[0].Groups["contractType"].Value;
+                            string targetID = matches[0].Groups["target"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employerID}, systemId {systemId}, contractType {contractType}, targetID {targetID}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
                             system.Tags.Remove(tag);

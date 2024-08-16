@@ -94,6 +94,7 @@ When naming star systems, remember to use the ID and not the name. You want `sta
 * `WIIC_{faction}_raids_{system}` (eg: `WIIC_Clan Jade Falcon_raids_starsystemdef_Sol`) - Setting this will cause a new Raid to start in the given system, with the faction as the raider, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
 * `WIIC_set_{system}_{attacker|defender}_strength_{number}` (eg: `WIIC_set_starsystemdef_Sol_defender_strength_10`) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
 * `WIIC_add_{tag}_to_{system} | WIIC_remove_{tag}_from_{system}` (eg: `WIIC_add_planet_other_pirate_to_starsystemdef_Sol` or `WIIC_remove_planet_other_pirate_from_starsystemdef_Sol`) - Setting this will add or remove the given tag from the given system. The tag won't actually added to the company - WIIC 'eats' it.
+* `WIIC_{employer}_offers_{contractType}_at_{system}_against_{target}` (eg: `WIIC_Clan Jade Falcon_offers__at_starsystemdef_Sol_against_Clan Wolf`)
 
 ### Company Stats
 For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.
