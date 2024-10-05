@@ -3,14 +3,17 @@ using HBS.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using IRBTModUtils.Logging;
-using Localize;
 
 namespace WarTechIIC {
     public class WhoAndWhere {
         private static Dictionary<string, TagSet> factionActivityTags = new Dictionary<string, TagSet>();
         private static Dictionary<string, TagSet> factionInvasionTags = new Dictionary<string, TagSet>();
+        private static Dictionary<(StarSystem, FactionValue), double> weightedLocationCache = null;
         public static TagSet clearEmployersTags;
+
+        public static void clearLocationCache() {
+            weightedLocationCache = null;
+        }
 
         public static void init() {
             Settings s = WIIC.settings;
@@ -157,6 +160,10 @@ namespace WarTechIIC {
         }
 
         public static (StarSystem, FactionValue) getFlareupEmployerAndLocation(ExtendedContractType type) {
+            if (weightedLocationCache != null) {
+                return Utilities.WeightedChoice(weightedLocationCache);
+            }
+
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
             var reputations = new Dictionary<FactionValue, double>();
@@ -238,6 +245,8 @@ namespace WarTechIIC {
                     }
                 }
             }
+
+            weightedLocationCache = weightedLocations;
 
             return Utilities.WeightedChoice(weightedLocations);
         }

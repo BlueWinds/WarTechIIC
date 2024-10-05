@@ -30,11 +30,8 @@ namespace WarTechIIC {
                 if (extendedContract != null && __instance.SelectedContract.Name == extendedContract.currentContractName) {
                     WIIC.modLog.Debug?.Write($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
 
-                    HBSButton backButton = (HBSButton)AccessTools.Field(typeof(SGContractsWidget), "NegotiateTitleBackButton").GetValue(__instance);
-                    backButton.SetState(ButtonState.Disabled);
-
-                    SGLeftNavDrawer leftDrawer = (SGLeftNavDrawer)AccessTools.Field(typeof(SGRoomManager), "LeftDrawerWidget").GetValue(WIIC.sim.RoomManager);
-                    leftDrawer.gameObject.SetActive(false);
+                    __instance.NegotiateTitleBackButton.SetState(ButtonState.Disabled);
+                    WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(false);
                 }
             }
             catch (Exception e) {

@@ -1,35 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="Common.props" />
-  <ItemGroup>
-    <Link Include="$(BattleTechGameDir)\Mods\.modtek\*.log*" />
-  </ItemGroup>
   <Target Condition="Exists('$(BattleTechGameDir)\Mods\$(ProjectName)\')" Name="CopyFilesToGame" AfterTargets="CopyFilesToOutputDirectory">
+    <ItemGroup>
+        <DataFiles Include="README.md;src/data/**/*.*"/>
+    </ItemGroup>
+
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/" />
-
     <Copy
-      SourceFiles="src/data/contracts/wiic_help_attacker.json;src/data/contracts/wiic_help_defender.json;src/data/contracts/wiic_raid_attacker.json;src/data/contracts/wiic_raid_defender.json"
-      DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/contracts/"
-    />
-
-    <Copy
-      SourceFiles="src/data/contracts/wiic_garrison_duty.json"
-      DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/contracts/"
-    />
-    <Copy
-      SourceFiles="src/data/extendedContracts/Garrison Duty.json"
-      DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/extendedContracts/"
-    />
-    <Copy
-      SourceFiles="src/data/extendedContracts/Attack.json"
-      DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/extendedContracts/"
-    />
-    <Copy
-      SourceFiles="src/data/extendedContracts/Raid.json"
-      DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/extendedContracts/"
-    />
-    <Copy
-      SourceFiles="src/data/settings.json"
-      DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/"
+      SourceFiles="@(DataFiles)"
+      DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/%(RecursiveDir)"
     />
   </Target>
 

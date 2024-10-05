@@ -1,19 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Harmony;
 using BattleTech;
 using BattleTech.UI;
 
 namespace WarTechIIC {
     public class Utilities {
         public static Random rng = new Random();
-        private static MethodInfo methodSetOwner = AccessTools.Method(typeof(StarSystemDef), "set_OwnerValue");
-        private static FieldInfo _fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
-        private static FieldInfo _fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
-        private static FieldInfo _fieldGetAlliedFactions = AccessTools.Field(typeof(SimGameState), "AlliedFactions");
-
         public static List<string> deferredToasts = new List<string>();
 
         public static FactionValue getFactionValueByFactionID(string id) {
@@ -49,10 +42,13 @@ namespace WarTechIIC {
 
         public static void applyOwner(StarSystem system, FactionValue newOwner, bool refresh) {
             WIIC.modLog.Trace?.Write($"Flipping control of {system.Name} to {newOwner.Name}");
+
+            WhoAndWhere.clearLocationCache();
+
             List<string> tagList = system.Tags.ToList();
             WIIC.systemControl[system.ID] = $"WIIC_control_{newOwner.Name}";
 
-            methodSetOwner.Invoke(system.Def, new object[] { newOwner });
+            system.Def.OwnerValue = newOwner;
             setActiveFactions(system);
 
             if (refresh) {
@@ -71,8 +67,8 @@ namespace WarTechIIC {
                 return;
             }
 
-            _fieldSetContractEmployers.SetValue(system.Def, WhoAndWhere.getEmployers(system));
-            _fieldSetContractTargets.SetValue(system.Def, WhoAndWhere.getTargets(system));
+            system.Def.contractEmployerIDs = WhoAndWhere.getEmployers(system);
+            system.Def.contractTargetIDs = WhoAndWhere.getTargets(system);
         }
 
         public static FactionValue controlFromTag(string tag) {
@@ -139,16 +135,15 @@ namespace WarTechIIC {
             // Revert system description to the default
             if (WIIC.fluffDescriptions.ContainsKey(system.ID)) {
                 WIIC.modLog.Debug?.Write($"Reverting map description for {system.ID}");
-                AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(system.Def.Description, new object[] { WIIC.fluffDescriptions[system.ID] });
+                system.Def.Description.Details = WIIC.fluffDescriptions[system.ID];
             }
 
             redrawMap();
         }
 
         public static void slowDownFloaties() {
-            var playPause = (SGTimePlayPause)AccessTools.Field(typeof(SGRoomController_Ship), "TimePlayPause").GetValue(WIIC.sim.RoomManager.ShipRoom);
-            var floatyStack = (SGTimeFloatyStack)AccessTools.Field(typeof(SGTimePlayPause), "eventFloatyToasts").GetValue(playPause);
-            floatyStack.timeBetweenFloaties = 0.5f;
+            var floatyStack = WIIC.sim.RoomManager.ShipRoom.TimePlayPause.eventFloatyToasts;
+            floatyStack.timeBetweenFloaties = 0.6f;
         }
 
         public static double getReputationMultiplier(FactionValue faction) {
@@ -175,8 +170,7 @@ namespace WarTechIIC {
         }
 
         public static List<FactionValue> getAllies() {
-            List<string> allied = (List<string>)_fieldGetAlliedFactions.GetValue(WIIC.sim);
-            return allied.Select(f => FactionEnumeration.GetFactionByName(f)).ToList();
+            return WIIC.sim.AlliedFactions.Select(f => FactionEnumeration.GetFactionByName(f)).ToList();
         }
 
         public static void giveReward(string itemCollection) {

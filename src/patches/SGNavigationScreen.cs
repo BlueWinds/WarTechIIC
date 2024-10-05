@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Harmony;
 using BattleTech;
 using BattleTech.UI;
@@ -17,10 +16,8 @@ namespace WarTechIIC {
                     return true;
                 }
 
-                UIManager uiManager = (UIManager) AccessTools.Field(typeof(SGNavigationScreen), "uiManager").GetValue(__instance);
-
                 void cleanup() {
-                    uiManager.ResetFader(UIManagerRootType.PopupRoot);
+                    __instance.uiManager.ResetFader(UIManagerRootType.PopupRoot);
                     WIIC.sim.Starmap.Screen.AllowInput(true);
                 }
 
@@ -51,7 +48,11 @@ namespace WarTechIIC {
                 }, primaryButtonText, cleanup, cancel);
 
                 WIIC.sim.Starmap.Screen.AllowInput(false);
-                uiManager.SetFaderColor(uiManager.UILookAndColorConstants.PopupBackfill, UIManagerFader.FadePosition.FadeInBack, UIManagerRootType.PopupRoot);
+                __instance.uiManager.SetFaderColor(
+                    __instance.uiManager.UILookAndColorConstants.PopupBackfill,
+                    UIManagerFader.FadePosition.FadeInBack,
+                    UIManagerRootType.PopupRoot
+                );
                 return false;
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

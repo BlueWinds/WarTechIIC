@@ -1,15 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
 using Newtonsoft.Json;
-using Harmony;
 using BattleTech;
 using BattleTech.UI;
-using UnityEngine;
 using Localize;
-using ColourfulFlashPoints;
-using ColourfulFlashPoints.Data;
 
 namespace WarTechIIC {
     public class Raid : Attack {

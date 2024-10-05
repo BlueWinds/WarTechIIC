@@ -1,15 +1,11 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Harmony;
 using IRBTModUtils.Logging;
 using BattleTech;
-using BattleTech.UI;
-using HBS.Collections;
-using UnityEngine;
 
 namespace WarTechIIC
 {
@@ -33,7 +29,7 @@ namespace WarTechIIC
                     settings = JsonConvert.DeserializeObject<Settings>(jdata);
                 }
                 modLog = new DeferringLogger(modDirectory, "WarTechIIC", "WIIC", settings.debug, settings.trace);
-                modLog.Debug?.Write($"Loaded settings from {modDir}/settings.json. Version {typeof(Settings).Assembly.GetName().Version}");
+                modLog.Debug?.Write($"Loaded settings from {modDir}/settings.json");
             }
 
             catch (Exception e) {

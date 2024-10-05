@@ -5,6 +5,8 @@
   "ignoreFactions": [
     "SolarisVII",
     "NoFaction",
+    "DarkCaste",
+    "331stDivision",
     "AuriganPirates",
     "SelfEmployed",
     "MasonsMarauders",
@@ -46,54 +48,43 @@
     "ClanWolfInExile",
     "Wolfs_Dragoons"
   ],
-	"dailyAttackChance": 0.0,
-	"dailyRaidChance": 0.0,
-  "distanceFactor": 40,
+  "dailyAttackChance": 0.1,
+  "dailyRaidChance": 0.1,
+  "dailyExtConChanceIfNoneAvailable": 0.2,
+  "dailyExtConChanceIfSomeAvailable": 0.1,
+  "maxAvailableExtendedContracts": 3,
+  "distanceFactor": 85,
   "aggression": {
     "ClanNovaCat": 1.5,
+    "ClanFireMandrill": 1.75,
     "Ives": 2.0
   },
   "hatred": {
-    "ClanNovaCat": {
-      "ClanGhostBear": 1.25
-    },
-    "Davion": {
-      "Davion": 0.65,
-      "Liao": 0.65,
-      "Kurita": 0.65,
-      "Marik": 0.65,
-      "Steiner": 0.65
-    },
     "Liao": {
-      "Davion": 0.65,
-      "Kurita": 0.65,
-      "Marik": 0.65,
-      "Steiner": 0.65,
       "Ives": 1.5
     },
     "Ives": {
       "Liao": 1.5
     },
-    "Kurita": {
-      "Davion": 0.65,
-      "Liao": 0.65,
-      "Marik": 0.65,
-      "Steiner": 0.65
-    },
     "Marian": {
-      "Marik": 1.25
+      "Marik": 1.25,
+      "Lothian": 1.25,
+      "Illyrian": 1.5
     },
-    "Marik": {
-      "Davion": 0.65,
-      "Liao": 0.65,
-      "Kurita": 0.65,
-      "Steiner": 0.65
+    "ClanNovaCat": {
+      "ClanGhostBear": 1.25
     },
-    "Steiner": {
-      "Davion": 0.65,
-      "Liao": 0.65,
-      "Kurita": 0.65,
-      "Marik": 0.65
+    "Lothian": {
+      "Marian": 1.5
+    },
+    "Illyrian": {
+      "Marian": 1.15
+    },
+    "TaurianConcordat": {
+      "SanctuaryAlliance": 1.2
+    },
+    "SanctuaryAlliance": {
+      "TaurianConcordat": 1.3
     }
   },
   "reputationMultiplier": {
@@ -116,9 +107,35 @@
     "planet_factory": 2
   },
   "limitTargetsToFactionEnemies": true,
+  "attackMarker": {
+    "useHmAnimation": true,
+    "flashpointPrefix": "",
+    "swapColour": true,
+    "keepAlpha": true,
+    "useOnlyInner": true,
+    "autoDetectContracts": false,
+    "useContractColourOverride": false,
+    "innerCircle": {
+      "Colour": "#8904B1"
+    }
+  },
+  "raidMarker": {
+    "useHmAnimation": true,
+    "flashpointPrefix": "",
+    "swapColour": true,
+    "keepAlpha": true,
+    "useOnlyInner": true,
+    "autoDetectContracts": false,
+    "useContractColourOverride": false,
+    "innerCircle": {
+      "Colour": "#1904B1"
+    }
+  },
+  "minCountdown": 30,
+  "maxCountdown": 45,
   "defaultAttackStrength": 20,
   "defaultDefenseStrength": 15,
-  "strengthVariation": 10,
+  "strengthVariation": 6,
   "attackStrength": {
     "ClanWolf": 22,
     "ClanJadeFalcon": 23,
@@ -126,7 +143,9 @@
     "ClanNovaCat": 21,
     "Marian": 22,
     "Circinus": 21,
-    "WordOfBlake": 25
+    "WordOfBlake": 25,
+    "SanctuaryAlliance": 21,
+    "Cameron": 26
   },
   "defenseStrength": {
     "JarnFolk": 20,
@@ -138,7 +157,10 @@
     "Rim": 16,
     "Outworld": 19,
     "Ives": 21,
-    "WordOfBlake": 25
+    "WordOfBlake": 25,
+    "RimWorldsRepublic": 26,
+    "Cameron": 41,
+    "Illyrian": 20
   },
   "addStrengthTags": {
     "planet_factory": 10
@@ -150,7 +172,9 @@
     "ClanWolf",
     "ClanJadeFalcon",
     "ClanGhostBear",
-    "ClanDiamondShark"
+    "ClanDiamondShark",
+    "SanctuaryAlliance",
+    "AuriganDirectorate"
   ],
   "daysBetweenMissions": 3,
   "combatForceLossMin": 2,
@@ -189,13 +213,18 @@
     ],
     "ClanJadeFalcon": [
       "falcon_invasion_corridor"
+    ],
+    "Lothian": [
+      "planet_lothian_rebellion"
+    ],
+    "Marian": [
+      "planet_marian_invasion"
     ]
   },
-  "defaultAttackReward": "itemCollection_loot_ItemTriple_uncommon",
-  "defaultRaidReward": "itemCollection_loot_ItemTriple_uncommon",
-  "customContractEnums": [],
-  "dailyExtConChanceIfNoneAvailable": 1,
-  "dailyExtConChanceIfSomeAvailable": 1,
-  "maxAvailableExtendedContracts": 2,
+  "defaultAttackReward": "BTA_standard_Major_Loot",
+  "defaultRaidReward": "BTA_standard_Major_Loot",
+  "customContractEnums": [
+    10002
+  ],
   "saveFolder": "../../BTASaves"
 }

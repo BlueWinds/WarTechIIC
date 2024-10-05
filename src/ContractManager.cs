@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
-using Harmony;
 using BattleTech;
 using BattleTech.Data;
 using BattleTech.Framework;
@@ -18,45 +16,28 @@ namespace WarTechIIC {
             (int)ContractType.ThreeWayBattle
         };
 
-        private static MethodInfo _getValidParticipants = AccessTools.Method(typeof(SimGameState), "GetValidParticipants");
-        private static MethodInfo _hasValidMaps = AccessTools.Method(typeof(SimGameState), "HasValidMaps");
-        private static MethodInfo _hasValidContracts = AccessTools.Method(typeof(SimGameState), "HasValidContracts");
-        private static MethodInfo _hasValidParticipants = AccessTools.Method(typeof(SimGameState), "HasValidParticipants");
-        private static MethodInfo _clearUsedBiomeFromDiscardPile = AccessTools.Method(typeof(SimGameState), "ClearUsedBiomeFromDiscardPile");
-        private static MethodInfo _filterActiveMaps = AccessTools.Method(typeof(SimGameState), "FilterActiveMaps");
-        private static MethodInfo _fillMapEncounterContractData = AccessTools.Method(typeof(SimGameState), "FillMapEncounterContractData");
-        private static MethodInfo _createProceduralContract = AccessTools.Method(typeof(SimGameState), "CreateProceduralContract");
-
-        private static FieldInfo _fieldSetContractEmployers = AccessTools.Field(typeof(StarSystemDef), "contractEmployerIDs");
-        private static FieldInfo _fieldSetContractTargets = AccessTools.Field(typeof(StarSystemDef), "contractTargetIDs");
-
         public static Contract getNewProceduralContract(StarSystem system, FactionValue employer, FactionValue target, int[] validTypes) {
             // In order to force a given employer and target, we have to temoporarily munge the system we're in, such that
             // our employer/target are the only valid ones. We undo this at the end of getNewProceduralContract.
-            var oldEmployers = (List<string>)_fieldSetContractEmployers.GetValue(system.Def);
-            var oldTargets = (List<string>)_fieldSetContractTargets.GetValue(system.Def);
-            _fieldSetContractEmployers.SetValue(system.Def, new List<string>(){ employer.Name });
-            _fieldSetContractTargets.SetValue(system.Def, new List<string>(){ target.Name });
+            var oldEmployers = system.Def.contractEmployerIDs;
+            var oldTargets = system.Def.contractTargetIDs;
+            system.Def.contractEmployerIDs = new List<string>(){ employer.Name };
+            system.Def.contractTargetIDs = new List<string>(){ target.Name };
 
             // In addition, we have to make sure that our target is a valid enemy for the employer - otherwise the base game's
             // `GenerateContractParticipants` will return an empty list and the contract will fail to generate.
-            string[] oldEnemies = employer.FactionDef.Enemies;
+            var oldEnemies = employer.FactionDef.Enemies;
             List<string> enemies = oldEnemies.ToList();
             enemies.Add(target.Name);
-            Traverse.Create(employer.FactionDef).Property("Enemies").SetValue(enemies.ToArray());
+            employer.FactionDef.Enemies = enemies.ToArray();
 
             WIIC.modLog.Debug?.Write($"getNewProceduralContract: SimGameMode {WIIC.sim.SimGameMode}, GlobalDifficulty {WIIC.sim.GlobalDifficulty}");
             var difficultyRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
 
-            Type Diff = difficultyRange.GetType();
-            int min = (int)AccessTools.Field(Diff, "MinDifficulty").GetValue(difficultyRange);
-            int max = (int)AccessTools.Field(Diff, "MaxDifficulty").GetValue(difficultyRange);
-            int minClamped = (int)AccessTools.Field(Diff, "MinDifficultyClamped").GetValue(difficultyRange);
-            int maxClamped = (int)AccessTools.Field(Diff, "MaxDifficultyClamped").GetValue(difficultyRange);
-            WIIC.modLog.Debug?.Write($"difficultyRange: MinDifficulty {min}, MaxDifficulty {max}, MinClamped {minClamped}, MaxClamped {maxClamped}");
+            WIIC.modLog.Debug?.Write($"difficultyRange: MinDifficulty {difficultyRange.MinDifficulty}, MaxDifficulty {difficultyRange.MaxDifficulty}, MinClamped {difficultyRange.MinDifficultyClamped}, MaxClamped {difficultyRange.MaxDifficultyClamped}");
 
             if (validTypes.Length == 0) {
-                validTypes = contractTypes.AddRangeToArray(WIIC.settings.customContractEnums.ToArray());
+                validTypes = WIIC.settings.customContractEnums.Concat(contractTypes).ToArray();
             }
 
             var potentialContracts = (Dictionary<int, List<ContractOverride>>) WIIC.sim.GetContractOverrides(difficultyRange, validTypes);
@@ -66,50 +47,50 @@ namespace WarTechIIC {
                     system.Def.MapRequiredTags, system.Def.MapExcludedTags, system.Def.SupportedBiomes, true)
                     .ToWeightedList(WeightedListType.SimpleRandom);
 
-            var validParticipants = _getValidParticipants.Invoke(WIIC.sim, new object[] { system });
+            var validParticipants = WIIC.sim.GetValidParticipants(system);
 
-            if (!(bool)_hasValidMaps.Invoke(WIIC.sim, new object[] { system, playableMaps })
-                || !(bool)_hasValidContracts.Invoke(WIIC.sim, new object[] { difficultyRange, potentialContracts })
-                || !(bool)_hasValidParticipants.Invoke(WIIC.sim, new object[] { system, validParticipants })) {
+            if (!WIIC.sim.HasValidMaps(system, playableMaps)
+                || !WIIC.sim.HasValidContracts(difficultyRange, potentialContracts)
+                || !WIIC.sim.HasValidParticipants(system, validParticipants)
+            ) {
                 return null;
             }
 
-            _clearUsedBiomeFromDiscardPile.Invoke(WIIC.sim, new object[] { playableMaps });
+            WIIC.sim.ClearUsedBiomeFromDiscardPile(playableMaps);
             IEnumerable<int> mapWeights = from map in playableMaps
                                           select map.Map.Weight;
 
             var activeMaps = new WeightedList<MapAndEncounters>(WeightedListType.WeightedRandom, playableMaps.ToList(), mapWeights.ToList<int>(), 0);
 
-            _filterActiveMaps.Invoke(WIIC.sim, new object[] { activeMaps, WIIC.sim.GlobalContracts });
+            WIIC.sim.FilterActiveMaps(activeMaps, WIIC.sim.GlobalContracts);
             activeMaps.Reset(false);
             MapAndEncounters level = activeMaps.GetNext(false);
 
-            var MapEncounterContractData = _fillMapEncounterContractData.Invoke(WIIC.sim, new object[] { system, difficultyRange, potentialContracts, validParticipants, level });
-            bool HasContracts = Traverse.Create(MapEncounterContractData).Property("HasContracts").GetValue<bool>();
-            while (!HasContracts && activeMaps.ActiveListCount > 0) {
+            var MapEncounterContractData = WIIC.sim.FillMapEncounterContractData(system, difficultyRange, potentialContracts, validParticipants, level);
+            while (!MapEncounterContractData.HasContracts && activeMaps.ActiveListCount > 0) {
                 level = activeMaps.GetNext(false);
-                MapEncounterContractData = _fillMapEncounterContractData.Invoke(WIIC.sim, new object[] { system, difficultyRange, potentialContracts, validParticipants, level });
+                MapEncounterContractData = WIIC.sim.FillMapEncounterContractData(system, difficultyRange, potentialContracts, validParticipants, level);
             }
-            system.SetCurrentContractFactions(FactionEnumeration.GetInvalidUnsetFactionValue(), FactionEnumeration.GetInvalidUnsetFactionValue());
-            HashSet<int> Contracts = Traverse.Create(MapEncounterContractData).Field("Contracts").GetValue<HashSet<int>>();
 
-            if (MapEncounterContractData == null || Contracts.Count == 0) {
-                List<string> mapDiscardPile = Traverse.Create(WIIC.sim).Field("mapDiscardPile").GetValue<List<string>>();
-                if (mapDiscardPile.Count > 0) {
-                    mapDiscardPile.Clear();
+            system.SetCurrentContractFactions(FactionEnumeration.GetInvalidUnsetFactionValue(), FactionEnumeration.GetInvalidUnsetFactionValue());
+
+            if (MapEncounterContractData == null || MapEncounterContractData.Contracts.Count == 0) {
+                if (WIIC.sim.mapDiscardPile.Count > 0) {
+                    WIIC.sim.mapDiscardPile.Clear();
                 } else {
                     WIIC.modLog.Error?.Write($"Unable to find any valid contracts for available map pool.");
                 }
             }
+
             GameContext gameContext = new GameContext(WIIC.sim.Context);
             gameContext.SetObject(GameContextObjectTagEnum.TargetStarSystem, system);
 
-            Contract contract = (Contract)_createProceduralContract.Invoke(WIIC.sim, new object[] { system, true, level, MapEncounterContractData, gameContext });
+            Contract contract = WIIC.sim.CreateProceduralContract(system, true, level, MapEncounterContractData, gameContext);
 
             // Restore system and faction to previous values, now that we've forced the game to generate our desired contract.
-            _fieldSetContractEmployers.SetValue(system.Def, oldEmployers);
-            _fieldSetContractTargets.SetValue(system.Def, oldTargets);
-            Traverse.Create(employer.FactionDef).Property("Enemies").SetValue(oldEnemies);
+            system.Def.contractEmployerIDs = oldEmployers;
+            system.Def.contractTargetIDs = oldTargets;
+            employer.FactionDef.Enemies = oldEnemies;
             return contract;
         }
 

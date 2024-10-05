@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
 using Newtonsoft.Json;
-using Harmony;
 using Localize;
 using BattleTech;
 using BattleTech.Data;
@@ -161,7 +160,9 @@ namespace WarTechIIC {
         }
 
         // WIIC:Attack:{...}
-        private static Regex SERIALIZED_TAG = new Regex("^WIIC:(?<type>.*?):(?<json>.*)$", RegexOptions.Compiled);
+        private static Regex SERIALIZED_TAG = new Regex("^WIIC:(?<type>.*?):(?<json>\\{.*\\})$", RegexOptions.Compiled);
+        private static Regex OLD_SERIALIZED_TAG = new Regex("^WIIC:(?<json>\\{.*\\})$", RegexOptions.Compiled);
+        private static Regex OLD_SERIALIZED_TAG_TYPE = new Regex("\"type\":\"(?<type>Attack|Raid)\"", RegexOptions.Compiled);
         public static bool isSerializedExtendedContract(string tag) {
             return tag.StartsWith("WIIC:");
         }
@@ -508,7 +509,7 @@ namespace WarTechIIC {
             }
 
             string description = getMapDescription() + WIIC.fluffDescriptions[location.ID];
-            AccessTools.Method(typeof(DescriptionDef), "set_Details").Invoke(location.Def.Description, new object[] { description });
+            location.Def.Description.Details = description;
         }
 
         public virtual string getMapDescription() {
@@ -517,20 +518,42 @@ namespace WarTechIIC {
 
         public static ExtendedContract Deserialize(string tag) {
             MatchCollection matches = SERIALIZED_TAG.Matches(tag);
-            if (matches.Count == 0) {
-                throw new Exception($"Tried to deserialize invalid Extended Contract tag: {tag}");
-            }
+            string type;
+            string json;
+            var old = false;
 
-            string type = matches[0].Groups["type"].Value;
-            string json = matches[0].Groups["json"].Value;
+            if (matches.Count > 0) {
+                json = matches[0].Groups["json"].Value;
+                type = matches[0].Groups["type"].Value;
+            } else {
+                matches = OLD_SERIALIZED_TAG.Matches(tag);
+
+                if (matches.Count == 0) {
+                    throw new Exception($"Tried to deserialize invalid Extended Contract tag: {tag}");
+                }
+
+                // This is a flareup from before the Extended Contract rewrite; we'll have to do some
+                // massaging to read it into the new format
+                json =  matches[0].Groups["json"].Value;
+                type = OLD_SERIALIZED_TAG_TYPE.Matches(json)[0].Groups["type"].Value;
+                old = true;
+            }
 
             if (type == "Attack") {
                 Attack attack = JsonConvert.DeserializeObject<Attack>(json);
+                if (old) {
+                    attack.employerName = attack.attackerName;
+                    attack.targetName = WIIC.sim.GetSystemById(attack.locationID).OwnerValue.Name;
+                }
                 attack.initAfterDeserialization();
                 return attack;
             }
             if (type == "Raid") {
                 Raid raid = JsonConvert.DeserializeObject<Raid>(json);
+                if (old) {
+                    raid.employerName = raid.attackerName;
+                    raid.targetName = WIIC.sim.GetSystemById(raid.locationID).OwnerValue.Name;
+                };
                 raid.initAfterDeserialization();
                 return raid;
             }

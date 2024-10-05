@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Reflection;
 using System.Threading.Tasks;
 using Harmony;
 using BattleTech;
@@ -57,7 +56,7 @@ namespace WarTechIIC {
                         string tag = system.Tags.ToList().Find(ExtendedContract.isSerializedExtendedContract);
                         if (tag != null) {
                             system.Tags.Remove(tag);
-                            WIIC.modLog.Debug?.Write($"    {system.ID}: {tag}");
+                            WIIC.modLog.Debug?.Write($"    {tag}");
                             ExtendedContract extendedContract = ExtendedContract.Deserialize(tag);
                             WIIC.extendedContracts[system.ID] = extendedContract;
                         }
@@ -94,6 +93,7 @@ namespace WarTechIIC {
                     bool finished = extendedContract.passDay();
                     if (finished) {
                         WIIC.extendedContracts.Remove(extendedContract.locationID);
+                        Utilities.cleanupSystem(extendedContract.location);
                     }
                 }
 
@@ -183,6 +183,7 @@ namespace WarTechIIC {
             try {
                 WIIC.modLog.Debug?.Write($"Entering system {system.ID} from {WIIC.sim.CurSystem.ID}");
 
+                WhoAndWhere.clearLocationCache();
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     WIIC.extendedContracts[WIIC.sim.CurSystem.ID].onLeaveSystem();
                 }
@@ -204,8 +205,7 @@ namespace WarTechIIC {
                 WIIC.modLog.Debug?.Write($"CompleteLanceConfigurationPrep. selectedContract: {WIIC.sim.SelectedContract.Name}, currentContractName: {(extendedContract != null ? extendedContract.currentContractName : null)}");
                 if (extendedContract != null && WIIC.sim.SelectedContract.Name == extendedContract.currentContractName) {
                     WIIC.modLog.Debug?.Write($"Hiding nav drawer from CompleteLanceConfigurationPrep.");
-                    SGLeftNavDrawer leftDrawer = (SGLeftNavDrawer)AccessTools.Field(typeof(SGRoomManager), "LeftDrawerWidget").GetValue(WIIC.sim.RoomManager);
-                    leftDrawer.Visible = false;
+                    WIIC.sim.RoomManager.LeftDrawerWidget.Visible = false;
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
