@@ -13,9 +13,11 @@ namespace WarTechIIC {
         public static void SaveFlareups() {
             WIIC.modLog.Debug?.Write($"Saving {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
 
+            string saves = "";
+
             try {
                 foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
-                    WIIC.modLog.Trace?.Write("    " + extendedContract.Serialize());
+                    saves += "\n    " + extendedContract.Serialize();
                     extendedContract.location.Tags.Add(extendedContract.Serialize());
                 }
                 foreach (KeyValuePair<string, string> control in WIIC.systemControl) {
@@ -23,8 +25,12 @@ namespace WarTechIIC {
                 }
                 WIIC.serializeToJson();
             } catch (Exception e) {
+                WIIC.modLog.Trace?.Write(saves);
                 WIIC.modLog.Error?.Write(e);
+                saves = "";
             }
+
+            WIIC.modLog.Trace?.Write(saves);
         }
     }
 

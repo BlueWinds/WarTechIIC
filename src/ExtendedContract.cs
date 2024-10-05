@@ -259,10 +259,14 @@ namespace WarTechIIC {
         }
 
         public void runEntry(Entry entry) {
+            if (entry.invokeMethod != null) {
+                this.GetType().GetMethod(entry.invokeMethod).Invoke(this, new object[]{});
+            }
+
             foreach (string eventID in entry.triggerEvent) {
-                WIIC.modLog.Debug?.Write($"Considering event {eventID}");
                 if (!WIIC.sim.DataManager.SimGameEventDefs.TryGet(eventID, out SimGameEventDef eventDef)) {
-                    WIIC.modLog.Error?.Write($"Couldn't find event {eventID} on day {currentDay} of {type}");
+                    WIIC.modLog.Error?.Write($"Couldn't find event {eventID} on day {currentDay} of {type}.");
+                    return;
                 }
 
                 if (WIIC.sim.MeetsRequirements(eventDef.Requirements) && WIIC.sim.MeetsRequirements(eventDef.AdditionalRequirements)) {
@@ -274,6 +278,8 @@ namespace WarTechIIC {
 
                     return;
                 }
+
+                WIIC.modLog.Debug?.Write($"Considered event {eventID}, but requirements did not match.");
             }
 
             double rand = Utilities.rng.NextDouble();
@@ -282,13 +288,12 @@ namespace WarTechIIC {
                 Contract contract = null;
                 if (entry.contract.Length > 0) {
                     foreach (string contractName in entry.contract) {
-                        WIIC.modLog.Debug?.Write($"Considering {contractName}");
                         contract = ContractManager.getContractByName(contractName, location, employer, target);
                         if (WIIC.sim.MeetsRequirements(contract.Override.requirementList.ToArray())) {
-                            WIIC.modLog.Debug?.Write($"Meets requirements");
+                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Meets requirements");
                             break;
                         } else {
-                            WIIC.modLog.Debug?.Write($"Does not meet requirements");
+                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Does not meet requirements");
                             contract = null;
                         }
                     }
@@ -299,11 +304,19 @@ namespace WarTechIIC {
 
                 if (contract != null) {
                     if (contract.Override.contractRewardOverride < 0) {
+                        WIIC.modLog.Debug?.Write($"contractRewardOverride < 0, generating.");
                         contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
                     }
-                    contract.Override.contractRewardOverride = (int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier);
-                    contract.Override.salvagePotential += entry.contractBonusSalvage;
-                    contract.Override.salvagePotential = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, contract.Override.salvagePotential));
+
+                    WIIC.modLog.Debug?.Write($"contractRewardOverride: {contract.Override.contractRewardOverride}, contractPayoutMultiplier: {entry.contractPayoutMultiplier}, InitialContractValue: {contract.InitialContractValue}");
+                    contract.SetInitialReward((int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier));
+
+                    WIIC.modLog.Debug?.Write($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
+
+                    int salvage = contract.Override.salvagePotential + entry.contractBonusSalvage;
+                    salvage = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, salvage));
+                    contract.SalvagePotential = contract.Override.salvagePotential = salvage;
+
                     contract.SetupContext();
 
                     string message = contract.RunMadLib(entry.contractMessage);
@@ -323,11 +336,6 @@ namespace WarTechIIC {
 
                 WIIC.modLog.Info?.Write($"rewardByDifficulty chose {itemCollection}.");
                 Utilities.giveReward(itemCollection);
-            }
-
-            if (entry.invokeMethod != null) {
-                Type thisType = this.GetType();
-                this.GetType().GetMethod(entry.invokeMethod).Invoke(this, new object[]{});
             }
         }
 
@@ -368,16 +376,20 @@ namespace WarTechIIC {
 
             passDayEmployed();
             WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
+            if (extraWorkOrder != null) {
+                WIIC.sim.RoomManager.AddWorkQueueEntry(extraWorkOrder);
+            }
+
             WIIC.sim.RoomManager.RefreshTimeline(false);
         }
 
-        public void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
+        public virtual void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
             string title = Strings.T($"{extendedType.name} Mission");
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
 
             if (declinePenalty == DeclinePenalty.BadFaith) {
-                message += "\n\nDeclining this contract is equivelent to a bad faith withdrawal. It will severely harm our reputation.";
+                message += $"\n\nDeclining this contract is equivelent to a bad faith withdrawal. It will severely harm our reputation with {employer.FactionDef.ShortName}.";
             } else if (declinePenalty == DeclinePenalty.BreakContract) {
                 message += $"\n\nDeclining this contract is will break our {type} contract with {employer.FactionDef.ShortName}.";
             }
@@ -430,7 +442,7 @@ namespace WarTechIIC {
         public virtual string getDescription() {
             StringBuilder description = new StringBuilder();
 
-            description.AppendLine(Strings.T("<b><color=#de0202>{0} has hired us for {1}.</color></b>", employer.FactionDef.ShortName, type));
+            description.AppendLine(Strings.T("<b><color=#de0202>Hired by {0} for {1}</color></b>", employer.FactionDef.ShortName, type));
             description.AppendLine(Strings.T("We've been on assignment {0} days. The contract will complete after {1}.", currentDay, extendedType.schedule.Length - 1));
 
             return description.ToString();
@@ -444,7 +456,7 @@ namespace WarTechIIC {
                     _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractComplete", title);
                 }
 
-                _workOrder.SetCost(extendedType.schedule.Length - currentDay);
+                _workOrder.SetCost(extendedType.schedule.Length - currentDay - 1);
                 return _workOrder;
             }
             set {
@@ -460,22 +472,18 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write("Generated _extraWorkOrder");
                 }
 
-                int day = currentDay;
-                while (day < extendedType.schedule.Length) {
-                    day++;
+                for (int day = currentDay + 1; day < extendedType.schedule.Length; day++) {
                     string entryName = extendedType.schedule[day];
                     WIIC.modLog.Debug?.Write($"currentDay: {currentDay}, day: {day}, entryName: {entryName}");
-                    if (entryName == "" || !extendedType.entries.ContainsKey(entryName)) {
-                        continue;
-                    }
+                    if (extendedType.entries.ContainsKey(entryName)) {
+                        Entry entry = extendedType.entries[entryName];
+                        if (entry.workOrder != null) {
+                            WIIC.modLog.Debug?.Write($"Matching. {entry.workOrder}");
+                            _extraWorkOrder.SetDescription(entry.workOrder);
+                            _extraWorkOrder.SetCost(day - currentDay);
 
-                    Entry entry = extendedType.entries[entryName];
-                    if (entry.workOrder != null) {
-                        WIIC.modLog.Debug?.Write($"Matching. {entry.workOrder}");
-                        _extraWorkOrder.SetDescription(entry.workOrder);
-                        _extraWorkOrder.SetCost(day - currentDay);
-
-                        return _extraWorkOrder;
+                            return _extraWorkOrder;
+                        }
                     }
                 }
 

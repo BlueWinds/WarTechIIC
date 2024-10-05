@@ -13,6 +13,10 @@ using ColourfulFlashPoints.Data;
 
 namespace WarTechIIC {
     public class Raid : Attack {
+        public Raid() {
+            // Empty constructor used for deserialization.
+        }
+
         public Raid(StarSystem flareupLocation, FactionValue attacker, ExtendedContractType flareupType) : base(flareupLocation, attacker, flareupType) {
             Settings s = WIIC.settings;
             attackerStrength = (int) Math.Ceiling(attackerStrength * s.raidStrengthMultiplier);

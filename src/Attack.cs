@@ -96,22 +96,35 @@ namespace WarTechIIC {
 
             currentDay++;
 
-            string today = extendedType.schedule[currentDay % extendedType.schedule.Length];
-            runEntry(extendedType.entries[today]);
+            string entryName = extendedType.schedule[currentDay % extendedType.schedule.Length];
+
+            if (entryName != "") {
+                Entry entry = extendedType.entries[entryName];
+
+                if (isEmployedHere) {
+                    runEntry(entry);
+                } else if (entry.invokeMethod != null) {
+                    Type thisType = this.GetType();
+                    this.GetType().GetMethod(entry.invokeMethod).Invoke(this, new object[]{});
+                }
+            }
 
             return false;
         }
 
         public void flareupForceLoss() {
+            WIIC.modLog.Debug?.Write($"{type} progressing at {location.Name}. attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
+
             Settings s = WIIC.settings;
             double rand = Utilities.rng.NextDouble();
             if (rand > 0.5) {
                 attackerStrength -= Utilities.rng.Next(s.combatForceLossMin, s.combatForceLossMax);
+                WIIC.modLog.Debug?.Write($"    attackerStrength changed to {attackerStrength}");
             } else {
                 defenderStrength -= Utilities.rng.Next(s.combatForceLossMin, s.combatForceLossMax);
+                WIIC.modLog.Debug?.Write($"    defenderStrength changed to {defenderStrength}");
             }
 
-            WIIC.modLog.Debug?.Write($"{type} progressed at {location.Name}. attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
         }
 
         public CompletionResult getCompletionResult() {
@@ -221,6 +234,11 @@ namespace WarTechIIC {
             return Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, employer.FactionDef.ShortName);
         }
 
+        public override void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
+            currentContractForceLoss = Utilities.rng.Next(WIIC.settings.combatForceLossMin, WIIC.settings.combatForceLossMax);
+            base.launchContract(message, contract, declinePenalty);
+        }
+
         public override void applyDeclinePenalty(DeclinePenalty declinePenalty) {
             if (employer == attacker) {
                 attackerStrength -= currentContractForceLoss;
@@ -231,6 +249,25 @@ namespace WarTechIIC {
             }
 
             base.applyDeclinePenalty(declinePenalty);
+        }
+
+        public override string getDescription() {
+            return getMapDescription();
+        }
+
+        public override WorkOrderEntry_Notification workOrder {
+            get {
+                if (_workOrder == null) {
+                    string title = Strings.T($"Upcoming mission");
+                    _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractComplete", title);
+                }
+
+                _workOrder.SetCost(extendedType.schedule.Length - ((currentDay + 1) % extendedType.schedule.Length));
+                return _workOrder;
+            }
+            set {
+                _workOrder = value;
+            }
         }
     }
 }

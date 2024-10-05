@@ -1,0 +1,20 @@
+﻿<Project InitialTargets="ValidateBattleTechGameDir">
+  <Target Name="ValidateBattleTechGameDir" Condition="'$(BattleTechGameDir)' == ''">
+    <Error Text="BattleTechGameDir variable empty" />
+  </Target>
+  <Target Name="ValidateBattleTechGameDir" Condition="!Exists('$(BattleTechGameDir)')">
+    <Error Text="BattleTechGameDir does not exist - $(BattleTechGameDir)" />
+  </Target>
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>11</LangVersion>
+    <AssemblySearchPaths>
+      {HintPathFromItem};
+      $(BattleTechGameDir)\BattleTech_Data\Managed
+    </AssemblySearchPaths>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <DebugType>embedded</DebugType>
+    <NoWarn>CS0436</NoWarn>
+  </PropertyGroup>
+</Project>

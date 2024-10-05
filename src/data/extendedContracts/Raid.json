@@ -30,6 +30,8 @@
   "entries": {
     "mission": {
       "contractChance": 1,
+      "declinePenalty": "None",
+      "contractMessage": "We have a mission from {TEAM_EMP.FactionDef.ShortName}, Commander: {RES_OBJ.Name}. Details will be provided en-route about the {RES_OBJ.ContractTypeValue.FriendlyName}.",
       "invokeMethod": "flareupForceLoss",
     }
   }

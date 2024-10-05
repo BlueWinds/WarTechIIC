@@ -34,7 +34,8 @@ namespace WarTechIIC {
         private static Regex REMOVE_SYSTEM_TAG = new Regex("^WIIC_remove_(?<tag>.*?)_from_(?<system>.*?)$", RegexOptions.Compiled);
 
         // WIIC_remove_ives_rebellion_from_systemdef_Sol
-        private static Regex OFFER_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_(?<contractType>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
+        // Not completed / working
+        // private static Regex OFFER_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_(?<contractType>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
 
         public static void Prefix(ref SimGameEventResult result) {
             Settings s = WIIC.settings;
@@ -148,7 +149,7 @@ namespace WarTechIIC {
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             if (WIIC.extendedContracts.ContainsKey(system.ID)) {
-                                (WIIC.extendedContracts[system.ID] as Attack).attackerStrength = strength;
+                                (WIIC.extendedContracts[system.ID] as Attack).defenderStrength = strength;
                             } else {
                                 WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
@@ -181,21 +182,20 @@ namespace WarTechIIC {
 
                             result.AddedTags.Remove(addedTag);
                             continue;
-
-                        matches = OFFER_CONTRACT_TAG.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string employerID = matches[0].Groups["employer"].Value;
-                            string systemId = matches[0].Groups["system"].Value;
-                            string contractType = matches[0].Groups["contractType"].Value;
-                            string targetID = matches[0].Groups["target"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employerID}, systemId {systemId}, contractType {contractType}, targetID {targetID}");
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            system.Tags.Remove(tag);
-
-                            result.AddedTags.Remove(addedTag);
-                            continue;
                         }
+
+                        // TODO
+                        // matches = OFFER_CONTRACT_TAG.Matches(addedTag);
+                        // if (matches.Count > 0) {
+                        //     string employerID = matches[0].Groups["employer"].Value;
+                        //     string systemId = matches[0].Groups["system"].Value;
+                        //     string contractType = matches[0].Groups["contractType"].Value;
+                        //     string targetID = matches[0].Groups["target"].Value;
+                        //     WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employerID}, systemId {systemId}, contractType {contractType}, targetID {targetID}");
+                        //
+                        //     StarSystem system = WIIC.sim.GetSystemById(systemId);
+                        //     continue;
+                        // }
                     } catch (Exception e) {
                         WIIC.modLog.Error?.Write(e);
                     }
@@ -204,10 +204,10 @@ namespace WarTechIIC {
 
             try {
                 if (result.Scope == EventScope.Company && result.Stats != null) {
-                    WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Searching for WIIC stats from {result.Stats.Length}");
+                    WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Searching for WIIC entries among {result.Stats.Length} stats");
                     foreach (SimGameStat stat in result.Stats) {
                         if (stat.Validate() && stat.name.StartsWith("WIIC")) {
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Applying {stat.name} and removing from stats");
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Applying {stat.ToEditorString()} and removing from stats");
                             SimGameState.SetSimGameStat(stat, WIIC.sim.CompanyStats);
                         }
                     }

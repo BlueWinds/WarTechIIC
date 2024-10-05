@@ -18,8 +18,6 @@ namespace WarTechIIC {
             (int)ContractType.ThreeWayBattle
         };
 
-        private static MethodInfo _getContractRangeDifficultyRange = AccessTools.Method(typeof(SimGameState), "GetContractRangeDifficultyRange");
-        private static MethodInfo _getContractOverrides = AccessTools.Method(typeof(SimGameState), "GetContractOverrides");
         private static MethodInfo _getValidParticipants = AccessTools.Method(typeof(SimGameState), "GetValidParticipants");
         private static MethodInfo _hasValidMaps = AccessTools.Method(typeof(SimGameState), "HasValidMaps");
         private static MethodInfo _hasValidContracts = AccessTools.Method(typeof(SimGameState), "HasValidContracts");
@@ -48,7 +46,7 @@ namespace WarTechIIC {
             Traverse.Create(employer.FactionDef).Property("Enemies").SetValue(enemies.ToArray());
 
             WIIC.modLog.Debug?.Write($"getNewProceduralContract: SimGameMode {WIIC.sim.SimGameMode}, GlobalDifficulty {WIIC.sim.GlobalDifficulty}");
-            var difficultyRange = _getContractRangeDifficultyRange.Invoke(WIIC.sim, new object[] { system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty });
+            var difficultyRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
 
             Type Diff = difficultyRange.GetType();
             int min = (int)AccessTools.Field(Diff, "MinDifficulty").GetValue(difficultyRange);
@@ -61,7 +59,7 @@ namespace WarTechIIC {
                 validTypes = contractTypes.AddRangeToArray(WIIC.settings.customContractEnums.ToArray());
             }
 
-            var potentialContracts = (Dictionary<int, List<ContractOverride>>)_getContractOverrides.Invoke(WIIC.sim, new object[] { difficultyRange, validTypes });
+            var potentialContracts = (Dictionary<int, List<ContractOverride>>) WIIC.sim.GetContractOverrides(difficultyRange, validTypes);
 
             WeightedList<MapAndEncounters> playableMaps =
                 MetadataDatabase.Instance.GetReleasedMapsAndEncountersBySinglePlayerProceduralContractTypeAndTags(

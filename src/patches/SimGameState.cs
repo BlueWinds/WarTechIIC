@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Harmony;
 using BattleTech;
 using BattleTech.UI;
+using BattleTech.Framework;
 using BattleTech.Save;
 using BattleTech.Save.Test;
 using Localize;
@@ -81,13 +82,9 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameStateOnDayPassedPatch {
-        private static FieldInfo _getTimelineWidget = AccessTools.Field(typeof(SGRoomManager), "timelineWidget");
-        private static FieldInfo _getActiveItems = AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems");
-
         private static void Prefix() {
             try {
-                var timelineWidget = (TaskTimelineWidget)_getTimelineWidget.GetValue(WIIC.sim.RoomManager);
-                var activeItems = (Dictionary<WorkOrderEntry, TaskManagementElement>)_getActiveItems.GetValue(timelineWidget);
+                var activeItems = WIIC.sim.RoomManager.timelineWidget.ActiveItems;
 
                 Utilities.slowDownFloaties();
                 ColourfulFlashPoints.Main.clearMapMarkers();
@@ -105,7 +102,7 @@ namespace WarTechIIC {
                     if (activeItems.TryGetValue(current.workOrder, out var taskManagementElement)) {
                         taskManagementElement.UpdateItem(0);
                     }
-                    if (activeItems.TryGetValue(current.extraWorkOrder, out taskManagementElement)) {
+                    if (current.extraWorkOrder != null && activeItems.TryGetValue(current.extraWorkOrder, out taskManagementElement)) {
                         taskManagementElement.UpdateItem(0);
                         taskManagementElement.UpdateTaskInfo();
                     }
@@ -165,10 +162,12 @@ namespace WarTechIIC {
                 WIIC.modLog.Debug?.Write($"Breadcrumb complete {WIIC.sim.CurSystem.ID} - {__state}");
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     ExtendedContract extendedContract = WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
-                    WIIC.modLog.Debug?.Write($"Type: {extendedContract.extendedType.name}, looking for {extendedContract.extendedType.hireContract}{(String.IsNullOrEmpty(extendedContract.extendedType.targetHireContract) ? " or " + extendedContract.extendedType.targetHireContract : "")}");
+                    WIIC.modLog.Debug?.Write($"Type: {extendedContract.extendedType.name}, looking for {extendedContract.extendedType.hireContract}{(String.IsNullOrEmpty(extendedContract.extendedType.targetHireContract) ? "" : (" or " + extendedContract.extendedType.targetHireContract))}");
                     if (__state == extendedContract.extendedType.hireContract || __state == extendedContract.extendedType.targetHireContract) {
-                        __instance.ClearBreadcrumb();
                         extendedContract.acceptContract(__state);
+
+                        __instance.ClearBreadcrumb();
+                        WIIC.sim.RoomManager.ShipRoom.TimePlayPause.UpdateLaunchContractButton();
                     }
                 }
             } catch (Exception e) {
@@ -189,7 +188,7 @@ namespace WarTechIIC {
                 }
 
                 if (WIIC.extendedContracts.ContainsKey(system.ID)) {
-                    WIIC.extendedContracts[WIIC.sim.CurSystem.ID].onEnterSystem();
+                    WIIC.extendedContracts[system.ID].onEnterSystem();
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

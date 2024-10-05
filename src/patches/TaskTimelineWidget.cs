@@ -10,7 +10,7 @@ namespace WarTechIIC {
         static bool Prefix(WorkOrderEntry entry) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (extendedContract != null && extendedContract.workOrder == entry || extendedContract.extraWorkOrder == entry) {
+                if (extendedContract != null && (extendedContract.workOrder == entry || extendedContract.extraWorkOrder == entry)) {
                     return false;
                 }
             } catch (Exception e) {
@@ -31,7 +31,9 @@ namespace WarTechIIC {
                     return;
                 }
 
-                __instance.AddEntry(extendedContract.workOrder, false);
+                if (extendedContract.workOrder != null) {
+                    __instance.AddEntry(extendedContract.workOrder, false);
+                }
                 if (extendedContract.extraWorkOrder != null) {
                     __instance.AddEntry(extendedContract.extraWorkOrder, false);
                 }

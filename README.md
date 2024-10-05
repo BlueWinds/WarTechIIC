@@ -1,4 +1,4 @@
-WarTech IIC (WIIC) is a mod for HBS's Battletech computer game. It's inspired by the likes of WarTech, GalaxyAtWar, and RogueTech's PersistantMap. The mod's homepage is https://github.com/BlueWinds/WarTechIIC, where you can always find the most up to date source code.
+WarTechIIC (WIIC) is a mod for HBS's Battletech computer game. It's inspired by the likes of WarTech, GalaxyAtWar, and RogueTech's PersistantMap. The mod's homepage is https://github.com/BlueWinds/WarTechIIC, where you can always find the most up to date source code.
 
 WIIC is distributed under the GNU General Public License v3.0 license. Special permission is granted to Battletech Advanced: 3062 and Roguetech to distribute this alongside Custom Bundle and other proprietary code. Please reach out to BlueWinds on github, or the BTA/RogueTech discords for more details.
 
@@ -94,7 +94,9 @@ When naming star systems, remember to use the ID and not the name. You want `sta
 * `WIIC_{faction}_raids_{system}` (eg: `WIIC_Clan Jade Falcon_raids_starsystemdef_Sol`) - Setting this will cause a new Raid to start in the given system, with the faction as the raider, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
 * `WIIC_set_{system}_{attacker|defender}_strength_{number}` (eg: `WIIC_set_starsystemdef_Sol_defender_strength_10`) - Setting this will adjust the attacker or defender's strength in that system's flareup, if there is one. The tag won't actually added to the company - WIIC 'eats' it.
 * `WIIC_add_{tag}_to_{system} | WIIC_remove_{tag}_from_{system}` (eg: `WIIC_add_planet_other_pirate_to_starsystemdef_Sol` or `WIIC_remove_planet_other_pirate_from_starsystemdef_Sol`) - Setting this will add or remove the given tag from the given system. The tag won't actually added to the company - WIIC 'eats' it.
-* `WIIC_{employer}_offers_{contractType}_at_{system}_against_{target}` (eg: `WIIC_Clan Jade Falcon_offers__at_starsystemdef_Sol_against_Clan Wolf`)
+
+#### TODO
+* `WIIC_{employer}_offers_{contractType}_at_{system}_against_{target}` (eg: `WIIC_Clan Jade Falcon_offers_simple_battle_at_starsystemdef_Sol_against_Clan Wolf`) - Setting this will cause the employer ot offer a random travel contract of the given type to the player at the given system.
 
 ### Company Stats
 For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.
@@ -113,7 +115,7 @@ WarTechIIC modifies several base-game features.
 * Contract descriptions can now use `{RES_OBJ}` for self-referencing descriptions ("mad libs"). For example, a contract can use its own name, `{RES_OBJ.Name}`, inside its `shortDescription`.
 
 # Extended Contracts
-In addition to existing Raids and Attacks, there are now "extended contracts", as defined by `ExtendedContractType` and `ContractOverride` definitions. These are loaded via modtek, like other things that modtek can load. Though similar in some ways to Flareups, extended contracts do not use / track combat forces, nor do they appear on the map of have lasting effects on the galactic stage.
+In addition to existing Raids and Attacks, there are now "extended contracts", as defined by `ExtendedContractType` and `ContractOverride` definitions. These are loaded via modtek, like other things that modtek can load. Though similar in some ways to Flareups, extended contracts do not use / track combat forces, nor do they appear on the map or have lasting effects on the galactic stage.
 
 ## Extended Contract Types
 Extended Contract Types are defined each in their own json files, loaded as any other ModTek resource. Any mod can include them by having an entry in its mod.json similar to
@@ -193,6 +195,7 @@ The first entry occurs immediately upon accepting the extended contract - it's "
       - `BadFaith`: Reputation penalty as if they'd performed a bad-faith withdrawal.
       - `BreakContract`: Declining this mission terminates the Extended Contract as if the player had flown away.
   - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that. If the player is given a lootbox, no contract will be generated.
+  - `invokeMethod` is developer-only, and its usage requires writing C# code. An explanation is beyond the scope of this documentation; ask BlueWinds on the BTA discord or read the code.
 
 ## Generating Extended Contracts
 Each day, after checking for flareups and raids if there are fewer than `maxAvailableExtendedContracts` available, WIIC decides if it should generate a new one. If there are currently no extended contracts available, it uses `dailyExtConChanceIfNoneAvailable` as the chance. If one or more already exist, it instead uses `dailyExtConChanceIfSomeAvailable`.

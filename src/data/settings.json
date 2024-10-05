@@ -46,8 +46,8 @@
     "ClanWolfInExile",
     "Wolfs_Dragoons"
   ],
-  "dailyAttackChance": 0.0,
-  "dailyRaidChance": 0.0,
+	"dailyAttackChance": 0.0,
+	"dailyRaidChance": 0.0,
   "distanceFactor": 40,
   "aggression": {
     "ClanNovaCat": 1.5,
