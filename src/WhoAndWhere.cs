@@ -152,11 +152,14 @@ namespace WarTechIIC {
             return employers;
         }
 
-        public static double getDistanceMultiplier(StarSystem system) {
+        public static double getDistance(StarSystem system) {
             FakeVector3 p1 = system.Def.Position;
             FakeVector3 p2 = WIIC.sim.CurSystem.Def.Position;
-            double distance = Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
-            return 1 / (WIIC.settings.distanceFactor + distance);
+            return Math.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+        }
+
+        public static double getDistanceMultiplier(StarSystem system) {
+            return 1 / (WIIC.settings.distanceFactor + getDistance(system));
         }
 
         public static (StarSystem, FactionValue) getFlareupEmployerAndLocation(ExtendedContractType type) {
@@ -193,7 +196,7 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                WIIC.modLog.Trace?.Write($"Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
+                // WIIC.modLog.Trace?.Write($"Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
 
                 Action<FactionValue> considerEmployer = (FactionValue employer) => {
                     if (s.ignoreFactions.Contains(employer.Name)) {
@@ -222,7 +225,7 @@ namespace WarTechIIC {
                     }
 
                     double weight = systemMultiplier * aggressions[employer] * (reputations[employer] + reputations[owner]) * distanceMult * hatred[(employer, owner)];
-                    WIIC.modLog.Trace?.Write($"    {employer.Name}: {weightedLocations[(system, employer)]} + {weight} from systemMultiplier {systemMultiplier}, rep[att] {reputations[employer]}, rep[own] {reputations[owner]}, mult {distanceMult}, hatred[(att, own)] {hatred[(employer, owner)]}");
+                    // WIIC.modLog.Trace?.Write($"    {employer.Name}: {weightedLocations[(system, employer)]} + {weight} from systemMultiplier {systemMultiplier}, rep[att] {reputations[employer]}, rep[own] {reputations[owner]}, mult {distanceMult}, hatred[(att, own)] {hatred[(employer, owner)]}");
                     weightedLocations[(system, employer)] += weight;
                 };
 
@@ -268,7 +271,7 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                WIIC.modLog.Trace?.Write($"    {system.Name}, distanceMult: {distanceMult}, owner {owner.Name}");
+                // WIIC.modLog.Trace?.Write($"    {system.Name}, distanceMult: {distanceMult}, owner {owner.Name}");
 
                 foreach (FactionValue employer in potentialExtendedEmployers(system, spawnLocation, potentialEmployers)) {
                     weightedLocations[(system, employer)] = distanceMult;

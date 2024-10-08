@@ -9,33 +9,32 @@ using Localize;
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "ApplySimGameEventResult", new Type[] {typeof(SimGameEventResult), typeof(List<object>), typeof(SimGameEventTracker)})]
     public static class SimGameState_ApplySimGameEventResult_Patch {
-        // WIIC_give_systemdef_Sol_to_Clan Wolf
+        // WIIC_give_starsystemdef_Terra_to_Clan Wolf
         private static Regex GIVE_SYSTEM = new Regex("^WIIC_give_(?<system>.*?)_to_(?<faction>.*)$", RegexOptions.Compiled);
 
-        // WIIC_give_systemdef_Sol_to_Clan Wolf_on_attacker_win
+        // WIIC_give_starsystemdef_Terra_to_Clan Wolf_on_attacker_win
         private static Regex GIVE_SYSTEM_ON_WIN = new Regex("^WIIC_give_(?<system>.*?)_to_(?<faction>.*)_on_attacker_win$", RegexOptions.Compiled);
 
-        // WIIC_ClanJadeFalcon_attacks_systemdef_Sol
+        // WIIC_ClanJadeFalcon_attacks_starsystemdef_Terra
         private static Regex ATTACK_SYSTEM = new Regex("^WIIC_(?<faction>.*?)_attacks_(?<system>.*)$", RegexOptions.Compiled);
 
-        // WIIC_ClanJadeFalcon_raids_systemdef_Sol
+        // WIIC_ClanJadeFalcon_raids_starsystemdef_Terra
         private static Regex RAID_SYSTEM = new Regex("^WIIC_(?<faction>.*?)_raids_(?<system>.*)$", RegexOptions.Compiled);
 
-        // WIIC_set_systemdef_Sol_attacker_strength_10
+        // WIIC_set_starsystemdef_Terra_attacker_strength_10
         private static Regex ATTACKER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_attacker_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
-        // WIIC_set_systemdef_Sol_defender_strength_10
+        // WIIC_set_starsystemdef_Terra_defender_strength_10
         private static Regex DEFENDER_FORCES = new Regex("^WIIC_set_(?<system>.*?)_defender_strength_(?<strength>.*)$", RegexOptions.Compiled);
 
-        // WIIC_add_ives_rebellion_to_systemdef_Sol
+        // WIIC_add_ives_rebellion_to_starsystemdef_Terra
         private static Regex ADD_SYSTEM_TAG = new Regex("^WIIC_add_(?<tag>.*?)_to_(?<system>.*?)$", RegexOptions.Compiled);
 
-        // WIIC_remove_ives_rebellion_from_systemdef_Sol
+        // WIIC_remove_ives_rebellion_from_starsystemdef_Terra
         private static Regex REMOVE_SYSTEM_TAG = new Regex("^WIIC_remove_(?<tag>.*?)_from_(?<system>.*?)$", RegexOptions.Compiled);
 
-        // WIIC_remove_ives_rebellion_from_systemdef_Sol
-        // Not completed / working
-        // private static Regex OFFER_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_(?<contractType>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
+        // WIIC_ClanJadeFalcon_offers_StoryTime_3_Axylus_Default_at_starsystemdef_Terra_against_ClanWolf
+        private static Regex OFFER_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_(?<contractName>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
 
         public static void Prefix(ref SimGameEventResult result) {
             Settings s = WIIC.settings;
@@ -185,17 +184,31 @@ namespace WarTechIIC {
                         }
 
                         // TODO
-                        // matches = OFFER_CONTRACT_TAG.Matches(addedTag);
-                        // if (matches.Count > 0) {
-                        //     string employerID = matches[0].Groups["employer"].Value;
-                        //     string systemId = matches[0].Groups["system"].Value;
-                        //     string contractType = matches[0].Groups["contractType"].Value;
-                        //     string targetID = matches[0].Groups["target"].Value;
-                        //     WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employerID}, systemId {systemId}, contractType {contractType}, targetID {targetID}");
-                        //
-                        //     StarSystem system = WIIC.sim.GetSystemById(systemId);
-                        //     continue;
-                        // }
+                        matches = OFFER_CONTRACT_TAG.Matches(addedTag);
+                        if (matches.Count > 0) {
+                            string employerID = matches[0].Groups["employer"].Value;
+                            string contractName = matches[0].Groups["contractName"].Value;
+                            string systemId = matches[0].Groups["system"].Value;
+                            string targetID = matches[0].Groups["target"].Value;
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employerID}, contractName {contractName}, systemId {systemId}, targetID {targetID}");
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: system {system}");
+                            FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employer}");
+                            FactionValue target = Utilities.getFactionValueByFactionID(targetID);
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: target {target}");
+
+                            var diffRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: diffRange {diffRange}");
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: diffRange.Min {diffRange.MinDifficulty}");
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: diffRange.Max {diffRange.MaxDifficulty}");
+                            int difficulty = WIIC.sim.NetworkRandom.Int(diffRange.MinDifficulty, diffRange.MaxDifficulty + 1);
+
+                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: difficulty {difficulty}");
+                            ContractManager.addTravelContract(contractName, system, employer, target, difficulty);
+                            continue;
+                        }
                     } catch (Exception e) {
                         WIIC.modLog.Error?.Write(e);
                     }

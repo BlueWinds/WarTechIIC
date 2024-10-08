@@ -41,6 +41,7 @@ namespace WarTechIIC {
             int v;
             attackerStrength = s.attackStrength.TryGetValue(employer.Name, out v) ? v : s.defaultAttackStrength;
             defenderStrength = s.defenseStrength.TryGetValue(target.Name, out v) ? v : s.defaultDefenseStrength;
+            WIIC.modLog.Debug?.Write($"{type} at {location.Name} - initial attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
 
             foreach (string tag in s.addStrengthTags.Keys) {
                 if (location.Tags.Contains(tag)) {
@@ -49,14 +50,20 @@ namespace WarTechIIC {
                 }
             }
 
+            WIIC.modLog.Debug?.Write($"    After tags: attackerStrength - {attackerStrength}, defenderStrength: {defenderStrength}");
             attackerName = attacker.Name;
+
             attackerStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
             defenderStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
+
+            WIIC.modLog.Debug?.Write($"    After randomness - attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
 
             string stat = $"WIIC_{employer.Name}_attack_strength";
             attackerStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
             stat = $"WIIC_{target.Name}_defense_strength";
             defenderStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
+
+            WIIC.modLog.Debug?.Write($"    After company stats - attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
         }
 
         public FactionValue attacker {
@@ -150,9 +157,9 @@ namespace WarTechIIC {
                 case CompletionResult.AttackerWonReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
                 case CompletionResult.AttackerWonNoReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
                 case CompletionResult.DefenderWonUnemployed: return "{1} drives the invasion by {0} from {2}.";
-                case CompletionResult.DefenderWonEmployerLost: return "{1} drives the forces {0} sent to invade {2}. Your contract ends on a sour note with the invasion's defeat.";
-                case CompletionResult.DefenderWonReward: return "{1} drives the forces {0} sent to invade {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                case CompletionResult.DefenderWonNoReward: return "{1} drives the forces {0} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                case CompletionResult.DefenderWonEmployerLost: return "{1} drives away the forces {0} sent to invade {2}. Your contract ends on a sour note with the invasion's defeat.";
+                case CompletionResult.DefenderWonReward: return "{1} drives away the forces {0} sent to invade {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                case CompletionResult.DefenderWonNoReward: return "{0} drives away the forces {1} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
             }
 
             return "Something went wrong. Attacker: {0}. Defender: {1}. Location: {2}.";
@@ -172,7 +179,7 @@ namespace WarTechIIC {
             Settings s = WIIC.settings;
 
             removeParticipationContracts();
-            string text = Strings.T(completionText(), employer.FactionDef.Name, target.FactionDef.Name, location.Name);
+            string text = Strings.T(completionText(), attacker.FactionDef.Name, defender.FactionDef.Name, location.Name);
             // Because shortnames can start with a lowercase 'the' ("the Aurigan Coalition", for example), we have to fix the capitalization or the result can look weird.
             text = text.Replace(". the ", ". The ");
             text = char.ToUpper(text[0]) + text.Substring(1);
@@ -184,7 +191,7 @@ namespace WarTechIIC {
                 string primaryButtonText = Strings.T("Acknowledged");
                 string itemCollection = reward();
 
-                Sprite sprite = attackerStrength > 0 ? employer.FactionDef.GetSprite() : target.FactionDef.GetSprite();
+                Sprite sprite = attackerStrength > 0 ? attacker.FactionDef.GetSprite() : defender.FactionDef.GetSprite();
                 queue.QueuePauseNotification($"{extendedType.name} Complete", text, sprite, string.Empty, delegate {
                     Utilities.giveReward(itemCollection);
                 }, primaryButtonText);
@@ -193,7 +200,14 @@ namespace WarTechIIC {
                 }
             // Things happening elsewhere in the galaxy just get an event toast.
             } else {
-                WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+                // Event toast only happens if it's nearby, or the player has strongly positive reputation with one of the factions involved.
+                SimGameReputation attackerRep = WIIC.sim.GetReputation(attacker);
+                SimGameReputation defenderRep = WIIC.sim.GetReputation(defender);
+                double distance = WhoAndWhere.getDistance(location);
+
+                if (attackerRep == SimGameReputation.HONORED || defenderRep == SimGameReputation.HONORED || distance < 150 ) {
+                    WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
+                }
             }
 
             finalEffects();
@@ -219,15 +233,15 @@ namespace WarTechIIC {
             if (countdown > 0) {
                description.AppendLine(Strings.T("{0} days until the fighting starts", countdown));
             }
-            description.AppendLine("\n" + Strings.T("{0} forces: {1}", employer.Name.Replace("the ", ""), Utilities.forcesToString(attackerStrength)));
-            description.AppendLine(Strings.T("{0} forces: {1}", target.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(defenderStrength)));
+            description.AppendLine("\n" + Strings.T("{0} forces: {1}", attacker.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(attackerStrength)));
+            description.AppendLine(Strings.T("{0} forces: {1}", defender.FactionDef.Name.Replace("the ", ""), Utilities.forcesToString(defenderStrength)));
 
             description.AppendLine("");
             return description.ToString();
         }
 
         public virtual string basicMapDescription() {
-            return Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, employer.FactionDef.ShortName);
+            return Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, attacker.FactionDef.ShortName);
         }
 
         public override void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
@@ -264,6 +278,25 @@ namespace WarTechIIC {
             set {
                 _workOrder = value;
             }
+        }
+
+        public void fixOldEmployer() {
+            string systemOwner = WIIC.sim.GetSystemById(locationID).OwnerValue.Name;
+            string originalEmployer = "attacker";
+            bool workingHere = WIIC.sim.CurSystem.ID == locationID;
+
+            if (WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker")) {
+                WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
+                WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
+            } else if (WIIC.sim.CompanyTags.Contains("WIIC_helping_defender") && workingHere) {
+                originalEmployer = "defender";
+                WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
+                WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
+            }
+
+            WIIC.modLog.Debug?.Write($"fixOldEmployer: originalEmployer {originalEmployer}, workingHere {workingHere}, attackerName {attackerName}, systemOwner {systemOwner}");
+            employerName = originalEmployer == "attacker" ? attackerName : systemOwner;
+            targetName = originalEmployer == "attacker" ? systemOwner : attackerName;
         }
     }
 }

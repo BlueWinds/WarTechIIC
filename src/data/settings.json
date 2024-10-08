@@ -50,9 +50,9 @@
   ],
   "dailyAttackChance": 0.1,
   "dailyRaidChance": 0.1,
-  "dailyExtConChanceIfNoneAvailable": 0.2,
-  "dailyExtConChanceIfSomeAvailable": 0.1,
-  "maxAvailableExtendedContracts": 3,
+  "dailyExtConChanceIfNoneAvailable": 0,
+  "dailyExtConChanceIfSomeAvailable": 0,
+  "maxAvailableExtendedContracts": 0,
   "distanceFactor": 85,
   "aggression": {
     "ClanNovaCat": 1.5,

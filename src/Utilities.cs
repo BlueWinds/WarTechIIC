@@ -10,7 +10,12 @@ namespace WarTechIIC {
         public static List<string> deferredToasts = new List<string>();
 
         public static FactionValue getFactionValueByFactionID(string id) {
-            return WIIC.sim.DataManager.Factions.FirstOrDefault(x => x.Value.FactionValue.Name == id).Value.FactionValue;
+            try {
+                return WIIC.sim.DataManager.Factions.FirstOrDefault(x => x.Value.FactionValue.Name == id).Value.FactionValue;
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write($"Error getting faction: {id}");
+                throw e;
+            }
         }
 
         public static TKey WeightedChoice<TKey>(Dictionary<TKey, double> weights) {
@@ -128,8 +133,7 @@ namespace WarTechIIC {
 
             if (system == WIIC.sim.CurSystem) {
                 WIIC.modLog.Debug?.Write($"Player was participating in flareup at {system.ID}; Removing company tags");
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
-                WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
+                WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
             }
 
             // Revert system description to the default

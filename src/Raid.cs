@@ -22,13 +22,13 @@ namespace WarTechIIC {
 
             switch (result) {
                 case CompletionResult.AttackerWonUnemployed: return "{0} weakens {1} control of {2}.";
-                case CompletionResult.AttackerWonEmployerLost: return "{0} smashes through the forces {1} has defending {2}, withdrawing before a counter attack can be mounted. Your contract ends on a sour note.";
-                case CompletionResult.AttackerWonReward: return "{0} smashes through the forces {1} has defending {2}, withdrawing before they can mount a proper counter attack. They depart the system swiftly, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                case CompletionResult.AttackerWonNoReward: return "{0} smashes through the force s{1} has defending {2}, withdrawing before they can mount a proper counter attack. They depart the system swiftly, but your contact informs you that there will be no bonus forthcoming since you never participated in a mission.";
+                case CompletionResult.AttackerWonEmployerLost: return "{0} smashes through the forces {1} has defending {2}, withdrawing before help can arrive. Your contract ends on a sour note.";
+                case CompletionResult.AttackerWonReward: return "{0} smashes through the forces {1} has defending {2}, withdrawing before help can arrive. They depart the system swiftly, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                case CompletionResult.AttackerWonNoReward: return "{0} smashes through the forces {1} has defending {2}, withdrawing before help can arrive. They depart the system swiftly, but your contact informs you that there will be no bonus forthcoming since you never participated in a mission.";
                 case CompletionResult.DefenderWonUnemployed: return "{1} drives off the {0} raid on {2}.";
-                case CompletionResult.DefenderWonEmployerLost: return "{1} drives the remaining forces {0} had on the surface of {2}. Your contract ends on a sour note with the invasion's defeat.";
-                case CompletionResult.DefenderWonReward: return "{1} drives the remaining forces {0} had on the surface of {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                case CompletionResult.DefenderWonNoReward: return "{1} drives the remaining forces {0} had on the surface of {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                case CompletionResult.DefenderWonEmployerLost: return "{1} drives away the remaining forces {0} had on the surface of {2}. Your contract ends on a sour note with the invasion's defeat.";
+                case CompletionResult.DefenderWonReward: return "{1} drives away the remaining forces {0} had on the surface of {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                case CompletionResult.DefenderWonNoReward: return "{1} drives away the remaining forces {0} had on the surface of {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
             }
 
             return "Something went wrong. Attacker: {0}. Defender: {1}. Location: {2}.";
@@ -67,7 +67,7 @@ namespace WarTechIIC {
         }
 
         public override string basicMapDescription() {
-            return Strings.T("<b><color=#de0202>{0} is being raided by {1}</color></b>", location.Name, employer.FactionDef.ShortName);
+            return Strings.T("<b><color=#de0202>{0} is being raided by {1}</color></b>", location.Name, attacker.FactionDef.ShortName);
         }
     }
 }

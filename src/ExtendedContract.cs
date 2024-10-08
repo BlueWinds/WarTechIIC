@@ -343,12 +343,20 @@ namespace WarTechIIC {
         public virtual void spawnParticipationContracts() {
             int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
 
-            WIIC.modLog.Trace?.Write($"Spawning travel hire contract {extendedType.hireContract} at {location.Name} for {type}");
-            ContractManager.addTravelContract(extendedType.hireContract, location, employer, target, diff);
+            if (WIIC.settings.wontHirePlayer.Contains(employer.Name)) {
+                WIIC.modLog.Trace?.Write($"Skipping hireContract for {type} at {location.Name} because employer {employer.Name} wontHirePlayer");
+            } else {
+                WIIC.modLog.Trace?.Write($"Spawning travel hireContract {extendedType.hireContract} at {location.Name} for {type}");
+                ContractManager.addTravelContract(extendedType.hireContract, location, employer, target, diff);
+            }
 
             if (extendedType.targetHireContract != null) {
-                WIIC.modLog.Trace?.Write($"    Also adding {extendedType.targetHireContract} from targetHireContract");
-                ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer, diff);
+                if (WIIC.settings.wontHirePlayer.Contains(target.Name)) {
+                    WIIC.modLog.Trace?.Write($"Skipping targetHireContract for {type} at {location.Name} because target {target.Name} wontHirePlayer");
+                } else {
+                    WIIC.modLog.Trace?.Write($"    Also adding {extendedType.targetHireContract} from targetHireContract");
+                    ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer, diff);
+                }
             }
         }
 
@@ -520,7 +528,7 @@ namespace WarTechIIC {
             MatchCollection matches = SERIALIZED_TAG.Matches(tag);
             string type;
             string json;
-            var old = false;
+            bool old = false;
 
             if (matches.Count > 0) {
                 json = matches[0].Groups["json"].Value;
@@ -534,26 +542,20 @@ namespace WarTechIIC {
 
                 // This is a flareup from before the Extended Contract rewrite; we'll have to do some
                 // massaging to read it into the new format
+                old = true;
                 json =  matches[0].Groups["json"].Value;
                 type = OLD_SERIALIZED_TAG_TYPE.Matches(json)[0].Groups["type"].Value;
-                old = true;
             }
 
             if (type == "Attack") {
                 Attack attack = JsonConvert.DeserializeObject<Attack>(json);
-                if (old) {
-                    attack.employerName = attack.attackerName;
-                    attack.targetName = WIIC.sim.GetSystemById(attack.locationID).OwnerValue.Name;
-                }
+                if (old) { attack.fixOldEmployer(); }
                 attack.initAfterDeserialization();
                 return attack;
             }
             if (type == "Raid") {
                 Raid raid = JsonConvert.DeserializeObject<Raid>(json);
-                if (old) {
-                    raid.employerName = raid.attackerName;
-                    raid.targetName = WIIC.sim.GetSystemById(raid.locationID).OwnerValue.Name;
-                };
+                if (old) { raid.fixOldEmployer(); }
                 raid.initAfterDeserialization();
                 return raid;
             }
