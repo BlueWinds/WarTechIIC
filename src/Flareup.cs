@@ -192,10 +192,10 @@ namespace WarTechIIC {
                     case CompletionResult.AttackerWonEmployerLost: return "{0} takes control of {2}. {1} withdraws their forces in haste, your contract ending with their defeat.";
                     case CompletionResult.AttackerWonReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
                     case CompletionResult.AttackerWonNoReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
-                    case CompletionResult.DefenderWonUnemployed: return "{1} drives the invasion by {0} from {2}.";
-                    case CompletionResult.DefenderWonEmployerLost: return "{1} drives the forces {0} sent to invade {2}. Your contract ends on a sour note with the invasion's defeat.";
-                    case CompletionResult.DefenderWonReward: return "{1} drives the forces {0} sent to invade {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                    case CompletionResult.DefenderWonNoReward: return "{1} drives the forces {0} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                    case CompletionResult.DefenderWonUnemployed: return "{1} drives off the invasion by {0} from {2}.";
+                    case CompletionResult.DefenderWonEmployerLost: return "{1} drives off the forces {0} sent to invade {2}. Your contract ends on a sour note with the invasion's defeat.";
+                    case CompletionResult.DefenderWonReward: return "{1} drives off the forces {0} sent to invade {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                    case CompletionResult.DefenderWonNoReward: return "{1} drives off the forces {0} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
                 }
             } else {
                 switch (result) {
@@ -204,9 +204,9 @@ namespace WarTechIIC {
                     case CompletionResult.AttackerWonReward: return "{0} smashes through the forces {1} has defending {2}, withdrawing before they can mount a proper counter attack. They depart the system swiftly, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
                     case CompletionResult.AttackerWonNoReward: return "{0} smashes through the force s{1} has defending {2}, withdrawing before they can mount a proper counter attack. They depart the system swiftly, but your contact informs you that there will be no bonus forthcoming since you never participated in a mission.";
                     case CompletionResult.DefenderWonUnemployed: return "{1} drives off the {0} raid on {2}.";
-                    case CompletionResult.DefenderWonEmployerLost: return "{1} drives the remaining forces {0} had on the surface of {2}. Your contract ends on a sour note with the invasion's defeat.";
-                    case CompletionResult.DefenderWonReward: return "{1} drives the remaining forces {0} had on the surface of {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                    case CompletionResult.DefenderWonNoReward: return "{1} drives the remaining forces {0} had on the surface of {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                    case CompletionResult.DefenderWonEmployerLost: return "{1} drives off the remaining forces {0} had on the surface of {2}. Your contract ends on a sour note with the invasion's defeat.";
+                    case CompletionResult.DefenderWonReward: return "{1} drives off the remaining forces {0} had on the surface of {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
+                    case CompletionResult.DefenderWonNoReward: return "{1} drives off the remaining forces {0} had on the surface of {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
                 }
             }
 
