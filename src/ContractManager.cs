@@ -40,6 +40,7 @@ namespace WarTechIIC {
                 validTypes = WIIC.settings.customContractEnums.Concat(contractTypes).ToArray();
             }
 
+            system.SetCurrentContractFactions(employer, target);
             var potentialContracts = (Dictionary<int, List<ContractOverride>>) WIIC.sim.GetContractOverrides(difficultyRange, validTypes);
 
             WeightedList<MapAndEncounters> playableMaps =
@@ -72,7 +73,6 @@ namespace WarTechIIC {
                 MapEncounterContractData = WIIC.sim.FillMapEncounterContractData(system, difficultyRange, potentialContracts, validParticipants, level);
             }
 
-            system.SetCurrentContractFactions(FactionEnumeration.GetInvalidUnsetFactionValue(), FactionEnumeration.GetInvalidUnsetFactionValue());
 
             if (MapEncounterContractData == null || MapEncounterContractData.Contracts.Count == 0) {
                 if (WIIC.sim.mapDiscardPile.Count > 0) {
@@ -102,6 +102,7 @@ namespace WarTechIIC {
                 TargetSystem = location.ID
             };
 
+            location.SetCurrentContractFactions(employer, target);
             Contract contract = WIIC.sim.AddContract(addContractData);
             location.SystemContracts.Remove(contract);
             return contract;

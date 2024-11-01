@@ -12,6 +12,8 @@ namespace WarTechIIC {
         public double dailyExtConChanceIfNoneAvailable = 0;
         public double dailyExtConChanceIfSomeAvailable = 0;
         public int maxAvailableExtendedContracts = 0;
+        public int maxAttackRaidDistance = 300;
+        public int maxExtendedContractDistance = 300;
 
         public bool setActiveFactionsForAllSystems = false;
         public List<string> clearEmployersAndTargetsForSystemTags = new List<string>();

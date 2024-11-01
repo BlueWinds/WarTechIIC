@@ -8,6 +8,7 @@
   "hireContract": "wiic_raid_attacker",
   "targetHireContract": "wiic_raid_defender",
   "travelContracts": false,
+  "blockOtherContracts": true,
   "mapMarker": {
     "useHmAnimation": true,
     "flashpointPrefix": "",
@@ -20,7 +21,6 @@
       "Colour": "#1904B1"
     }
   },
-  "startToast": "{0} launches raid on {1} at {2}",
   "availableFor": [30, 45],
   "schedule": [
     "",

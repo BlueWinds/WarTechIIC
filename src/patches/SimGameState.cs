@@ -43,10 +43,10 @@ namespace WarTechIIC {
         public static void Postfix(GameInstanceSave gameInstanceSave, SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
-                WIIC.modLog.Info?.Write("Player currently at {__instance.CurSystem.ID}. Loading Extended Contracts.");
+                WIIC.modLog.Info?.Write($"Player currently at {__instance.CurSystem.ID}. Loading Extended Contracts.");
 
                 WIIC.extendedContracts.Clear();
-                WIIC.sim.CompanyTags.Add("WIIC_enabled");
+                __instance.CompanyTags.Add("WIIC_enabled");
 
                 WIIC.readFromJson("WIIC_ephemeralSystemControl.json", true);
 
@@ -81,7 +81,7 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameStateOnDayPassedPatch {
-        private static void Prefix() {
+        private static void Postfix() {
             try {
                 var activeItems = WIIC.sim.RoomManager.timelineWidget.ActiveItems;
 
@@ -108,16 +108,16 @@ namespace WarTechIIC {
                     }
                 }
 
-                bool newFlareup = WhoAndWhere.checkForNewFlareup();
-                if (!newFlareup) {
+                Attack newFlareup = WhoAndWhere.checkForNewFlareup();
+                if (newFlareup == null) {
                     WhoAndWhere.checkForNewExtendedContract();
-                }
-
-                if (Utilities.deferredToasts.Count > 0) {
-                    foreach (var toast in Utilities.deferredToasts) {
-                        WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
-                    }
-                    Utilities.deferredToasts.Clear();
+                } else {
+                    FactionValue attacker = newFlareup.attacker;
+                    FactionValue defender = newFlareup.defender;
+                    string action = newFlareup.type == "Attack" ? "invade" : "raid";
+                    string s = SimGameState_ApplySimGameEventResult_Patch.anS(attacker);
+                    string toast = $"{attacker.factionDef.CapitalizedName} {action}{s} {defender.factionDef.Name} at {newFlareup.location.Name}";
+                    WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
                 }
 
                 Utilities.redrawMap();
@@ -206,6 +206,21 @@ namespace WarTechIIC {
                 if (extendedContract != null && WIIC.sim.SelectedContract.Name == extendedContract.currentContractName) {
                     WIIC.modLog.Debug?.Write($"Hiding nav drawer from CompleteLanceConfigurationPrep.");
                     WIIC.sim.RoomManager.LeftDrawerWidget.Visible = false;
+                }
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(SimGameState), "ContractUserMeetsReputation")]
+    public static class SimGameState_ContractUserMeetsReputation_Patch {
+        public static void Postfix(ref bool __result, Contract c) {
+            try {
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && c.Name != extendedContract.currentContractName) {
+                    WIIC.modLog.Debug?.Write($"Marking as insufficent reputation because blockOtherContracts");
+                    __result = false;
                 }
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

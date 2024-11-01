@@ -61,7 +61,7 @@ namespace WarTechIIC {
             }
         }
 
-        public static bool checkForNewFlareup() {
+        public static Attack checkForNewFlareup() {
             double rand = Utilities.rng.NextDouble();
             double flareupChance = Utilities.statOrDefault("WIIC_dailyAttackChance", WIIC.settings.dailyAttackChance);
             double raidChance = Utilities.statOrDefault("WIIC_dailyRaidChance", WIIC.settings.dailyRaidChance);
@@ -73,7 +73,7 @@ namespace WarTechIIC {
             } else if (rand < flareupChance + raidChance) {
                 type = WIIC.extendedContractTypes["Raid"];
             } else {
-                return false;
+                return null;
             }
 
             (StarSystem system, FactionValue employer) = getFlareupEmployerAndLocation(type);
@@ -83,24 +83,22 @@ namespace WarTechIIC {
             } else {
                 WIIC.extendedContracts[system.ID] = new Raid(system, employer, type);
             }
-            return true;
+            return WIIC.extendedContracts[system.ID] as Attack;
         }
 
         public static bool checkForNewExtendedContract() {
             Settings s = WIIC.settings;
 
             double rand = Utilities.rng.NextDouble();
-            WIIC.modLog.Debug?.Write($"Checking for new extended contract: {rand} existing contracts: {WIIC.extendedContracts.Count}, chance if 0: {s.dailyExtConChanceIfNoneAvailable}, chance if < {s.maxAvailableExtendedContracts}: {s.dailyExtConChanceIfSomeAvailable}");
+            int count = WIIC.extendedContracts.Values.Count(ec => ec.type != "Attack" && ec.type != "Raid");
+            WIIC.modLog.Debug?.Write($"Checking for new extended contract: {rand} existing contracts: {count}, chance if 0: {s.dailyExtConChanceIfNoneAvailable}, chance if < {s.maxAvailableExtendedContracts}: {s.dailyExtConChanceIfSomeAvailable}");
 
-            if (WIIC.extendedContracts.Count >= s.maxAvailableExtendedContracts) { return false; }
-            if (WIIC.extendedContracts.Count > 0 && rand > s.dailyExtConChanceIfSomeAvailable) { return false; }
-            if (WIIC.extendedContracts.Count == 0 && rand > s.dailyExtConChanceIfNoneAvailable) { return false; }
+            if (count >= s.maxAvailableExtendedContracts) { return false; }
+            if (count> 0 && rand > s.dailyExtConChanceIfSomeAvailable) { return false; }
+            if (count == 0 && rand > s.dailyExtConChanceIfNoneAvailable) { return false; }
 
             Dictionary<string, double> weightedTypes = new Dictionary<string, double>();
             foreach (ExtendedContractType possibleType in WIIC.extendedContractTypes.Values) {
-                if (possibleType.name == "Attack" || possibleType.name == "Raid") {
-                    continue;
-                }
                 if (possibleType.weight > 0 && possibleType.requirementList.Where(r => r.Scope != EventScope.StarSystem).All(r => WIIC.sim.MeetsRequirements(r))) {
                     weightedTypes[possibleType.name] = (double)possibleType.weight;
                 }
@@ -108,15 +106,28 @@ namespace WarTechIIC {
 
             if (weightedTypes.Count == 0) { return false; }
 
-            ExtendedContractType type = WIIC.extendedContractTypes[Utilities.WeightedChoice(weightedTypes)];
-            RequirementDef[] systemReqs = type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray();
-            (StarSystem system, FactionValue employer) = getExtendedEmployerAndLocation(type.employer, type.spawnLocation, systemReqs);
-            FactionValue target = getExtendedTarget(system, employer, type.target);
 
-            ExtendedContract contract = new ExtendedContract(system, employer, target, type);
-            WIIC.extendedContracts[system.ID] = contract;
+            for (int i = 0; i < 3; i++) {
+                ExtendedContractType type = WIIC.extendedContractTypes[Utilities.WeightedChoice(weightedTypes)];
+                RequirementDef[] systemReqs = type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray();
 
-            return true;
+                StarSystem system;
+                FactionValue employer;
+                try {
+                    (system, employer) = getExtendedEmployerAndLocation(type.employer, type.spawnLocation, systemReqs);
+                } catch (InvalidOperationException) {
+                    WIIC.modLog.Debug?.Write($"Chose {type.name}, but couldn't find a system and employer. i={i}");
+                    continue;
+                }
+
+                FactionValue target = getExtendedTarget(system, employer, type.target);
+                ExtendedContract contract = new ExtendedContract(system, employer, target, type);
+                WIIC.extendedContracts[system.ID] = contract;
+
+                return true;
+            }
+
+            return false;
         }
 
         public static List<string> getTargets(StarSystem system) {
@@ -174,6 +185,10 @@ namespace WarTechIIC {
             var hatred = new Dictionary<(FactionValue, FactionValue), double>();
 
             foreach (StarSystem system in WIIC.sim.StarSystems) {
+                if (getDistance(system) > WIIC.settings.maxAttackRaidDistance) {
+                    continue;
+                }
+
                 FactionValue owner = system.OwnerValue;
 
                 if (Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {
@@ -260,6 +275,10 @@ namespace WarTechIIC {
 
             WIIC.modLog.Trace?.Write($"Checking locations for extended contract, using distanceFactor: {s.distanceFactor}");
             foreach (StarSystem system in WIIC.sim.StarSystems) {
+                if (getDistance(system) > WIIC.settings.maxExtendedContractDistance) {
+                    continue;
+                }
+
                 FactionValue owner = system.OwnerValue;
 
                 if (Utilities.flashpointInSystem(system) || WIIC.extendedContracts.ContainsKey(system.ID)) {

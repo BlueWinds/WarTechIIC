@@ -1,0 +1,45 @@
+{
+	"name": "Gunslinger Program",
+	"requirementList": [],
+	"weight": 1,
+	"spawnLocation": "OwnSystem",
+	"employer": ["ComStar", "Cameron"],
+	"target": ["ComStar"],
+	"hireContract": "wiic_gunslingers",
+	"availableFor": [20, 30],
+	"travelContracts": true,
+	"blockOtherContracts": true,
+	"schedule": [
+		"",
+		"",
+		"GunslingerDuel",
+		"",
+		"GunslingerDuel",
+		"",
+		"GunslingerDuel",
+		"",
+		"GunslingerDuel",
+		"",
+		"GunslingerDuel",
+		"PaymentDelivered"
+	],
+	"entries": {
+		"GunslingerDuel": {
+			"contractChance": 1,
+			"workOrder": "Gunslinger Duel",
+			"contract": [ "SoloDuel_GunslingerProgram" ],
+			"declinePenalty": "BreakContract",
+			"contractPayoutMultiplier": 1.25,
+			"contractBonusSalvage": -60,
+			"contractMessage": "Alright, Commander, time to get out there and train up these ComGuard MechWarriors. They're taking things seriously, so we should too."
+		},
+		"PaymentDelivered": {
+			"workOrder": "Payment For Services Rendered",
+			"rewardByDifficulty": {
+					"2": "BTA_standard_Minor_Loot_EC",
+					"5": "BTA_standard_Major_Loot_EC",
+					"8": "BTA_standard_ComStar_Loot"
+			}
+		}
+	}
+}

@@ -24,6 +24,10 @@ namespace WarTechIIC {
                 totalWeight += entry.Value;
             }
 
+            if (totalWeight == 0) {
+                throw new InvalidOperationException("No entries with weight > 0 in weights.");
+            }
+
             double rand = totalWeight * rng.NextDouble();
             WIIC.modLog.Debug?.Write($"WeightedChoice totalWeight: {totalWeight}, rand: {rand}");
             foreach (KeyValuePair<TKey, double> entry in weights) {

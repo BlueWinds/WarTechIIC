@@ -36,8 +36,16 @@ namespace WarTechIIC {
         // WIIC_ClanJadeFalcon_offers_StoryTime_3_Axylus_Default_at_starsystemdef_Terra_against_ClanWolf
         private static Regex OFFER_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_(?<contractName>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
 
+        public static List<(string, string)> eventResultsCache = new List<(string, string)>();
+
+        public static string anS(FactionValue faction) {
+            if (faction.factionDef.Name.EndsWith("s")) { return ""; }
+            return "s";
+        }
+
         public static void Prefix(ref SimGameEventResult result) {
             Settings s = WIIC.settings;
+            eventResultsCache.Clear();
 
             if (result.Scope == EventScope.Company && result.AddedTags != null) {
                 foreach (string addedTag in result.AddedTags.ToList()) {
@@ -78,6 +86,7 @@ namespace WarTechIIC {
                             Utilities.applyOwner(system, faction, true);
 
                             result.AddedTags.Remove(addedTag);
+                            eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.factionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
 
@@ -101,6 +110,7 @@ namespace WarTechIIC {
                             Utilities.redrawMap();
 
                             result.AddedTags.Remove(addedTag);
+                            eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.factionDef.CapitalizedName}]] invade{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
 
@@ -118,6 +128,7 @@ namespace WarTechIIC {
                             Utilities.redrawMap();
 
                             result.AddedTags.Remove(addedTag);
+                            eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.factionDef.CapitalizedName}]] raid{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
 
@@ -183,30 +194,24 @@ namespace WarTechIIC {
                             continue;
                         }
 
-                        // TODO
                         matches = OFFER_CONTRACT_TAG.Matches(addedTag);
                         if (matches.Count > 0) {
                             string employerID = matches[0].Groups["employer"].Value;
                             string contractName = matches[0].Groups["contractName"].Value;
                             string systemId = matches[0].Groups["system"].Value;
                             string targetID = matches[0].Groups["target"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employerID}, contractName {contractName}, systemId {systemId}, targetID {targetID}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: system {system}");
                             FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: employer {employer}");
                             FactionValue target = Utilities.getFactionValueByFactionID(targetID);
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: target {target}");
 
                             var diffRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: diffRange {diffRange}");
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: diffRange.Min {diffRange.MinDifficulty}");
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: diffRange.Max {diffRange.MaxDifficulty}");
                             int difficulty = WIIC.sim.NetworkRandom.Int(diffRange.MinDifficulty, diffRange.MaxDifficulty + 1);
 
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult OFFER_CONTRACT_TAG: difficulty {difficulty}");
                             ContractManager.addTravelContract(contractName, system, employer, target, difficulty);
+
+                            result.AddedTags.Remove(addedTag);
+                            eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.factionDef.Name}]] offer{anS(employer)} a contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
                     } catch (Exception e) {

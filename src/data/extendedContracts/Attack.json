@@ -8,6 +8,7 @@
   "hireContract": "wiic_help_attacker",
   "targetHireContract": "wiic_help_defender",
   "travelContracts": false,
+  "blockOtherContracts": true,
   "mapMarker": {
     "useHmAnimation": true,
     "flashpointPrefix": "",
@@ -20,7 +21,6 @@
       "Colour": "#8904B1"
     }
   },
-  "startToast": "{0} attacks {1} for control of {2}",
   "availableFor": [30, 45],
   "schedule": [
     "",

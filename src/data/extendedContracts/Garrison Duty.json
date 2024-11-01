@@ -1,54 +1,64 @@
 {
-  "name": "Garrison Duty",
-  "requirementList": [],
-  "weight": 1,
-  "spawnLocation": "OwnSystem",
-  "employer": ["Any"],
-  "target": ["NearbyEnemy", "AuriganPirates"],
-  "hireContract": "wiic_garrison_duty",
-  "availableFor": [20, 30],
-  "travelContracts": true,
-  "schedule": [
-    "",
-    "",
-    "myMission1",
-    "",
-    "",
-    "myMission2",
-    "",
-    "",
-    "myMission1",
-    "",
-    "",
-    "myEvent",
-    "giveAManAFish"
-  ],
-  "entries": {
-    "myEvent": {
-      "workOrder": "Time to restock kitchen",
-      "triggerEvent": ["event_mw_localFood"]
-    },
-    "myMission1": {
-      "contractChance": 1,
-      "allowedContractTypes": [13, 3, 53],
-      "declinePenalty": "BadFaith",
-      "contractMessage": "We have a mission from {TEAM_EMP.FactionDef.ShortName}, Commander: {RES_OBJ.Name}. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent."
-    },
-    "myMission2": {
-      "contractChance": 1,
-      "declinePenalty": "None",
-      "contractPayoutMultiplier": 0,
-      "contractBonusSalvage": -40,
-      "contract": ["Assassinate_EscapingSpy", "Assassinate_Flyswatter_Alt", "Assassinate_FalseSecurity"],
-      "contractMessage": "Time to assassinate our target! Good luck.",
-      "workOrder": "Assasination coming up soon"
-    },
-    "giveAManAFish": {
-      "rewardByDifficulty": {
-        "0": "itemCollection_loot_ItemTriple_common",
-        "5": "itemCollection_loot_ItemTriple_uncommon",
-        "8": "itemCollection_loot_ItemTriple_rare"
-      }
-    }
+	"name": "Garrison Duty",
+	"requirementList": [],
+	"weight": 1,
+	"spawnLocation": "OwnSystem",
+	"employer": [ "Any" ],
+	"target": [ "NearbyEnemy" ],
+	"hireContract": "wiic_garrison_duty",
+	"availableFor": [20, 30],
+	"travelContracts": true,
+	"blockOtherContracts": true,
+	"schedule": [
+		"",
+		"",
+		"DefenseMission1",
+		"",
+		"",
+		"DefenseMission2",
+		"",
+		"",
+		"DefenseMission3",
+		"",
+		"",
+		"CounterAttack",
+		"giveAManAFish"
+	],
+	"entries": {
+		"DefenseMission1": {
+			"workOrder": "First Attack Incoming",
+			"contractChance": 1,
+			"allowedContractTypes": [ 11 ],
+			"declinePenalty": "BadFaith",
+			"contractMessage": "We have a mission from {TEAM_EMP.FactionDef.ShortName}, Commander. Details will be provided en-route, but it looks like we need to defend one of their local outposts. Better get to it."
+		},
+		"DefenseMission2": {
+			"workOrder": "Second Attack Incoming",
+			"contractChance": 1,
+			"allowedContractTypes": [ 11 ],
+			"declinePenalty": "BreakContract",
+			"contractMessage": "{TEAM_EMP.FactionDef.ShortName} has another task for us, Commander. Looks like a second outpost is under attack and we need to protect it. Time to earn our paycheck."
+		},
+		"DefenseMission3": {
+			"workOrder": "Third Attack Incoming",
+			"contractChance": 1,
+			"allowedContractTypes": [ 11 ],
+			"declinePenalty": "BreakContract",
+			"contractMessage": "We have a mission from {TEAM_EMP.FactionDef.ShortName}, Commander. This is the third outpost to come under attack and our employer is frantically looking for the source of these attacks. Until they find it, we need to stay on defense."
+		},
+		"CounterAttack": {
+			"workOrder": "Time to Go On the Offensive",
+			"contractChance": 1,
+			"allowedContractTypes": [ 6 ],
+			"declinePenalty": "BreakContract",
+			"contractMessage": "Commander, it looks like {TEAM_EMP.FactionDef.ShortName} finally found the source of these repeated attacks and we're being ordered to take them out. Let's put an end to these raids at last."
+		},
+		"PaymentDelivered": {
+			"rewardByDifficulty": {
+				"2": "BTA_standard_Minor_Loot_EC",
+				"5": "BTA_standard_Major_Loot_EC",
+				"8": "BTA_standard_Superior_Loot_EC"
+			}
+		}
   }
 }

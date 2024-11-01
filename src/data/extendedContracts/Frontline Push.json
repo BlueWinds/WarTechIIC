@@ -1,0 +1,67 @@
+{
+	"name": "Frontline Push",
+	"requirementList": [],
+	"weight": 1,
+	"spawnLocation": "NearbyEnemy",
+	"employer": ["Any"],
+	"target": ["SystemOwner"],
+	"hireContract": "wiic_frontline_push",
+	"availableFor": [20, 30],
+	"travelContracts": true,
+	"blockOtherContracts": true,
+	"schedule": [
+		"",
+		"",
+		"InitialSkirmish",
+		"",
+		"CapturingTheBase",
+		"",
+		"HoldingTheBase",
+		"",
+		"",
+		"CrushingResistance",
+		"PaymentDelivered"
+	],
+	"entries": {
+		"InitialSkirmish": {
+			"contractChance": 1,
+			"workOrder": "Taking the Landing Zone",
+			"contract": [ "SimpleBattle_HotLanding" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "Time to get this party started, Commander. We're going in with a simple combat operation. Buckle up, it only gets hotter from here."
+		},
+		"CapturingTheBase": {
+			"contractChance": 1,
+			"workOrder": "Taking the Initial Enemy Base",
+			"contract": [ "CaptureBase_PullingLinchpins" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "Ok, Commander, we've got our LZ, now it's time to capture an enemy base to set up our command post. Expect resistance."
+		},
+		"HoldingTheBase": {
+			"contractChance": 1,
+			"workOrder": "Enemy Counter-Attack",
+			"contract": [ "DefendBase_Automation" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "Commander, we've received word from our advance scouts of a large enemy counter-attack against our command post. Get out there and hold the line!"
+		},
+		"CrushingResistance": {
+			"contractChance": 1,
+			"workOrder": "Assault Enemy Forward Position",
+			"contract": [ "DestroyBase_ICanDestroy" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "We've identified the source of the recent counter-attack that you held off. Time to break their assault once and for all. Destroy that base, Commander."
+		},
+		"PaymentDelivered": {
+			"workOrder": "Payment For a Job Well Done",
+			"rewardByDifficulty": {
+				"2": "BTA_standard_Minor_Loot_EC",
+				"5": "BTA_standard_Major_Loot_EC",
+				"8": "BTA_standard_Superior_Loot_EC"
+			}
+		}
+  }
+}

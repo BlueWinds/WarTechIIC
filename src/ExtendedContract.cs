@@ -28,6 +28,7 @@ namespace WarTechIIC {
         public string[] triggerEvent = new string[0];
         public double contractChance;
         public string[] contract = new string[0];
+        public bool ignoreContractRequirements = false;
         public int[] allowedContractTypes = new int[0];
         public DeclinePenalty declinePenalty;
         public double contractPayoutMultiplier = 1;
@@ -40,7 +41,7 @@ namespace WarTechIIC {
         public void validate(string type, string key) {
             foreach (string evt in triggerEvent) {
                 if (MetadataDatabase.Instance.GetEventDef(evt) == null) {
-                    throw new Exception($"triggerEvent {evt} is not a valid event in {type} schedule[{key}].");
+                    throw new Exception($"VALIDATION: triggerEvent {evt} is not a valid event in {type} schedule[{key}].");
                 }
             }
         }
@@ -58,8 +59,8 @@ namespace WarTechIIC {
         public int[] availableFor;
         public string[] schedule;
         public FpMarker mapMarker = null;
-        public bool travelContracts;
-        public string startToast = null;
+        public bool travelContracts = true;
+        public bool blockOtherContracts = false;
         public Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
 
         public ExtendedContractType(string newName) {
@@ -71,32 +72,32 @@ namespace WarTechIIC {
 
             foreach (string emp in employer) {
                 if (emp == "Any") {
-                    if (spawnLocation == SpawnLocation.Any) { throw new Exception($"employer Any is not valid with spawnLocation Any for ExtendedContractType {name}."); }
+                    if (spawnLocation == SpawnLocation.Any) { throw new Exception($"VALIDATION: employer Any is not valid with spawnLocation Any for ExtendedContractType {name}."); }
                 } else if (emp == "OwnSystem") {
-                    if (spawnLocation == SpawnLocation.OwnSystem) { throw new Exception($"employer OwnSystem is not valid with spawnLocation OwnSystem for ExtendedContractType {name}."); }
-                    if (spawnLocation == SpawnLocation.NearbyEnemy) { throw new Exception($"employer OwnSystem is not valid with spawnLocation NearbyEnemy for ExtendedContractType {name}."); }
+                    if (spawnLocation == SpawnLocation.OwnSystem) { throw new Exception($"VALIDATION: employer OwnSystem is not valid with spawnLocation OwnSystem for ExtendedContractType {name}."); }
+                    if (spawnLocation == SpawnLocation.NearbyEnemy) { throw new Exception($"VALIDATION: employer OwnSystem is not valid with spawnLocation NearbyEnemy for ExtendedContractType {name}."); }
                 } else if (emp == "Allied") {
                 } else if (FactionEnumeration.GetFactionByName(emp) == invalid) {
-                  throw new Exception($"employer {emp} is not a valid faction in ExtendedContractType {name}.");
+                  throw new Exception($"VALIDATION: employer {emp} is not a valid faction in ExtendedContractType {name}.");
                 }
             }
 
             foreach (string tar in target) {
                 if (tar == "Employer" || tar == "SystemOwner" || tar == "NearbyEnemy") {
                 } else if (FactionEnumeration.GetFactionByName(tar) == invalid) {
-                    throw new Exception($"target {tar} is not a valid faction in ExtendedContractType {name}.");
+                    throw new Exception($"VALIDATION: target {tar} is not a valid faction in ExtendedContractType {name}.");
                 }
             }
 
             foreach (string key in schedule) {
                 if (key != "" && !entries.ContainsKey(key)) {
-                    throw new Exception($"'{key}' in the schedule is not in the entries dictionary in ExtendedContractType {name}.");
+                    throw new Exception($"VALIDATION: '{key}' in the schedule is not in the entries dictionary in ExtendedContractType {name}.");
                 }
             }
 
             foreach (string key in entries.Keys) {
                 if (!schedule.Contains(key)) {
-                    throw new Exception($"Entry '{key}' is not used in the schedule of ExtendedContractType {name}. This probably indicates an error in your configuration. The goggles, they do nothing.");
+                    throw new Exception($"VALIDATION: Entry '{key}' is not used in the schedule of ExtendedContractType {name}. This probably indicates an error in your configuration. The goggles, they do nothing.");
                 }
 
                 entries[key].validate(name, key);
@@ -104,20 +105,20 @@ namespace WarTechIIC {
 
             bool hireContractExists = MetadataDatabase.Instance.Query<Contract_MDD>("SELECT * from Contract WHERE ContractID = @ID", new { ID = hireContract }).ToArray().Length > 0;
             if (!hireContractExists) {
-                throw new Exception($"Couldn't find hireContract '{hireContract}' for ExtendedContractType {name}.");
+                throw new Exception($"VALIDATION: Couldn't find hireContract '{hireContract}' for ExtendedContractType {name}.");
             }
 
             bool targetHireContractExists = MetadataDatabase.Instance.Query<Contract_MDD>("SELECT * from Contract WHERE ContractID = @ID", new { ID = targetHireContract }).ToArray().Length > 0;
             if (targetHireContract != null && !targetHireContractExists) {
-                throw new Exception($"Couldn't find targetHireContract '{targetHireContract}' for ExtendedContractType {name}.");
+                throw new Exception($"VALIDATION: Couldn't find targetHireContract '{targetHireContract}' for ExtendedContractType {name}.");
             }
 
             if (availableFor.Length != 2 || availableFor[0] < 0 || availableFor[0] > availableFor[1]) {
-                throw new Exception($"Invalid availableFor availableFor for ExtendedContractType {name}.");
+                throw new Exception($"VALIDATION: Invalid availableFor availableFor for ExtendedContractType {name}.");
             }
 
             if (mapMarker == null && !travelContracts) {
-                throw new Exception($"No map marker found for ExtendedContractType {name}, nor does it generate travelContracts. Users won't be able to find it.");
+                throw new Exception($"VALIDATION: No map marker found for ExtendedContractType {name}, nor does it generate travelContracts. Users won't be able to find it - set `\"travelContracts\": true`.");
             }
         }
     }
@@ -187,12 +188,6 @@ namespace WarTechIIC {
 
             if (extendedType.travelContracts) {
                 spawnParticipationContracts();
-            }
-
-            if (extendedType.startToast != null) {
-                string text = Strings.T(extendedType.startToast, employer.FactionDef.ShortName, target.FactionDef.ShortName, location.Name);
-                Utilities.deferredToasts.Add(text);
-                WIIC.modLog.Info?.Write(text);
             }
         }
 
@@ -287,10 +282,15 @@ namespace WarTechIIC {
             if (rand <= entry.contractChance) {
                 WIIC.modLog.Info?.Write($"Triggering contract on day {currentDay} of {type} ({entry.contractChance} chance)");
                 Contract contract = null;
+
                 if (entry.contract.Length > 0) {
                     foreach (string contractName in entry.contract) {
                         contract = ContractManager.getContractByName(contractName, location, employer, target);
-                        if (WIIC.sim.MeetsRequirements(contract.Override.requirementList.ToArray())) {
+                        if (entry.ignoreContractRequirements) {
+                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Ignoring requirements");
+                            break;
+                        }
+                        else if (WIIC.sim.MeetsRequirements(contract.Override.requirementList.ToArray())) {
                             WIIC.modLog.Debug?.Write($"Considering {contractName} - Meets requirements");
                             break;
                         } else {
@@ -400,7 +400,7 @@ namespace WarTechIIC {
             if (declinePenalty == DeclinePenalty.BadFaith) {
                 message += $"\n\nDeclining this contract is equivelent to a bad faith withdrawal. It will severely harm our reputation with {employer.FactionDef.ShortName}.";
             } else if (declinePenalty == DeclinePenalty.BreakContract) {
-                message += $"\n\nDeclining this contract is will break our {type} contract with {employer.FactionDef.ShortName}.";
+                message += $"\n\nDeclining this contract will break our {type} contract with {employer.FactionDef.ShortName}.";
             }
 
             WIIC.modLog.Debug?.Write(message);
@@ -409,10 +409,13 @@ namespace WarTechIIC {
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
                     WIIC.modLog.Info?.Write($"Accepted {type} mission {contract.Name}.");
-                    currentContractName = contract.Name;
 
+                    currentContractName = contract.Name;
+                    WIIC.sim.RoomManager.ChangeRoom(DropshipLocation.CMD_CENTER);
                     WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
+                    WIIC.sim.RoomManager.RefreshDisplay();
                     WIIC.sim.ForceTakeContract(contract, false);
+                    WIIC.sim.RoomManager.LeftDrawerWidget.SetCollapsed(true);
                 } catch (Exception e) {
                     WIIC.modLog.Error?.Write(e);
                 }
@@ -483,11 +486,9 @@ namespace WarTechIIC {
 
                 for (int day = currentDay + 1; day < extendedType.schedule.Length; day++) {
                     string entryName = extendedType.schedule[day];
-                    WIIC.modLog.Debug?.Write($"currentDay: {currentDay}, day: {day}, entryName: {entryName}");
                     if (extendedType.entries.ContainsKey(entryName)) {
                         Entry entry = extendedType.entries[entryName];
                         if (entry.workOrder != null) {
-                            WIIC.modLog.Debug?.Write($"Matching. {entry.workOrder}");
                             _extraWorkOrder.SetDescription(entry.workOrder);
                             _extraWorkOrder.SetCost(day - currentDay);
 
