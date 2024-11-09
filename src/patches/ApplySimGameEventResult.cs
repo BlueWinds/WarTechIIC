@@ -36,6 +36,9 @@ namespace WarTechIIC {
         // WIIC_ClanJadeFalcon_offers_StoryTime_3_Axylus_Default_at_starsystemdef_Terra_against_ClanWolf
         private static Regex OFFER_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_(?<contractName>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
 
+        // WIIC_ClanJadeFalcon_offers_Garrison Duto_at_starsystemdef_Terra_against_ClanWolf
+        private static Regex OFFER_EXTENDED_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_extended_(?<extendedContractType>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
+
         public static List<(string, string)> eventResultsCache = new List<(string, string)>();
 
         public static string anS(FactionValue faction) {
@@ -97,8 +100,13 @@ namespace WarTechIIC {
                             string systemId = matches[0].Groups["system"].Value;
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
 
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+                            StarSystem system;
+                            if (systemId == "SOMEWHERE") {
+                                (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Attack"], faction);
+                            } else {
+                                system = WIIC.sim.GetSystemById(systemId);
+                            }
 
                             if (system.OwnerValue.Name == faction.Name) {
                                 WIIC.modLog.Info?.Write($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
@@ -121,7 +129,12 @@ namespace WarTechIIC {
                             WIIC.modLog.Info?.Write($"ApplySimGameEventResult RAID_SYSTEM: factionID {factionID}, systemId {systemId}");
 
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            StarSystem system;
+                            if (systemId == "SOMEWHERE") {
+                                (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Raid"], faction);
+                            } else {
+                                system = WIIC.sim.GetSystemById(systemId);
+                            }
 
                             Utilities.cleanupSystem(system);
                             WIIC.extendedContracts[system.ID] = new Raid(system, faction, WIIC.extendedContractTypes["Raid"]);
@@ -214,7 +227,36 @@ namespace WarTechIIC {
                             eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.factionDef.Name}]] offer{anS(employer)} a contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
+
+                        matches = OFFER_EXTENDED_CONTRACT_TAG.Matches(addedTag);
+                        if (matches.Count > 0) {
+                            string employerID = matches[0].Groups["employer"].Value;
+                            string extendedContractType = matches[0].Groups["extendedContractType"].Value;
+                            string systemId = matches[0].Groups["system"].Value;
+                            string targetID = matches[0].Groups["target"].Value;
+
+                            if (!WIIC.extendedContractTypes.ContainsKey(extendedContractType)) {
+                                throw new Exception($"Unable to find extended contract type '{extendedContractType}'.");
+                            }
+                            if (extendedContractType == "Attack" || extendedContractType == "Raid") {
+                                throw new Exception($"Use WIIC_(faction)_attacks_(system) or WIIC_(faction)_raids_(system) instead of {addedTag}. Doing nothing.");
+                            }
+
+                            StarSystem system = WIIC.sim.GetSystemById(systemId);
+                            FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
+                            FactionValue target = Utilities.getFactionValueByFactionID(targetID);
+                            ExtendedContractType type = WIIC.extendedContractTypes[extendedContractType];
+
+                            Utilities.cleanupSystem(system);
+                            WIIC.extendedContracts[system.ID] = new ExtendedContract(system, employer, target, type);
+                            Utilities.redrawMap();
+
+                            result.AddedTags.Remove(addedTag);
+                            eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.factionDef.Name}]] offer{anS(employer)} an extended contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                            continue;
+                        }
                     } catch (Exception e) {
+                        WIIC.modLog.Error?.Write($"Error while processing tag '{addedTag}'");
                         WIIC.modLog.Error?.Write(e);
                     }
                 }
@@ -233,7 +275,7 @@ namespace WarTechIIC {
                     result.Stats = result.Stats.Where(stat => stat.name == null || !stat.name.StartsWith("WIIC")).ToArray();
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write($"result.ToEditorSummaryString(): {result.ToString()}");
+                WIIC.modLog.Error?.Write($"result.ToString(): {result.ToString()}");
                 WIIC.modLog.Error?.Write(e);
             }
         }

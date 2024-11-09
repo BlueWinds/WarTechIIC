@@ -173,8 +173,8 @@ namespace WarTechIIC {
             return 1 / (WIIC.settings.distanceFactor + getDistance(system));
         }
 
-        public static (StarSystem, FactionValue) getFlareupEmployerAndLocation(ExtendedContractType type) {
-            if (weightedLocationCache != null) {
+        public static (StarSystem, FactionValue) getFlareupEmployerAndLocation(ExtendedContractType type, FactionValue forceEmployer = null) {
+            if (weightedLocationCache != null && forceEmployer == null) {
                 return Utilities.WeightedChoice(weightedLocationCache);
             }
 
@@ -214,6 +214,10 @@ namespace WarTechIIC {
                 // WIIC.modLog.Trace?.Write($"Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
 
                 Action<FactionValue> considerEmployer = (FactionValue employer) => {
+                    if (forceEmployer != null && employer != forceEmployer) {
+                        return;
+                    }
+
                     if (s.ignoreFactions.Contains(employer.Name)) {
                         return;
                     }
@@ -264,7 +268,9 @@ namespace WarTechIIC {
                 }
             }
 
-            weightedLocationCache = weightedLocations;
+            if (forceEmployer == null) {
+                weightedLocationCache = weightedLocations;
+            }
 
             return Utilities.WeightedChoice(weightedLocations);
         }

@@ -146,15 +146,13 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "FinishCompleteBreadcrumbProcess")]
     public static class SimGameState_FinishCompleteBreadcrumbProcessPatch {
-        public static bool Prefix(SimGameState __instance, out string __state) {
+        public static void Prefix(SimGameState __instance, out string __state) {
             __state = null;
             try {
                 __state = __instance.ActiveTravelContract.Override.ID;
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
-
-            return true;
         }
 
         public static void Postfix(SimGameState __instance, string __state) {
@@ -225,6 +223,49 @@ namespace WarTechIIC {
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(SGContractsWidget), "OnContractAccepted")]
+    [HarmonyPatch(new Type[] { typeof(bool) })]
+    public static class SGContractsWidget_OnContractAccepted_Patch {
+        public static bool Prefix(SGContractsWidget __instance, bool skipCombat) {
+            try {
+                WIIC.modLog.Debug?.Write($"OnContractAccepted Prefix - Blocking CU's prefix, because it is breaking things for some users? If you understand the purpose of CustomUnits.SGContractsWidget_OnContractAccepted, reach out to BloodyDoves or BlueWinds.");
+                originalImplementation(__instance, skipCombat);
+
+                return false;
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+
+            return true;
+        }
+        public static void originalImplementation(SGContractsWidget __instance, bool skipCombat) {
+            if (__instance.Sim.HasTravelContract) {
+                if (__instance.Sim.IsContractOurArrivedAtTravelContract(__instance.SelectedContract)) {
+                    __instance.Sim.PrepareBreadcrumb(__instance.Sim.ActiveTravelContract);
+                    return;
+                }
+
+                __instance.Sim.CreateBreakContractWarning(delegate {
+                    __instance.OnTravelContractWarningAccepted(skipCombat);
+                }, __instance.OnTravelContractWarningCancelled);
+
+                __instance.uiManager.SetFaderColor(__instance.uiManager.UILookAndColorConstants.PopupBackfill, UIManagerFader.FadePosition.FadeInBack, UIManagerRootType.PopupRoot);
+                return;
+            }
+            float num = 0f;
+            float num2 = 0f;
+            if (__instance.SelectedContract.Override != null && !__instance.SelectedContract.CanNegotiate) {
+                num = __instance.SelectedContract.Override.negotiatedSalary;
+                num2 = __instance.SelectedContract.Override.negotiatedSalvage;
+            } else {
+                num = __instance.NegPaymentSlider.Value / __instance.NegPaymentSlider.ValueMax;
+                num2 = __instance.NegSalvageSlider.Value / __instance.NegSalvageSlider.ValueMax;
+            }
+            __instance.SelectedContract.SetNegotiatedValues(num, num2);
+            __instance.contractAccepted(skipCombat);
         }
     }
 }

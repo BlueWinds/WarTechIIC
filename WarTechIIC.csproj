@@ -2,7 +2,7 @@
   <Import Project="Common.props" />
   <Target Condition="Exists('$(BattleTechGameDir)\Mods\$(ProjectName)\')" Name="CopyFilesToGame" AfterTargets="CopyFilesToOutputDirectory">
     <ItemGroup>
-        <DataFiles Include="README.md;src/data/**/*.*"/>
+        <DataFiles Include="README.md;ExtendedContracts.md;Flareups.md;src/data/**/*.*"/>
     </ItemGroup>
 
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/" />
