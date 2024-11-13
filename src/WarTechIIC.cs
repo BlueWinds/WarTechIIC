@@ -18,6 +18,7 @@ namespace WarTechIIC
         internal static Dictionary<string, ExtendedContract> extendedContracts = new Dictionary<string, ExtendedContract>();
         internal static Dictionary<string, string> systemControl = new Dictionary<string, string>();
         internal static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
+        internal static List<(string, string)> eventResultsCache = new List<(string, string)>();
         internal static SimGameState sim;
 
         public static void Init(string modDirectory, string settingsJSON) {

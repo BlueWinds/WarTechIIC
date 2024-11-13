@@ -39,16 +39,14 @@ namespace WarTechIIC {
         // WIIC_ClanJadeFalcon_offers_Garrison Duto_at_starsystemdef_Terra_against_ClanWolf
         private static Regex OFFER_EXTENDED_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_extended_(?<extendedContractType>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
 
-        public static List<(string, string)> eventResultsCache = new List<(string, string)>();
-
         public static string anS(FactionValue faction) {
-            if (faction.factionDef.Name.EndsWith("s")) { return ""; }
+            if (faction.FactionDef.Name.EndsWith("s")) { return ""; }
             return "s";
         }
 
         public static void Prefix(ref SimGameEventResult result) {
             Settings s = WIIC.settings;
-            eventResultsCache.Clear();
+            WIIC.eventResultsCache.Clear();
 
             if (result.Scope == EventScope.Company && result.AddedTags != null) {
                 foreach (string addedTag in result.AddedTags.ToList()) {
@@ -89,7 +87,7 @@ namespace WarTechIIC {
                             Utilities.applyOwner(system, faction, true);
 
                             result.AddedTags.Remove(addedTag);
-                            eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.factionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
 
@@ -118,7 +116,7 @@ namespace WarTechIIC {
                             Utilities.redrawMap();
 
                             result.AddedTags.Remove(addedTag);
-                            eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.factionDef.CapitalizedName}]] invade{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] invade{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
 
@@ -141,7 +139,7 @@ namespace WarTechIIC {
                             Utilities.redrawMap();
 
                             result.AddedTags.Remove(addedTag);
-                            eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.factionDef.CapitalizedName}]] raid{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] raid{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
 
@@ -224,7 +222,7 @@ namespace WarTechIIC {
                             ContractManager.addTravelContract(contractName, system, employer, target, difficulty);
 
                             result.AddedTags.Remove(addedTag);
-                            eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.factionDef.Name}]] offer{anS(employer)} a contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.FactionDef.Name}]] offer{anS(employer)} a contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
 
@@ -252,7 +250,7 @@ namespace WarTechIIC {
                             Utilities.redrawMap();
 
                             result.AddedTags.Remove(addedTag);
-                            eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.factionDef.Name}]] offer{anS(employer)} an extended contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.FactionDef.Name}]] offer{anS(employer)} an extended contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                             continue;
                         }
                     } catch (Exception e) {

@@ -5,7 +5,7 @@
 	"spawnLocation": "OwnSystem",
 	"employer": [ "Any" ],
 	"target": [ "NearbyEnemy" ],
-	"hireContract": "wiic_demo_only",
+	"hireContract": "wiic_garrison_duty",
 	"availableFor": [20, 30],
 	"travelContracts": true,
 	"blockOtherContracts": true,

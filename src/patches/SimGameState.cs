@@ -116,7 +116,7 @@ namespace WarTechIIC {
                     FactionValue defender = newFlareup.defender;
                     string action = newFlareup.type == "Attack" ? "invade" : "raid";
                     string s = SimGameState_ApplySimGameEventResult_Patch.anS(attacker);
-                    string toast = $"{attacker.factionDef.CapitalizedName} {action}{s} {defender.factionDef.Name} at {newFlareup.location.Name}";
+                    string toast = $"{attacker.factionDef.CapitalizedName} {action}{s} {defender.FactionDef.Name} at {newFlareup.location.Name}";
                     WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
                 }
 
@@ -157,7 +157,12 @@ namespace WarTechIIC {
 
         public static void Postfix(SimGameState __instance, string __state) {
             try {
-                WIIC.modLog.Debug?.Write($"Breadcrumb complete {WIIC.sim.CurSystem.ID} - {__state}");
+                if (String.IsNullOrEmpty(__state)) {
+                    WIIC.modLog.Debug?.Write($"Breadcrumb complete, not a travel contract.");
+                    return;
+                }
+
+                WIIC.modLog.Debug?.Write($"Breadcrumb complete {WIIC.sim.CurSystem.ID} - {__state}. GetType={__state.GetType()}");
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     ExtendedContract extendedContract = WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
                     WIIC.modLog.Debug?.Write($"Type: {extendedContract.extendedType.name}, looking for {extendedContract.extendedType.hireContract}{(String.IsNullOrEmpty(extendedContract.extendedType.targetHireContract) ? "" : (" or " + extendedContract.extendedType.targetHireContract))}");

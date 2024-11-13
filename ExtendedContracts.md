@@ -91,6 +91,6 @@ The first entry occurs immediately upon accepting the extended contract - it's "
 ## Generating Extended Contracts
 Each day, after checking for flareups and raids if there are fewer than `maxAvailableExtendedContracts` available, WIIC decides if it should generate a new one. If there are currently no extended contracts available, it uses `dailyExtConChanceIfNoneAvailable` as the chance. If one or more already exist, it instead uses `dailyExtConChanceIfSomeAvailable`.
 
-- If it decides to offer the player a new extended contract, it generates a list of all the extended contract types for which the player qualifies (based on their `companyRequirements`s), weighted by their `weight`s, and picks one.
-- Builds a list of all valid employer and location pairs, as described by `spawnLocation` and the `employer` array. These are weighted by the distance multiplier, as Flareups: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`, and limited to systems within `maxExtendedContractDistance` ly from the player. Systems near the player are more likely to be chosen than those far across the map.
-- Finally, it determines the target of the contract based on the `target` array.
+  - If it decides to offer the player a new extended contract, it generates a list of all the extended contract types for which the player qualifies (based on their `companyRequirements`s), weighted by their `weight`s, and picks one.
+  - Builds a list of all valid employer and location pairs, as described by `spawnLocation` and the `employer` array. These are weighted by the distance multiplier, as Flareups: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`, and limited to systems within `maxExtendedContractDistance` ly from the player. Systems near the player are more likely to be chosen than those far across the map.
+  - Finally, it determines the target of the contract based on the `target` array.

@@ -120,11 +120,16 @@ namespace WarTechIIC {
                     continue;
                 }
 
-                FactionValue target = getExtendedTarget(system, employer, type.target);
-                ExtendedContract contract = new ExtendedContract(system, employer, target, type);
-                WIIC.extendedContracts[system.ID] = contract;
-
-                return true;
+                for (int j = 0; j < 3; j++) {
+                    FactionValue target = getExtendedTarget(system, employer, type.target);
+                    if (target == null) {
+                        WIIC.modLog.Info?.Write($"Chose {type.name}, but couldn't find target at {system.Name} with employer {employer.Name}. i={i}, j={j}");
+                        continue;
+                    }
+                    ExtendedContract contract = new ExtendedContract(system, employer, target, type);
+                    WIIC.extendedContracts[system.ID] = contract;
+                    return true;
+                }
             }
 
             return false;
@@ -371,6 +376,10 @@ namespace WarTechIIC {
                 else {
                     factions.Add(FactionEnumeration.GetFactionByName(target));
                 }
+            }
+
+            if (factions.Count == 0) {
+                return null;
             }
 
             return Utilities.Choice(factions);

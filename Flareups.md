@@ -15,12 +15,12 @@ WIIC first decides who will be the attacker and where they'll attack by iteratin
 1) If it's more than `maxAttackRaidDistance` ly away from the player, it's skipped.
 2) If it's controlled by a faction in `cantBeAttacked` or `ignoreFactions`, it's also skipped.
 3) Each faction that controls a neighboring system and isn't in `ignoreFactions` might attack, if they're either the owner's enemy or `limitTargetsToFactionEnemies` is `false`. The weight for that attacker on this star system is the following items multiplied together:
-    1) The number of bordering systems the attacker controls (within one jump)
-    2) The distance multipilier: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`. Systems near the player are more likely to be attacked than those far across the map.
-    3) `aggression[attacker]`, read from the settings, defaulting to 1.
-    4) `reputationMultiplier[attacker] + reputationMultiplier[defender]`.
-    5) `hates[attacker][defender]`, defaulting to 1.
-    6) Multipliers from any tags in `systemAggressionByTag` that the system has. A multiplier of 0 means this system can never be attacked or raided randomly.
+  1) The number of bordering systems the attacker controls (within one jump)
+  2) The distance multipilier: `1 / sqrt(distanceFactor + distanceInLyFromPlayer)`. Systems near the player are more likely to be attacked than those far across the map.
+  3) `aggression[attacker]`, read from the settings, defaulting to 1.
+  4) `reputationMultiplier[attacker] + reputationMultiplier[defender]`.
+  5) `hates[attacker][defender]`, defaulting to 1.
+  6) Multipliers from any tags in `systemAggressionByTag` that the system has. A multiplier of 0 means this system can never be attacked or raided randomly.
 4) For attacks, `factionInvasionTags` are always considered adjacent to the appropriate faction (that is to say, Jade Falcon can always attack planets with the falcon_invasion_corridor tag, if such is set in settings.json). For raids, `factionActivityTags` is used instead (eg, Pirates can always raid planet_other_pirate worlds in the default settings).
     * The weight uses the same rules as above. Each tag the planet has is equivalent to one 'border world'.
 
