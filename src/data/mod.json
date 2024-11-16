@@ -8,11 +8,13 @@
     "IRBTModUtils"
   ],
   "CustomResourceTypes": [
-    "ExtendedContractType"
+    "ExtendedContractType",
+    "ExtendedConversation",
   ],
   "Manifest": [
     { "Type": "ContractOverride", "Path": "contracts" },
     { "Type": "BaseDescriptionDef", "Path": "descriptions" },
-    { "Type": "ExtendedContractType", "Path": "extendedContracts" }
+    { "Type": "ExtendedContractType", "Path": "extendedContracts" },
+    { "Type": "ExtendedConversation", "Path": "extendedConversations" }
   ]
 }

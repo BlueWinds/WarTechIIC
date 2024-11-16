@@ -42,6 +42,7 @@ namespace WarTechIIC {
         public string targetName;
 
         public string currentContractName = "";
+        public string currentEntry;
 
         public bool droppingForContract = false;
 
@@ -129,15 +130,15 @@ namespace WarTechIIC {
                 return true;
             }
 
-            string entryName = extendedType.schedule[currentDay];
+            currentEntry = extendedType.schedule[currentDay];
 
-            if (entryName == "") {
+            if (currentEntry == "") {
                 WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, nothing happening.");
-            } else if (extendedType.entries.ContainsKey(entryName)) {
-                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {entryName}.");
-                runEntry(extendedType.entries[entryName]);
+            } else if (extendedType.entries.ContainsKey(currentEntry)) {
+                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {currentEntry}.");
+                runEntry(extendedType.entries[currentEntry]);
             } else {
-                WIIC.modLog.Error?.Write($"ExtendedContractType references '{entryName}' at schedule[{currentDay}], but this is not present in its entries dictionary. Valid keys are {string.Join(", ", extendedType.entries.Keys)}");
+                WIIC.modLog.Error?.Write($"ExtendedContractType references '{currentEntry}' at schedule[{currentDay}], but this is not present in its entries dictionary. Valid keys are {string.Join(", ", extendedType.entries.Keys)}");
             }
 
             return currentDay == extendedType.schedule.Length - 1;

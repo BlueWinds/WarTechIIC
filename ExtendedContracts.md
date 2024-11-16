@@ -1,4 +1,3 @@
-
 # Extended Contracts
 In addition to existing Raids and Attacks, there are now "extended contracts", as defined by `ExtendedContractType` and `ContractOverride` definitions. These are loaded via modtek, like other things that modtek can load. Though similar in some ways to Flareups, extended contracts do not use / track combat forces, nor do they appear on the map or have lasting effects on the galactic stage.
 

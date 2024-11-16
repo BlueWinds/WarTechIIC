@@ -11,6 +11,7 @@ namespace WarTechIIC
 {
     public class WIIC {
         public static Dictionary<string, ExtendedContractType> extendedContractTypes = new Dictionary<string, ExtendedContractType>();
+        public static Dictionary<string, ExtendedConversation> extendedConversations = new Dictionary<string, ExtendedConversation>();
 
         internal static DeferringLogger modLog;
         internal static string modDir;
@@ -55,6 +56,23 @@ namespace WarTechIIC
                         ExtendedContractType ect = JsonConvert.DeserializeObject<ExtendedContractType>(jdata);
                         ect.validate();
                         extendedContractTypes[ect.name] = ect;
+                    } catch (Exception e) {
+                        WIIC.modLog.Error?.Write(e);
+                    }
+                }
+            }
+
+            if (customResources != null && customResources.ContainsKey("ExtendedConversation")) {
+                foreach (VersionManifestEntry entry in customResources["ExtendedConversation"].Values) {
+                    WIIC.modLog.Info?.Write($"Loading ExtendedConversation from {entry.FilePath}.");
+                    try {
+                        string jdata;
+                        using (StreamReader reader = new StreamReader(entry.FilePath)) {
+                            jdata = reader.ReadToEnd();
+                        }
+                        ExtendedConversation econv = JsonConvert.DeserializeObject<ExtendedConversation>(jdata);
+                        econv.validate();
+                        extendedConversations[econv.name] = econv;
                     } catch (Exception e) {
                         WIIC.modLog.Error?.Write(e);
                     }

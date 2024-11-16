@@ -1,0 +1,74 @@
+{
+  "name": "BetrayalAndDebt",
+  "introHeader": "BETRAYAL AND DEBT",
+  "introSubHeader": "In Orbit - \\u00dar Cruinne",
+  "nodes": {
+    "Entrypoint": {
+      "showOnViewscreen": "lostsignal",
+      "speaker": "Yang",
+      "text": "What should we do, boss?\n",
+      "options": {
+        "Yell at Darius": { "_goto": "DariusIsUnhappy" },
+        "Go out to eat": { "_goto": "DariusIsHappy" },
+        "Nothing": {
+          "_goto": "Node:DariusComplains",
+          "disableIf": {
+            "companyTags": ["Tag1", "Tag2"],
+            "notCompanyTags": ["Tag3"]
+          }
+        },
+        "Someday": {
+          "_goto": "Node:DariusIsHappy",
+          "hideIf": {
+            "commanderTags": ["Tag4"],
+            "notCommanderTags": ["Tag5"]
+          }
+        }
+      }
+    },
+    "DariusIsUnhappy": {
+      "speaker": "Darius",
+      "text": "Fuck.\n",
+      "options": {
+        "": { "_goto": "DariusIsSad" }
+      }
+    },
+    "DariusIsSad": {
+      "speaker": "Darius",
+      "text": "I think we're going to have to kill a man.\n",
+      "options": {
+        "": { "_goto": "Contract:Assassinate_EscapingSpy" }
+      }
+    },
+    "DariusIsHappy": {
+      "speaker": "Darius",
+      "text": "Yay! We found some food.\n",
+      "options": {
+        "": { "_goto": "Event:event_mw_localFood" },
+      }
+    },
+    "DariusComplains": {
+      "speaker": "Darius",
+      "text": "I'm bored, let's get back to work.\n",
+      "options": {
+        "": { "_goto": "Exit" }
+      }
+    }
+  },
+  "Each Node must have": [
+    "speaker",
+    "text",
+    "options"
+  ],
+  "An Option is object requiring _goto, which is in one of these formats": [
+    "Exit",
+    "Node:{nodeName}",
+    "Event:{simEventId}",
+    "Contract:{contractId}",
+    "Conversation:{extendedConversationName}"
+  ],
+  "An Option can also have zero or one of these properties": [
+    "disableIf",
+    "hideIf"
+  ]
+}
