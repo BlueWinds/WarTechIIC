@@ -85,6 +85,7 @@ The first entry occurs immediately upon accepting the extended contract - it's "
       - No `declinePenalty` defined: No penalty for declining.
       - `BadFaith`: Reputation penalty as if they'd performed a bad-faith withdrawal.
       - `BreakContract`: Declining this mission terminates the Extended Contract as if the player had flown away.
+    - If the contract is accepted and completed, thten if `postContractEvent` is defined, this event will *replace the contract objectives* on the after action report screen.
   - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that. If the player is given a lootbox, no contract will be generated.
   - `invokeMethod` is developer-only, and its usage requires writing C# code. An explanation is beyond the scope of this documentation; ask BlueWinds on the BTA discord or read the code.
 

@@ -13,7 +13,6 @@ namespace WarTechIIC {
         typeof(Pilot)
     })]
     public static class SimGameState_BuildSimGameResult_Patch {
-
         public static void Postfix(ref List<ResultDescriptionEntry> __result, ref SimGameEventResult[] resultsList, GameContext context) {
             var results = combineResults();
 
