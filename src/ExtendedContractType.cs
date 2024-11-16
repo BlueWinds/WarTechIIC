@@ -38,6 +38,7 @@ namespace WarTechIIC {
         public Dictionary<int, string> rewardByDifficulty = new Dictionary<int, string>();
         public string invokeMethod;
         public string workOrder;
+        public string postContractEvent;
 
         public void validate(string type, string key) {
             if (contract.Length > 0 && randomContract.Length > 0 || contract.Length > 0 && allowedContractTypes.Length > 0 || randomContract.Length > 0 && allowedContractTypes.Length > 0) {
@@ -47,6 +48,16 @@ namespace WarTechIIC {
             foreach (string evt in triggerEvent) {
                 if (MetadataDatabase.Instance.GetEventDef(evt) == null) {
                     throw new Exception($"VALIDATION: triggerEvent {evt} is not a valid event in {type} schedule[{key}].");
+                }
+            }
+
+            if (!String.IsNullOrEmpty(postContractEvent)) {
+                if (MetadataDatabase.Instance.GetEventDef(postContractEvent) == null) {
+                    throw new Exception($"VALIDATION: postContractEvent {postContractEvent} is not a valid event in {type} schedule[{key}].");
+                }
+
+                if (contract.Length == 0 && randomContract.Length == 0 && allowedContractTypes.Length == 0) {
+                    throw new Exception($"VALIDATION: postContractEvent {postContractEvent} is set in {type} schedule[{key}], but that entry doesn't spawn a contract.");
                 }
             }
         }
