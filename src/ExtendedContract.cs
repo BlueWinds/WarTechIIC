@@ -14,13 +14,13 @@ using ColourfulFlashPoints.Data;
 namespace WarTechIIC {
     [JsonObject(MemberSerialization.OptIn)]
     public class ExtendedContract {
-        public StarSystem location;
         [JsonProperty]
         public string locationID;
+        public StarSystem location;
 
-        public ExtendedContractType extendedType;
         [JsonProperty]
         public string type;
+        public ExtendedContractType extendedType;
 
         [JsonProperty]
         public int countdown;
@@ -33,18 +33,16 @@ namespace WarTechIIC {
         [JsonProperty]
         public int playerDrops = 0;
 
-        public FactionValue employer;
         [JsonProperty]
         public string employerName;
+        public FactionValue employer;
 
-        public FactionValue target;
         [JsonProperty]
         public string targetName;
+        public FactionValue target;
 
+        [JsonProperty]
         public string currentContractName = "";
-        public string currentEntry;
-
-        public bool droppingForContract = false;
 
         public ExtendedContract() {
             // Empty constructor used for deserialization.
@@ -101,6 +99,22 @@ namespace WarTechIIC {
             }
         }
 
+        public virtual Entry currentEntry {
+            get {
+                if (currentDay == -1) {
+                    return null;
+                }
+
+                string entryName = extendedType.schedule[currentDay];
+
+                if (entryName == "") {
+                    return null;
+                }
+
+                return extendedType.entries[entryName];
+            }
+        }
+
         public virtual bool passDay() {
 
             if (isEmployedHere) {
@@ -130,15 +144,11 @@ namespace WarTechIIC {
                 return true;
             }
 
-            currentEntry = extendedType.schedule[currentDay];
-
-            if (currentEntry == "") {
+            if (currentEntry == null) {
                 WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, nothing happening.");
-            } else if (extendedType.entries.ContainsKey(currentEntry)) {
-                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {currentEntry}.");
-                runEntry(extendedType.entries[currentEntry]);
             } else {
-                WIIC.modLog.Error?.Write($"ExtendedContractType references '{currentEntry}' at schedule[{currentDay}], but this is not present in its entries dictionary. Valid keys are {string.Join(", ", extendedType.entries.Keys)}");
+                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {currentEntry}.");
+                runEntry(currentEntry);
             }
 
             return currentDay == extendedType.schedule.Length - 1;
@@ -316,6 +326,11 @@ namespace WarTechIIC {
                 try {
                     WIIC.modLog.Info?.Write($"Accepted {type} mission {contract.Name}.");
 
+                    if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
+                        // Add it to the command center, so that it gets persisted in the pre-drop save.
+                        WIIC.sim.CurSystem.SystemContracts.Add(contract);
+                    }
+
                     currentContractName = contract.Name;
                     WIIC.sim.RoomManager.ChangeRoom(DropshipLocation.CMD_CENTER);
                     WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
@@ -327,6 +342,10 @@ namespace WarTechIIC {
                 }
             }, primaryButtonText, delegate {
                 WIIC.modLog.Info?.Write($"Passed on {type} mission, declinePenalty is {declinePenalty.ToString()}.");
+                if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
+                    // Happens when restoring a pre-drop save and declining a contract they had previously accepted
+                    WIIC.sim.CurSystem.SystemContracts.Remove(contract);
+                }
                 applyDeclinePenalty(declinePenalty);
             }, cancel);
 

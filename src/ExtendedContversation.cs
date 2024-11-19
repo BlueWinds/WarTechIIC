@@ -9,7 +9,7 @@ using Localize;
 using BattleTech;
 using BattleTech.Data;
 using BattleTech.UI;
-using ColourfulFlashPoints.Data;
+using HBS.Collections;
 
 namespace WarTechIIC {
     public enum ExitType {
@@ -30,9 +30,18 @@ namespace WarTechIIC {
         Viewscreen = "59f8f0296230359c2100082c",
     }*/
 
+    public class ExtendedConditions {
+        public List<string> companyTags;
+        public List<string> notCompanyTags;
+        public List<string> commanderTags;
+        public List<string> notCommanderTags;
+    }
+
     public class Option {
-        ExitType to;
-        string _goto;
+        public ExitType to;
+        public string _goto;
+        public ExtendedConditions disableIf;
+        public ExtendedConditions hideIf;
 
         public void validate(string nodeKey, string optionKey, Dictionary<string, EConvNode> nodes) {
             string[] parts = _goto.Split(':');
@@ -76,7 +85,7 @@ namespace WarTechIIC {
                 }
 
                 default:
-                    throw new Exception($"VALIDATION: Node {nodeKey}[{optionKey}] didn't make sense: '{_goto}'.");
+                    throw new Exception($"VALIDATION: Option {nodeKey}[{optionKey}] didn't make sense: '{_goto}'.");
             }
         }
     }
@@ -97,7 +106,7 @@ namespace WarTechIIC {
                 throw new Exception($"VALIDATION: Node {nodeKey} is missing 'text'");
             }
 
-            if (options != null) {
+            if (options == null) {
                 throw new Exception($"VALIDATION: Node {nodeKey} is missing 'options'");
             }
 

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Harmony;
 using IRBTModUtils.Logging;
 using BattleTech;
+using YamlDotNet.Serialization;
 
 namespace WarTechIIC
 {
@@ -62,6 +63,8 @@ namespace WarTechIIC
                 }
             }
 
+            IDeserializer deserializer = new DeserializerBuilder().Build();
+
             if (customResources != null && customResources.ContainsKey("ExtendedConversation")) {
                 foreach (VersionManifestEntry entry in customResources["ExtendedConversation"].Values) {
                     WIIC.modLog.Info?.Write($"Loading ExtendedConversation from {entry.FilePath}.");
@@ -70,7 +73,9 @@ namespace WarTechIIC
                         using (StreamReader reader = new StreamReader(entry.FilePath)) {
                             jdata = reader.ReadToEnd();
                         }
-                        ExtendedConversation econv = JsonConvert.DeserializeObject<ExtendedConversation>(jdata);
+
+                        ExtendedConversation econv = deserializer.Deserialize<ExtendedConversation>(jdata);
+                        // ExtendedConversation econv = JsonConvert.DeserializeObject<ExtendedConversation>(jdata);
                         econv.validate();
                         extendedConversations[econv.name] = econv;
                     } catch (Exception e) {

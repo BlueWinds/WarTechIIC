@@ -6,6 +6,7 @@
     </ItemGroup>
 
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/" />
+    <Copy SourceFiles="bin/Release/net472/YamlDotNet.dll" DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/" />
     <Copy
       SourceFiles="@(DataFiles)"
       DestinationFolder="$(BattleTechGameDir)/Mods/$(ProjectName)/%(RecursiveDir)"
@@ -17,8 +18,7 @@
       <PrivateAssets>All</PrivateAssets>
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="GitVersion.MsBuild">
-      <PrivateAssets>All</PrivateAssets>
+    <PackageReference Include="YamlDotNet">
     </PackageReference>
 
     <Reference Include="0Harmony" />

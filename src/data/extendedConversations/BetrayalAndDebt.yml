@@ -1,0 +1,57 @@
+name: BetrayalAndDebt
+introHeader: BETRAYAL AND DEBT
+introSubHeader: In Orbit - \u00dar Cruinne
+nodes:
+  Entrypoint:
+    showOnViewscreen: lostsignal
+    speaker: Yang
+    text: |
+      What should we do, boss?
+    options:
+      Yell at Darius:
+        _goto: 'Node:DariusIsUnhappy'
+      Go out to eat:
+        _goto: 'Node:DariusIsHappy'
+      Nothing:
+        _goto: 'Node:DariusComplains'
+        disableIf:
+          companyTags:
+            - Tag1
+            - Tag2
+          notCompanyTags:
+            - Tag3
+      Someday:
+        _goto: 'Node:DariusIsHappy'
+        hideIf:
+          commanderTags:
+            - Tag4
+          notCommanderTags:
+            - Tag5
+  DariusIsUnhappy:
+    speaker: Darius
+    text: |
+      Fuck.
+    options:
+      '':
+        _goto: 'Node:DariusIsSad'
+  DariusIsSad:
+    speaker: Darius
+    text: |
+      I think we're going to have to kill a man.
+    options:
+      '':
+        _goto: 'Contract:Assassinate_EscapingSpy'
+  DariusIsHappy:
+    speaker: Darius
+    text: |
+      Yay! We found some food.
+    options:
+      '':
+        _goto: 'Event:event_mw_localFood'
+  DariusComplains:
+    speaker: Darius
+    text: |
+      I'm bored, let's get back to work.
+    options:
+      '':
+        _goto: Exit
