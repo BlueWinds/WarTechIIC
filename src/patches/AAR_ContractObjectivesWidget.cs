@@ -68,12 +68,12 @@ namespace WarTechIIC {
                     return;
                 }
 
-                if (extendedContract.currentContractName != contract.Name || String.IsNullOrEmpty(extendedContract.currentEntry)) {
+                if (extendedContract.currentContractName != contract.Name || extendedContract.currentEntry == null) {
                     WIIC.modLog.Info?.Write($"AAR_ContractObjectivesWidget_Init: {contract.Name} not from current extended contract. Doing nothing.");
                     return;
                 }
 
-                string eventId = extendedContract.extendedType.entries[extendedContract.currentEntry].postContractEvent;
+                string eventId = extendedContract.currentEntry.postContractEvent;
 
                 if (String.IsNullOrEmpty(eventId)) {
                     WIIC.modLog.Info?.Write($"AAR_ContractObjectivesWidget_Init: {contract.Name} is from current Extended contract, but entry {extendedContract.currentEntry} has no postContractEvent. Doing nothing.");
