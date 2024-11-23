@@ -36,9 +36,9 @@ namespace WarTechIIC {
         public int contractBonusSalvage = 0;
         public string contractMessage;
         public Dictionary<int, string> rewardByDifficulty = new Dictionary<int, string>();
-        public string postContractEvent;
         public string invokeMethod;
         public string workOrder;
+        public string postContractEvent;
 
         public void validate(string type, string key) {
             if (contract.Length > 0 && randomContract.Length > 0 || contract.Length > 0 && allowedContractTypes.Length > 0 || randomContract.Length > 0 && allowedContractTypes.Length > 0) {
@@ -57,7 +57,7 @@ namespace WarTechIIC {
                 }
 
                 if (contract.Length == 0 && randomContract.Length == 0 && allowedContractTypes.Length == 0) {
-                    throw new Exception($"VALIDATION: postContractEvent {postContractEvent} is set in {type} schedule[{key}], but that entry doesn't offer a contract.");
+                    throw new Exception($"VALIDATION: postContractEvent {postContractEvent} is set in {type} schedule[{key}], but that entry doesn't spawn a contract.");
                 }
             }
         }

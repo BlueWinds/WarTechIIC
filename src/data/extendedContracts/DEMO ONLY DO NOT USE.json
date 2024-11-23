@@ -26,14 +26,15 @@
 	],
 	"entries": {
 		"myEvent": {
-			"workOrder": "Time to restock kitchen",
-			"triggerEvent": ["event_mw_localFood"]
+			"workOrder": "Something wrong with the argo?",
+			"triggerEvent": ["event_co_rumbleSeat"]
 		},
 		"myMission1": {
 			"contractChance": 1,
 			"allowedContractTypes": [13, 3, 53],
 			"declinePenalty": "BadFaith",
-			"contractMessage": "We have a mission from {TEAM_EMP.FactionDef.ShortName}, Commander. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent."
+			"contractMessage": "We have a mission from {TEAM_EMP.FactionDef.ShortName}, Commander. Details will be provided en-route, but it seems to be a {RES_OBJ.ContractTypeValue.FriendlyName} mission. Sounds urgent.",
+			"postContractEvent": "event_co_pokerNight"
 		},
 		"myMission2": {
 			"contractChance": 1,

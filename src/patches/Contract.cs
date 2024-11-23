@@ -22,21 +22,28 @@ namespace WarTechIIC {
                 Settings s = WIIC.settings;
                 WIIC.modLog.Debug?.Write($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}");
 
-                Attack flareup = Utilities.currentExtendedContract() as Attack;
-                if (flareup == null || __instance.Name != flareup.currentContractName) {
+                ExtendedContract current = Utilities.currentExtendedContract() as Attack;
+                if (current == null) {
                     return;
                 }
 
-                int bonus = flareup.type == "Attack" ? s.attackBonusPerHalfSkull : s.raidBonusPerHalfSkull;
-                int newCost = __instance.MoneyResults + bonus * __instance.Difficulty;
-                WIIC.modLog.Info?.Write($"{flareup.type} contract complete, adding bonus. old money: {__instance.MoneyResults}, new: {newCost}, funds: {WIIC.sim.Funds}");
+                if (__instance.Name != current.currentContractName) {
+                    current.currentContractName = null;
+                    return;
+                }
 
-                Traverse.Create(__instance).Property("MoneyResults").SetValue(newCost);
+                current.currentContractName = null;
+
+                int bonus = current.type == "Attack" ? s.attackBonusPerHalfSkull : s.raidBonusPerHalfSkull;
+                WIIC.modLog.Info?.Write($"{current.type} contract complete, adding bonus {bonus} * {__instance.Difficulty}");
+
+                __instance.MoneyResults += bonus * __instance.Difficulty;
                 WIIC.modLog.Info?.Write($"Reading it back after setting: {__instance.MoneyResults}");
 
-                bonus = flareup.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
+                bonus = current.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
                 WIIC.modLog.Info?.Write($"Adding salvage. FinalSalvageCount: {__instance.FinalSalvageCount}, bonus: {bonus}");
-                Traverse.Create(__instance).Property("FinalSalvageCount").SetValue(__instance.FinalSalvageCount + bonus);
+                __instance.FinalSalvageCount += bonus;
+
             }
             catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);

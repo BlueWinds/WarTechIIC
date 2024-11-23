@@ -79,6 +79,31 @@ namespace WarTechIIC {
         }
     }
 
+    [HarmonyPatch(typeof(SimGameState), "_OnAttachUXComplete")]
+    public static class SimGameState_OnAttachUXComplete_Patch {
+        public static void Postfix(SimGameState __instance) {
+            try {
+                ExtendedContract current = Utilities.currentExtendedContract();
+                if (current == null || String.IsNullOrEmpty(current.currentContractName)) {
+                    WIIC.modLog.Debug?.Write($"_OnAttachUXComplete: No current contract, or current contract not mid-drop. current={current}");
+                    return;
+                }
+
+                StarSystem system = WIIC.sim.CurSystem;
+                Contract contract = system.SystemContracts.Find(c => c.Name == current.currentContractName);
+                if (contract == null) {
+                    WIIC.modLog.Error?.Write($"_OnAttachUXComplete: currentContract {current.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.Name}");
+                }
+
+                WIIC.modLog.Info?.Write($"_OnAttachUXComplete: Loaded game, launching currentContract {current.currentContractName}.");
+                string message = contract.RunMadLib(current.currentEntry.contractMessage);
+                current.launchContract(message, contract, current.currentEntry.declinePenalty);
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameStateOnDayPassedPatch {
         private static void Postfix() {
