@@ -12,7 +12,7 @@ namespace WarTechIIC
 {
     public class WIIC {
         public static Dictionary<string, ExtendedContractType> extendedContractTypes = new Dictionary<string, ExtendedContractType>();
-        public static Dictionary<string, ExtendedConversation> extendedConversations = new Dictionary<string, ExtendedConversation>();
+        public static Dictionary<string, Campaign> campaigns = new Dictionary<string, Campaign>();
 
         internal static DeferringLogger modLog;
         internal static string modDir;
@@ -65,19 +65,18 @@ namespace WarTechIIC
 
             IDeserializer deserializer = new DeserializerBuilder().Build();
 
-            if (customResources != null && customResources.ContainsKey("ExtendedConversation")) {
-                foreach (VersionManifestEntry entry in customResources["ExtendedConversation"].Values) {
-                    WIIC.modLog.Info?.Write($"Loading ExtendedConversation from {entry.FilePath}.");
+            if (customResources != null && customResources.ContainsKey("Campaign")) {
+                foreach (VersionManifestEntry entry in customResources["Campaign"].Values) {
+                    WIIC.modLog.Info?.Write($"Loading Campaign from {entry.FilePath}.");
                     try {
-                        string jdata;
+                        string yaml;
                         using (StreamReader reader = new StreamReader(entry.FilePath)) {
-                            jdata = reader.ReadToEnd();
+                            yaml = reader.ReadToEnd();
                         }
 
-                        ExtendedConversation econv = deserializer.Deserialize<ExtendedConversation>(jdata);
-                        // ExtendedConversation econv = JsonConvert.DeserializeObject<ExtendedConversation>(jdata);
-                        econv.validate();
-                        extendedConversations[econv.name] = econv;
+                        Campaign campaign = deserializer.Deserialize<Campaign>(yaml);
+                        campaign.validate();
+                        campaigns[campaign.name] = campaign;
                     } catch (Exception e) {
                         WIIC.modLog.Error?.Write(e);
                     }

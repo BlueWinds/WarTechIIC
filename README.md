@@ -5,8 +5,8 @@ WIIC is distributed under the GNU General Public License v3.0 license. Special p
 In order to keep the README at a manageable size, it is broken into three sections.
   - [Flareups.md](./Flareups.md) - Deals with Attacks and Raids, where factions on the galactic map fight for control of entire planets.
   - [ExtendedContracts.md](./ExtendedContracts.md) - Deals with scripted contracts that unfold over the course of multiple days or weeks. They also provide a new framework for creating custom campaigns.
+  - [Campaigns.md](./Campaigns.md) - Deals with scripted campaigns. Similar to flashpoints, they are both significantly easier to work with and can be spread across multiple star systems.
   - The rest of this README deals with misc additional functionality that WIIC adds to the game.
-
 
 # Simgame statistics and tags
 WIIC reads and sets a variety of tags and statistics on companies and star systems. These can be used in conditions, set, updated or removed from events and flashpoints like any other stat or tag.
