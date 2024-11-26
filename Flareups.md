@@ -41,7 +41,7 @@ The initial attacker and defender forces are calculated as follows.
 ## How Flareups proceed
 When initially generated, flareups are in "countdown", a random number of days chosen based on the `[min, max]` values in `availableFor` in `extendedContracts/Attack.json` / `extendedContracts/Raid.json`. Nothing will happen until that many days pass - the attacker and defender are mustering their forces, preparing for the coming confrontation.
 
-When the countdown reaches 0, the flareup begins ticking. Every `daysBetweenMissions` days, one side or the other - chosen with a coinflip - will lose between `combatForceLossMin` and `combatForceLossMax` points. When one side reaches 0, the *next time a mission would occur* the flareup ends.
+When the countdown reaches 0, the flareup begins ticking. Every three days, one side or the other - chosen with a coinflip - will lose between `combatForceLossMin` and `combatForceLossMax` points. When one side reaches 0, the *next time a mission would occur* the flareup ends.
 
 ### How Flareups end
 When a raid concludes, the attacker gets + 1 to their `WIIC_{faction}_attack_strength` if they won, and -1 if they lost for the next `raidResultDuration` days. Similarly the defender with `WIIC_{faction}_defense_strength`.
@@ -66,7 +66,7 @@ Well, when they enter the star system where a flareup is occurring, each faction
 
 If the player accepts the contract, the "countdown" is immediately set to 0, and the next mission is set to begin tomorrow. They get a task in the timeline telling them when the next mission will occur.
 
-On the same interval as automatic force loss, every `daysBetweenMissions` days, the player will be offered a mission with nothing more than the mission name. If they accept, they *must* drop - no accepting the mission and then backing out! If they complete the mission, then the faction they fought against loses between `combatForceLossMin` and `combatForceLossMax` points, and the player gets a `attackBonusPerHalfSkull * (difficulty of mission)` cbill bonus (or `raidBonusPerHalfSkull`). Their non-priority salvage is increased by `attackBonusSalvage` / `raidBonusSalvage`.
+On the same interval as automatic force loss, every few days, the player will be offered a mission with nothing more than the mission name. If they accept, they *must* drop - no accepting the mission and then backing out! If they complete the mission, then the faction they fought against loses between `combatForceLossMin` and `combatForceLossMax` points, and the player gets a `attackBonusPerHalfSkull * (difficulty of mission)` cbill bonus (or `raidBonusPerHalfSkull`). Their non-priority salvage is increased by `attackBonusSalvage` / `raidBonusSalvage`.
 
 If they don't accept the mission, fail it, or evac without completing it, their employer loses forces between `combatForceLossMin` and `combatForceLossMax` (equal to what the target would have taken if the player had succeeded).
 
@@ -74,6 +74,3 @@ While participating in a flareup, the player has to stay in the star system - if
 
 ### When the flareup ends
 When a Flareup ends, if the player signed on with the winning faction and they dropped into combat at least once, they'll receive an extra reward. The itemCollection given to the player is determined by `defaultAttackReward` / `defaultRaidReward`, or overridden by an entry in `factionAttackRewards` / `factionRaidRewards`.
-
-# Exporting / Importing map control
-Every time a career saves, WIIC writes out `{savePath}/WIIC_systemControl.json`, which contains a list of all systems that have flipped control during the current career. If you copy this into the mod directory (`WarTechIIC/WIIC_systemControl.json`), then when you start a fresh career, WIIC will import the list. Bam, you can persist your map across careers!

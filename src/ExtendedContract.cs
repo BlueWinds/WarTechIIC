@@ -42,7 +42,7 @@ namespace WarTechIIC {
         public FactionValue target;
 
         [JsonProperty]
-        public string currentContractName = "";
+        public string currentContractName;
 
         public ExtendedContract() {
             // Empty constructor used for deserialization.
@@ -220,24 +220,7 @@ namespace WarTechIIC {
                 }
 
                 if (contract != null) {
-                    if (contract.Override.contractRewardOverride < 0) {
-                        WIIC.modLog.Debug?.Write($"contractRewardOverride < 0, generating.");
-                        contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
-                    }
-
-                    WIIC.modLog.Debug?.Write($"contractRewardOverride: {contract.Override.contractRewardOverride}, contractPayoutMultiplier: {entry.contractPayoutMultiplier}, InitialContractValue: {contract.InitialContractValue}");
-                    contract.SetInitialReward((int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier));
-
-                    WIIC.modLog.Debug?.Write($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
-
-                    int salvage = contract.Override.salvagePotential + entry.contractBonusSalvage;
-                    salvage = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, salvage));
-                    contract.SalvagePotential = contract.Override.salvagePotential = salvage;
-
-                    contract.SetupContext();
-
-                    string message = contract.RunMadLib(entry.contractMessage);
-                    launchContract(message, contract, entry.declinePenalty);
+                    launchContract(entry, contract);
 
                     return;
                 }
@@ -308,14 +291,35 @@ namespace WarTechIIC {
             WIIC.sim.RoomManager.RefreshTimeline(false);
         }
 
-        public virtual void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
+        public virtual void launchContract(Entry entry, Contract contract) {
+            if (contract.Override.contractRewardOverride < 0) {
+                WIIC.modLog.Debug?.Write($"contractRewardOverride < 0, generating.");
+                contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
+            }
+
+            WIIC.modLog.Debug?.Write($"contractRewardOverride: {contract.Override.contractRewardOverride}, contractPayoutMultiplier: {entry.contractPayoutMultiplier}, InitialContractValue: {contract.InitialContractValue}");
+            contract.SetInitialReward((int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier));
+
+            contract.SetupContext();
+
+            WIIC.modLog.Debug?.Write($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
+            contract.SalvagePotential += entry.contractBonusSalvage;
+            contract.SalvagePotential = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, contract.SalvagePotential));
+
+            // Make contract values available under RES_OBJ
+            // eg: "Contract name: {RES_OBJ.Name} is a {RES_OBJ.ContractTypeValue.FriendlyName} contract"
+            // This is done automatically by our constructor patch, but that can be bypassed if this contract
+            // was rehdyrated from a save game.
+            contract.GameContext.SetObject(GameContextObjectTagEnum.ResultObject, contract);
+            string message = contract.RunMadLib(entry.contractMessage);
+
             string title = Strings.T($"{extendedType.name} Mission");
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
 
-            if (declinePenalty == DeclinePenalty.BadFaith) {
+            if (entry.declinePenalty == DeclinePenalty.BadFaith) {
                 message += $"\n\nDeclining this contract is equivelent to a bad faith withdrawal. It will severely harm our reputation with {employer.FactionDef.ShortName}.";
-            } else if (declinePenalty == DeclinePenalty.BreakContract) {
+            } else if (entry.declinePenalty == DeclinePenalty.BreakContract) {
                 message += $"\n\nDeclining this contract will break our {type} contract with {employer.FactionDef.ShortName}.";
             }
 
@@ -341,12 +345,12 @@ namespace WarTechIIC {
                     WIIC.modLog.Error?.Write(e);
                 }
             }, primaryButtonText, delegate {
-                WIIC.modLog.Info?.Write($"Passed on {type} mission, declinePenalty is {declinePenalty.ToString()}.");
+                WIIC.modLog.Info?.Write($"Passed on {type} mission, declinePenalty is {entry.declinePenalty.ToString()}.");
                 if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
                     // Happens when restoring a pre-drop save and declining a contract they had previously accepted
                     WIIC.sim.CurSystem.SystemContracts.Remove(contract);
                 }
-                applyDeclinePenalty(declinePenalty);
+                applyDeclinePenalty(entry.declinePenalty);
             }, cancel);
 
             if (!queue.IsOpen) {

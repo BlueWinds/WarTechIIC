@@ -41,7 +41,6 @@ namespace WarTechIIC {
         public string minReputationToHelpAttack = "INDIFFERENT";
         public string minReputationToHelpRaid = "INDIFFERENT";
         public List<string> wontHirePlayer = new List<string>();
-        public int daysBetweenMissions = 2;
         public int combatForceLossMin = 2;
         public int combatForceLossMax = 5;
         public int attackBonusPerHalfSkull = 0;

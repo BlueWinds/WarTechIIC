@@ -27,7 +27,7 @@ namespace WarTechIIC {
                 int bonusMoney = bonus * contract.Difficulty;
                 int bonusSalvage = extendedContract.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
                 string loss = Utilities.forcesToString(extendedContract.currentContractForceLoss);
-                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus, {3} additional salvage", extendedContract.target.FactionDef.ShortName, loss, bonusMoney, bonusSalvage);
+                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus, {3} additional salvage", extendedContract.target.FactionDef.CapitalizedShortName, loss, bonusMoney, bonusSalvage);
                 WIIC.modLog.Debug?.Write(objectiveString);
 
                 bool won = contract.State == Contract.ContractState.Complete;
@@ -46,7 +46,7 @@ namespace WarTechIIC {
 
                 extendedContract.playerDrops += 1;
                 extendedContract.currentContractForceLoss = 0;
-                extendedContract.currentContractName = "";
+                extendedContract.currentContractName = null;
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }

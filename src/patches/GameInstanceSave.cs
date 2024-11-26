@@ -23,7 +23,6 @@ namespace WarTechIIC {
                 foreach (KeyValuePair<string, string> control in WIIC.systemControl) {
                     WIIC.sim.GetSystemById(control.Key).Tags.Add(control.Value);
                 }
-                WIIC.serializeToJson();
             } catch (Exception e) {
                 WIIC.modLog.Trace?.Write(saves);
                 WIIC.modLog.Error?.Write(e);

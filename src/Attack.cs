@@ -84,6 +84,23 @@ namespace WarTechIIC {
             }
         }
 
+        // Attacks loop over their schedule, so possible that currentDay > schedule.Length
+        public override Entry currentEntry {
+            get {
+                if (currentDay == -1) {
+                    return null;
+                }
+
+                string entryName = extendedType.schedule[currentDay % extendedType.schedule.Length];
+
+                if (entryName == "") {
+                    return null;
+                }
+
+                return extendedType.entries[entryName];
+            }
+        }
+
         public override bool passDay() {
             Settings s = WIIC.settings;
 
@@ -99,16 +116,12 @@ namespace WarTechIIC {
 
             currentDay++;
 
-            string entryName = extendedType.schedule[currentDay % extendedType.schedule.Length];
-
-            if (entryName != "") {
-                Entry entry = extendedType.entries[entryName];
-
+            if (currentEntry != null) {
                 if (isEmployedHere) {
-                    runEntry(entry);
-                } else if (entry.invokeMethod != null) {
+                    runEntry(currentEntry);
+                } else if (currentEntry.invokeMethod != null) {
                     Type thisType = this.GetType();
-                    this.GetType().GetMethod(entry.invokeMethod).Invoke(this, new object[]{});
+                    this.GetType().GetMethod(currentEntry.invokeMethod).Invoke(this, new object[]{});
                 }
             }
 
@@ -244,9 +257,9 @@ namespace WarTechIIC {
             return Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, attacker.FactionDef.ShortName);
         }
 
-        public override void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
+        public override void launchContract(Entry entry, Contract contract) {
             currentContractForceLoss = Utilities.rng.Next(WIIC.settings.combatForceLossMin, WIIC.settings.combatForceLossMax);
-            base.launchContract(message, contract, declinePenalty);
+            base.launchContract(entry, contract);
         }
 
         public override void applyDeclinePenalty(DeclinePenalty declinePenalty) {
