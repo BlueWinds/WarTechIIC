@@ -9,8 +9,11 @@ using BattleTech.Save.Test;
 namespace WarTechIIC {
     [HarmonyPatch(typeof(GameInstanceSave), "PreSerialization")]
     public static class GameInstanceSave_PreSerialization_Patch {
-        [HarmonyPrefix]
-        public static void SaveFlareups() {
+        public static void Prefix(GameInstanceSave __instance) {
+            if (__instance.serializePassOne) {
+                return;
+            }
+
             WIIC.modLog.Debug?.Write($"Saving {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
 
             string saves = "";
@@ -23,7 +26,6 @@ namespace WarTechIIC {
                 foreach (KeyValuePair<string, string> control in WIIC.systemControl) {
                     WIIC.sim.GetSystemById(control.Key).Tags.Add(control.Value);
                 }
-                WIIC.serializeToJson();
             } catch (Exception e) {
                 WIIC.modLog.Trace?.Write(saves);
                 WIIC.modLog.Error?.Write(e);
@@ -36,8 +38,11 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(GameInstanceSave), "PostSerialization")]
     public static class GameInstanceSave_PostSerialization_Patch {
-        [HarmonyPostfix]
-        public static void RemoveFlareupTags() {
+        public static void Prefix(GameInstanceSave __instance) {
+            if (!__instance.serializePassOne) {
+                return;
+            }
+
             WIIC.modLog.Debug?.Write("Clearing extendedContract system tags post-save");
 
             try {

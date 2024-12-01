@@ -27,17 +27,6 @@ namespace WarTechIIC {
         }
     }
 
-    [HarmonyPatch(typeof(SimGameState), "OnCareerModeStart")]
-    public static class SimGameState_OnCareerModeStartPatch {
-        public static void Postfix(SimGameState __instance) {
-            try {
-                WIIC.readFromJson("WIIC_systemControl.json", false);
-            } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
-            }
-        }
-    }
-
     [HarmonyPatch(typeof(SimGameState), "Rehydrate")]
     public static class SimGameState_RehydratePatch {
         public static void Postfix(GameInstanceSave gameInstanceSave, SimGameState __instance) {
@@ -47,8 +36,6 @@ namespace WarTechIIC {
 
                 WIIC.extendedContracts.Clear();
                 __instance.CompanyTags.Add("WIIC_enabled");
-
-                WIIC.readFromJson("WIIC_ephemeralSystemControl.json", true);
 
                 foreach (StarSystem system in __instance.StarSystems) {
                     // If one tag fails to load we don't want to break all those that come afterwards.
@@ -96,8 +83,7 @@ namespace WarTechIIC {
                 }
 
                 WIIC.modLog.Info?.Write($"_OnAttachUXComplete: Loaded game, launching currentContract {current.currentContractName}.");
-                string message = contract.RunMadLib(current.currentEntry.contractMessage);
-                current.launchContract(message, contract, current.currentEntry.declinePenalty);
+                current.launchContract(current.currentEntry, contract);
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }

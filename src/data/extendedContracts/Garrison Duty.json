@@ -6,7 +6,7 @@
 	"employer": [ "Any" ],
 	"target": [ "NearbyEnemy" ],
 	"hireContract": "wiic_garrison_duty",
-	"availableFor": [20, 30],
+	"availableFor": [20, 35],
 	"travelContracts": true,
 	"blockOtherContracts": true,
 	"schedule": [
@@ -54,6 +54,7 @@
 			"contractMessage": "Commander, it looks like {TEAM_EMP.FactionDef.ShortName} finally found the source of these repeated attacks and we're being ordered to take them out. Let's put an end to these raids at last."
 		},
 		"PaymentDelivered": {
+			"workOrder": "Time to Get Paid",
 			"rewardByDifficulty": {
 				"2": "BTA_standard_Minor_Loot_EC",
 				"5": "BTA_standard_Major_Loot_EC",

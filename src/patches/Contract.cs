@@ -32,8 +32,6 @@ namespace WarTechIIC {
                     return;
                 }
 
-                current.currentContractName = null;
-
                 int bonus = current.type == "Attack" ? s.attackBonusPerHalfSkull : s.raidBonusPerHalfSkull;
                 WIIC.modLog.Info?.Write($"{current.type} contract complete, adding bonus {bonus} * {__instance.Difficulty}");
 

@@ -11,7 +11,7 @@
 	"missionSuccessStatementOverride": null,
 	"badFaithStatementOverride": null,
 	"goodFaithStatementOverride": null,
-	"shortDescription": "This is what we're here for, Commander. It's a simple clean one on one duel, no holds barred. Get in there and show this ComStar MechWarrior what it means to be a Gunslinger!",
+	"shortDescription": "This is what we're here for, Commander. Remember, ComStar is providing the 'Mechs for all participants, we just need to provide a  pilot. Now, get in there and show this ComStar MechWarrior what it means to be a Gunslinger!",
 	"longDescription": "Get 'em, Commander.",
 	"salvagePotential": 0,
 	"requirementList": [

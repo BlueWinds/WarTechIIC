@@ -1,0 +1,40 @@
+{
+	"name": "Pirate Raid",
+	"requirementList": [],
+	"weight": 1,
+	"spawnLocation": "NearbyEnemy",
+	"employer": ["AuriganPirates"],
+	"target": ["SystemOwner"],
+	"hireContract": "wiic_pirate_raid",
+	"availableFor": [20, 35],
+	"travelContracts": true,
+	"blockOtherContracts": false,
+	"schedule": [
+		"",
+		"PirateRaidTime",
+		"",
+		"PirateRaidTime",
+		"",
+		"PirateRaidTime",
+		"",
+		"PirateRaidTime",
+		"TrainingReward"
+	],
+	"entries": {
+		"PirateRaidTime": {
+			"workOrder": "Raiding Time!",
+			"contractChance": 1,
+			"randomContract": ["Rescue_Pirate_Jailbreak", "Rescue_Pirate_Jailbreak_Hard", "Rescue_LostContact", "Rescue_BlackSite"],
+			"contractPayoutMultiplier": 0.9,
+			"contractMessage": "Buckle up, Commander, it's time to go raiding again!"
+		},
+		"TrainingReward": {
+			"workOrder": "Time To Get Our Cut!",
+			"rewardByDifficulty": {
+				"2": "BTA_standard_Minor_Loot_EC",
+				"5": "BTA_standard_Major_Loot_EC",
+				"8": "BTA_standard_Superior_Loot_EC"
+			}
+		}
+	}
+}

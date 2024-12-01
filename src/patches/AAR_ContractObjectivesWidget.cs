@@ -14,29 +14,36 @@ namespace WarTechIIC {
         private static string GUID = "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0";
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
-                Attack extendedContract = Utilities.currentExtendedContract() as Attack;
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 Contract contract = __instance.theContract;
-
+                // Player not working here
                 if (extendedContract == null || extendedContract.currentContractName != contract.Name) {
                     return;
                 }
 
-                Settings s = WIIC.settings;
+                Attack attack = extendedContract as Attack;
+                if (attack == null) {
+                    extendedContract.currentContractName = null;
+                    return;
+                }
 
-                int bonus = extendedContract.type == "Attack" ? s.attackBonusPerHalfSkull : s.raidBonusPerHalfSkull;
+                Settings s = WIIC.settings;
+                int bonus = attack.type == "Attack" ? s.attackBonusPerHalfSkull : s.raidBonusPerHalfSkull;
                 int bonusMoney = bonus * contract.Difficulty;
-                int bonusSalvage = extendedContract.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
-                string loss = Utilities.forcesToString(extendedContract.currentContractForceLoss);
-                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus, {3} additional salvage", extendedContract.target.FactionDef.ShortName, loss, bonusMoney, bonusSalvage);
+                int bonusSalvage = attack.type == "Attack" ? s.attackBonusSalvage : s.raidBonusSalvage;
+
+                int loss = attack.currentContractForceLoss ?? 0;
+                string lossString = Utilities.forcesToString(loss);
+                string objectiveString = Strings.T("{0} takes {1} point loss in Flareup\n¢{2:n0} bonus, {3} additional salvage", attack.target.FactionDef.CapitalizedShortName, lossString, bonusMoney, bonusSalvage);
                 WIIC.modLog.Debug?.Write(objectiveString);
 
                 bool won = contract.State == Contract.ContractState.Complete;
-                if ((extendedContract.employer == extendedContract.attacker && won) || (extendedContract.employer == extendedContract.target && !won)) {
-                    extendedContract.defenderStrength -= extendedContract.currentContractForceLoss;
-                    WIIC.modLog.Debug?.Write($"defenderStrength -= {extendedContract.currentContractForceLoss}");
+                if ((attack.employer == attack.attacker && won) || (attack.employer == attack.target && !won)) {
+                    attack.defenderStrength -= loss;
+                    WIIC.modLog.Debug?.Write($"defenderStrength -= {loss}");
                 } else {
-                    extendedContract.attackerStrength -= extendedContract.currentContractForceLoss;
-                    WIIC.modLog.Debug?.Write($"attackerStrength -= {extendedContract.currentContractForceLoss}");
+                    attack.attackerStrength -= loss;
+                    WIIC.modLog.Debug?.Write($"attackerStrength -= {loss}");
                 }
 
                 MissionObjectiveResult objective = new MissionObjectiveResult(objectiveString, GUID, false, true, ObjectiveStatus.Ignored, false);
@@ -44,9 +51,12 @@ namespace WarTechIIC {
 
                 WIIC.modLog.Info?.Write($"MoneyResults from ARR: {contract.MoneyResults}, funds: {WIIC.sim.Funds}");
 
-                extendedContract.playerDrops += 1;
-                extendedContract.currentContractForceLoss = 0;
-                extendedContract.currentContractName = "";
+                if (attack.playerDrops == null) {
+                    attack.playerDrops = 0;
+                }
+                attack.playerDrops += 1;
+                attack.currentContractForceLoss = null;
+                attack.currentContractName = null;
             } catch (Exception e) {
                 WIIC.modLog.Error?.Write(e);
             }

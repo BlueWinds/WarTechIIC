@@ -25,13 +25,8 @@ namespace WarTechIIC {
         [JsonProperty]
         public int countdown;
 
-        // Inits to -1 because acceptContract() immediately invokes passDayEmployed()
-        // in order to run the day 0 entry.
         [JsonProperty]
-        public int currentDay = -1;
-
-        [JsonProperty]
-        public int playerDrops = 0;
+        public int? currentDay = null;
 
         [JsonProperty]
         public string employerName;
@@ -42,7 +37,7 @@ namespace WarTechIIC {
         public FactionValue target;
 
         [JsonProperty]
-        public string currentContractName = "";
+        public string currentContractName;
 
         public ExtendedContract() {
             // Empty constructor used for deserialization.
@@ -52,12 +47,13 @@ namespace WarTechIIC {
         private static Regex SERIALIZED_TAG = new Regex("^WIIC:(?<type>.*?):(?<json>\\{.*\\})$", RegexOptions.Compiled);
         private static Regex OLD_SERIALIZED_TAG = new Regex("^WIIC:(?<json>\\{.*\\})$", RegexOptions.Compiled);
         private static Regex OLD_SERIALIZED_TAG_TYPE = new Regex("\"type\":\"(?<type>Attack|Raid)\"", RegexOptions.Compiled);
+        private static Regex OLD_SERIALIZED_TAG_ATTACKER = new Regex("\"attackerName\":\"(?<attacker>.+?)\"", RegexOptions.Compiled);
         public static bool isSerializedExtendedContract(string tag) {
             return tag.StartsWith("WIIC:");
         }
 
         public string Serialize() {
-            string json = JsonConvert.SerializeObject(this);
+            string json = JsonConvert.SerializeObject(this, WIIC.serializerSettings);
             return $"WIIC:{this.type}:{json}";
         }
 
@@ -101,11 +97,11 @@ namespace WarTechIIC {
 
         public virtual Entry currentEntry {
             get {
-                if (currentDay == -1) {
+                if (currentDay == null) {
                     return null;
                 }
 
-                string entryName = extendedType.schedule[currentDay];
+                string entryName = extendedType.schedule[currentDay ?? 0];
 
                 if (entryName == "") {
                     return null;
@@ -116,7 +112,6 @@ namespace WarTechIIC {
         }
 
         public virtual bool passDay() {
-
             if (isEmployedHere) {
                 return passDayEmployed();
             }
@@ -220,24 +215,7 @@ namespace WarTechIIC {
                 }
 
                 if (contract != null) {
-                    if (contract.Override.contractRewardOverride < 0) {
-                        WIIC.modLog.Debug?.Write($"contractRewardOverride < 0, generating.");
-                        contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
-                    }
-
-                    WIIC.modLog.Debug?.Write($"contractRewardOverride: {contract.Override.contractRewardOverride}, contractPayoutMultiplier: {entry.contractPayoutMultiplier}, InitialContractValue: {contract.InitialContractValue}");
-                    contract.SetInitialReward((int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier));
-
-                    WIIC.modLog.Debug?.Write($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
-
-                    int salvage = contract.Override.salvagePotential + entry.contractBonusSalvage;
-                    salvage = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, salvage));
-                    contract.SalvagePotential = contract.Override.salvagePotential = salvage;
-
-                    contract.SetupContext();
-
-                    string message = contract.RunMadLib(entry.contractMessage);
-                    launchContract(message, contract, entry.declinePenalty);
+                    launchContract(entry, contract);
 
                     return;
                 }
@@ -299,6 +277,7 @@ namespace WarTechIIC {
             WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
             WIIC.sim.SetSimRoomState(DropshipLocation.SHIP);
 
+            currentDay = -1;
             passDayEmployed();
             WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
             if (extraWorkOrder != null) {
@@ -308,14 +287,35 @@ namespace WarTechIIC {
             WIIC.sim.RoomManager.RefreshTimeline(false);
         }
 
-        public virtual void launchContract(string message, Contract contract, DeclinePenalty declinePenalty) {
+        public virtual void launchContract(Entry entry, Contract contract) {
+            if (contract.Override.contractRewardOverride < 0) {
+                WIIC.modLog.Debug?.Write($"contractRewardOverride < 0, generating.");
+                contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
+            }
+
+            WIIC.modLog.Debug?.Write($"contractRewardOverride: {contract.Override.contractRewardOverride}, contractPayoutMultiplier: {entry.contractPayoutMultiplier}, InitialContractValue: {contract.InitialContractValue}");
+            contract.SetInitialReward((int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier));
+
+            contract.SetupContext();
+
+            WIIC.modLog.Debug?.Write($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
+            contract.SalvagePotential += entry.contractBonusSalvage;
+            contract.SalvagePotential = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, contract.SalvagePotential));
+
+            // Make contract values available under RES_OBJ
+            // eg: "Contract name: {RES_OBJ.Name} is a {RES_OBJ.ContractTypeValue.FriendlyName} contract"
+            // This is done automatically by our constructor patch, but that can be bypassed if this contract
+            // was rehdyrated from a save game.
+            contract.GameContext.SetObject(GameContextObjectTagEnum.ResultObject, contract);
+            string message = contract.RunMadLib(entry.contractMessage);
+
             string title = Strings.T($"{extendedType.name} Mission");
             string primaryButtonText = Strings.T("Launch mission");
             string cancel = Strings.T("Pass");
 
-            if (declinePenalty == DeclinePenalty.BadFaith) {
+            if (entry.declinePenalty == DeclinePenalty.BadFaith) {
                 message += $"\n\nDeclining this contract is equivelent to a bad faith withdrawal. It will severely harm our reputation with {employer.FactionDef.ShortName}.";
-            } else if (declinePenalty == DeclinePenalty.BreakContract) {
+            } else if (entry.declinePenalty == DeclinePenalty.BreakContract) {
                 message += $"\n\nDeclining this contract will break our {type} contract with {employer.FactionDef.ShortName}.";
             }
 
@@ -341,12 +341,12 @@ namespace WarTechIIC {
                     WIIC.modLog.Error?.Write(e);
                 }
             }, primaryButtonText, delegate {
-                WIIC.modLog.Info?.Write($"Passed on {type} mission, declinePenalty is {declinePenalty.ToString()}.");
+                WIIC.modLog.Info?.Write($"Passed on {type} mission, declinePenalty is {entry.declinePenalty.ToString()}.");
                 if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
                     // Happens when restoring a pre-drop save and declining a contract they had previously accepted
                     WIIC.sim.CurSystem.SystemContracts.Remove(contract);
                 }
-                applyDeclinePenalty(declinePenalty);
+                applyDeclinePenalty(entry.declinePenalty);
             }, cancel);
 
             if (!queue.IsOpen) {
@@ -393,7 +393,7 @@ namespace WarTechIIC {
                     _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractComplete", title);
                 }
 
-                _workOrder.SetCost(extendedType.schedule.Length - currentDay - 1);
+                _workOrder.SetCost(extendedType.schedule.Length - (currentDay ?? 0) - 1);
                 return _workOrder;
             }
             set {
@@ -409,13 +409,13 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write("Generated _extraWorkOrder");
                 }
 
-                for (int day = currentDay + 1; day < extendedType.schedule.Length; day++) {
+                for (int day = (currentDay ?? 0) + 1; day < extendedType.schedule.Length; day++) {
                     string entryName = extendedType.schedule[day];
                     if (extendedType.entries.ContainsKey(entryName)) {
                         Entry entry = extendedType.entries[entryName];
                         if (entry.workOrder != null) {
                             _extraWorkOrder.SetDescription(entry.workOrder);
-                            _extraWorkOrder.SetCost(day - currentDay);
+                            _extraWorkOrder.SetCost(day - (currentDay ?? 0));
 
                             return _extraWorkOrder;
                         }
@@ -454,7 +454,7 @@ namespace WarTechIIC {
             MatchCollection matches = SERIALIZED_TAG.Matches(tag);
             string type;
             string json;
-            bool old = false;
+            string oldAttacker = "";
 
             if (matches.Count > 0) {
                 json = matches[0].Groups["json"].Value;
@@ -468,20 +468,20 @@ namespace WarTechIIC {
 
                 // This is a flareup from before the Extended Contract rewrite; we'll have to do some
                 // massaging to read it into the new format
-                old = true;
                 json =  matches[0].Groups["json"].Value;
                 type = OLD_SERIALIZED_TAG_TYPE.Matches(json)[0].Groups["type"].Value;
+                oldAttacker = OLD_SERIALIZED_TAG_ATTACKER.Matches(json)[0].Groups["attacker"].Value;
             }
 
             if (type == "Attack") {
                 Attack attack = JsonConvert.DeserializeObject<Attack>(json);
-                if (old) { attack.fixOldEmployer(); }
+                if (oldAttacker != "") { attack.fixOldEmployer(oldAttacker); }
                 attack.initAfterDeserialization();
                 return attack;
             }
             if (type == "Raid") {
                 Raid raid = JsonConvert.DeserializeObject<Raid>(json);
-                if (old) { raid.fixOldEmployer(); }
+                if (oldAttacker != "") { raid.fixOldEmployer(oldAttacker); }
                 raid.initAfterDeserialization();
                 return raid;
             }
