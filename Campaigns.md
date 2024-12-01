@@ -12,8 +12,8 @@ The overall goal is to make creating campaigns a pleasant and simple experience.
 ## How they work
 Campaigns have only a few top-level fields:
  - `name` - The name of the campaign. This should match the filename, and will be displayed to the player.
+ - `entrypoint` - A "fakeFlashpoint", which will appear on the map. When accepted, the player begins the campaign, moving to the `Start` node. See below for details on all the fakeFlashpoint fields.
  - `nodes` - A dictionary of named flow-control points. A campaign always begins with a node named `Start`.
-
 
 Each node is a sequential list of Entries, representing something presented to the player, some action they must take, or a flow-control statement (`goto`) telling the campaign what happens next.
 
@@ -22,6 +22,13 @@ The final Entry in a node must *always* be `goto` without an `if` block. Flow co
 Example:
 ```
 name: Sword of Restoration
+entrypoint:
+  name: Arano Restoration
+  employer: faction_AuriganRestoration
+  employerPortrait: castDef_DariusDefault
+  target: faction_AuriganDirectorate
+  at: starsystemdef_Coromodir
+  description: ...text for the player...
 nodes:
   Start:
     - event:

@@ -11,17 +11,21 @@ using YamlDotNet.Serialization;
 namespace WarTechIIC {
     public class WIIC {
         public static Dictionary<string, ExtendedContractType> extendedContractTypes = new Dictionary<string, ExtendedContractType>();
-        public static Dictionary<string, Campaign> campaigns = new Dictionary<string, Campaign>();
+        internal static Dictionary<string, ExtendedContract> extendedContracts = new Dictionary<string, ExtendedContract>();
 
         internal static DeferringLogger modLog;
         internal static string modDir;
         internal static Settings settings;
-        internal static Dictionary<string, ExtendedContract> extendedContracts = new Dictionary<string, ExtendedContract>();
         internal static Dictionary<string, string> systemControl = new Dictionary<string, string>();
         internal static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
         internal static List<(string, string)> eventResultsCache = new List<(string, string)>();
+
         internal static SimGameState sim;
         internal static JsonSerializerSettings serializerSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+
+        public static Dictionary<string, Campaign> campaigns = new Dictionary<string, Campaign>();
+        internal static CampaignSettings campaignSettings;
+        internal static Dictionary<string, ActiveCampaign> activeCampaigns = new Dictionary<string, ActiveCampaign>();
 
         public static void Init(string modDirectory, string settingsJSON) {
             modDir = modDirectory;
@@ -31,8 +35,12 @@ namespace WarTechIIC {
                     string jdata = reader.ReadToEnd();
                     settings = JsonConvert.DeserializeObject<Settings>(jdata);
                 }
+                using (StreamReader reader = new StreamReader($"{modDir}/campaignSettings.json")) {
+                    string jdata = reader.ReadToEnd();
+                    campaignSettings = JsonConvert.DeserializeObject<CampaignSettings>(jdata);
+                }
                 modLog = new DeferringLogger(modDirectory, "WarTechIIC", "WIIC", settings.debug, settings.trace);
-                modLog.Debug?.Write($"Loaded settings from {modDir}/settings.json");
+                modLog.Debug?.Write($"Loaded settings from {modDir}/settings.json and campaignSettings.json");
             }
 
             catch (Exception e) {

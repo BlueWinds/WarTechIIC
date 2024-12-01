@@ -1,4 +1,12 @@
 name: Sword of Restoration
+entrypoint:
+  name: Arano Restoration
+  employer: faction_AuriganRestoration
+  employerPortrait: castDef_DariusDefault
+  target: faction_AuriganDirectorate
+  difficulty: 2
+  at: starsystemdef_Coromodir
+  description: Your old mentor, Raju, has invited you to be one of [[DM.BaseDescriptionDefs[LoreKameaArano],Lady Kamea Arano's]] honor guards on the day of her coronation. Travel to [[DM.BaseDescriptionDefs[LoreCoromodir],Coromodir]] to meet with him. The [[DM.BaseDescriptionDefs[LoreAuriganCoalition],Aurigan Coalition]] will supply you with a mech for use in her procession, a venerable Shadowhawk that has been with the Aurigan Royal Guard for decades.
 nodes:
   Start:
     - event:
@@ -16,6 +24,7 @@ nodes:
         employerPortrait: castDef_DariusDefault
         target: faction_Unknown
         at: starsystemdef_Coromodir
+        difficulty: 2
         description: Your old mentor, Raju, has invited you to be one of [[DM.BaseDescriptionDefs[LoreKameaArano],Lady Kamea Arano's]] honor guards on the day of her coronation. Travel to [[DM.BaseDescriptionDefs[LoreCoromodir],Coromodir]] to meet with him. The [[DM.BaseDescriptionDefs[LoreAuriganCoalition],Aurigan Coalition]] will supply you with a mech for use in her procession, a venerable Shadowhawk that has been with the Aurigan Royal Guard for decades.
     - video: 1B-betrayal.bk2
     - contract:
@@ -43,6 +52,7 @@ nodes:
         employerPortrait: castDef_SE02_EmployerDefault
         target: faction_MajestyMetals
         at: starsystemdef_UrCruinne
+        difficulty: 2
         description: The Independent Prospectors' League needs your help, Commander. Two months ago, a fleet of corporate DropShips from Majesty Metals & Manufacturing touched down on Ur Cruinne. They jumped our claim, pushed us off of our own mining platforms, and killed our people. We need your help to make things right.
     - contract:
         id: StoryTime_2_ThreeYearsLater_Default
@@ -58,11 +68,12 @@ nodes:
 
   CaptureTheScheria:
     - fakeFlashpoint:
-        name: Arano Restoration - Rough Customers
+        name: Arano Restoration - Capture the Scheria
         employer: faction_MagistracyCentrella
         employerPortrait: castDef_CentrellaDefault
         target: faction_AuriganPirates
         at: starsystemdef_Axylus
+        difficulty: 3
         description: Travel to the outskirts of the system and dock with the JumpShip you find waiting there. It will carry you to Axylus, the pirate moon where a ship named the <i>Scheria</i> crash-landed centuries ago.\r\n\r\nFurther details on the job will be provided upon your arrival.
     - conversation:
         id: StoryTime3a-Axylus

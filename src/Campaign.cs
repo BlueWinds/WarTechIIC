@@ -11,27 +11,44 @@ using BattleTech.Data;
 using BattleTech.UI;
 using HBS.Collections;
 
+
 namespace WarTechIIC {
+    using CampaignNodes = Dictionary<string, List<CampaignEntry>>;
+
     public class CampaignIf {
         public string companyHasTag;
         public string companyDoesNotHaveTag;
 
-        public void validate(string nodeName, int entryIndex) {
+        public void validate(string path) {
             if (String.IsNullOrEmpty(companyHasTag) && String.IsNullOrEmpty(companyDoesNotHaveTag)) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].if must have \"companyHasTag\" and/or \"companyDoesNotHaveTag\". THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have \"companyHasTag\" and/or \"companyDoesNotHaveTag\". THE CAMPAIGN WILL NOT WORK.");
             }
+        }
+
+        public bool check() {
+            if (!String.IsNullOrEmpty(companyHasTag) && !WIIC.sim.CompanyTags.Contains(companyHasTag)) {
+                WIIC.modLog.Info?.Write($"    Company does not have {companyHasTag}, which is required");
+                return false;
+            }
+
+            if (!String.IsNullOrEmpty(companyDoesNotHaveTag) && WIIC.sim.CompanyTags.Contains(companyDoesNotHaveTag)) {
+                WIIC.modLog.Info?.Write($"    Company has {companyHasTag}, which is not allowed");
+                return false;
+            }
+
+            return true;
         }
     }
 
     public class CampaignEvent {
         public string id;
 
-        public void validate(string nodeName, int entryIndex) {
+        public void validate(string path) {
             if (String.IsNullOrEmpty(id)) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].event must have an \"id\". THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have an \"id\". THE CAMPAIGN WILL NOT WORK.");
             }
             if (MetadataDatabase.Instance.GetEventDef(id) == null) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].event.id \"{id}\" does not seem to exist. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path}.id \"{id}\" does not seem to exist. THE CAMPAIGN WILL NOT WORK.");
             }
         }
     }
@@ -41,13 +58,46 @@ namespace WarTechIIC {
         public string employer;
         public string employerPortrait;
         public string target;
+        public int difficulty;
         public string at;
         public string description;
 
-        public void validate(string nodeName, int entryIndex) {
+        public void validate(string path) {
             if (String.IsNullOrEmpty(name) || String.IsNullOrEmpty(employer) || String.IsNullOrEmpty(employerPortrait) ||  String.IsNullOrEmpty(target) ||  String.IsNullOrEmpty(at) ||  String.IsNullOrEmpty(description)) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].fakeFlashpoint must have all of [name, employer, employerPortrait, target, at, description]. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have all of [name, employer, employerPortrait, target, at, description]. THE CAMPAIGN WILL NOT WORK.");
             }
+
+            if (!employerPortrait.StartsWith("castDef_")) {
+                throw new Exception($"VALIDATION: {path}.employerPortrait \"{employerPortrait}\" must start with \"castDef_\". THE CAMPAIGN WILL NOT WORK.");
+            }
+        }
+
+        private Flashpoint _fp;
+        public Flashpoint toFlashpoint() {
+            if (_fp != null) {
+                return _fp;
+            }
+
+            _fp = new Flashpoint();
+            _fp.GUID = "CampaignFakeFlashpoint";
+            _fp.employerID = employer;
+            _fp.CurStatus = Flashpoint.Status.WAITING_FOR_DATA;
+            _fp.Def = new FlashpointDef();
+            _fp.Def.Description = new BaseDescriptionDef(name, name, description, "uixTxrSpot_campaignOutcomeVictory");
+            _fp.Def.Difficulty = difficulty;
+            _fp.Def.FlashpointDescriberCastDefId = employerPortrait;
+            _fp.Def.FlashpointLength = FlashpointDef.EngagementLength.CAMPAIGN;
+            _fp.Def.FlashpointShortDescription = description;
+            _fp.Def.InternalName = name;
+
+            LoadRequest request = WIIC.sim.DataManager.CreateLoadRequest();
+            request.AddLoadRequest<CastDef>(BattleTechResourceType.CastDef, employerPortrait, (string id, CastDef castDef) => {
+                _fp.FlashpointDescriberCastDef = castDef;
+                _fp.CurStatus = Flashpoint.Status.AVAILABLE;
+            });
+            request.ProcessRequests();
+
+            return _fp;
         }
     }
 
@@ -60,21 +110,21 @@ namespace WarTechIIC {
         public bool blockOtherContracts = false;
         public string postContractEvent;
 
-        public void validate(string nodeName, int entryIndex, Dictionary<string, List<CampaignEntry>> nodes) {
+        public void validate(string path, CampaignNodes nodes) {
             if (String.IsNullOrEmpty(id) || String.IsNullOrEmpty(employer) || String.IsNullOrEmpty(target) || String.IsNullOrEmpty(onFailGoto)) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].contract must have all of [id, employer, target, onFailGoto]. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have all of [id, employer, target, onFailGoto]. THE CAMPAIGN WILL NOT WORK.");
             }
 
             if (MetadataDatabase.Instance.Query<Contract_MDD>("SELECT * from Contract WHERE ContractID = @ID", new { ID = id }).ToArray().Length == 0) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].contract.id \"{id}\" does not appear to exist. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path}.id \"{id}\" does not appear to exist. THE CAMPAIGN WILL NOT WORK.");
             }
 
             if (onFailGoto != "Exit" && !nodes.ContainsKey(onFailGoto)) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].contract.onFailGoto must point to another node or be \"Exit\"; \"{onFailGoto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path}.onFailGoto must point to another node or be \"Exit\"; \"{onFailGoto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
             }
 
             if (postContractEvent != null && MetadataDatabase.Instance.GetEventDef(id) == null) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].contract.postContractEvent \"{postContractEvent}\" does not seem to exist. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path}.postContractEvent \"{postContractEvent}\" does not seem to exist. THE CAMPAIGN WILL NOT WORK.");
             }
         }
     }
@@ -84,9 +134,9 @@ namespace WarTechIIC {
         public string header;
         public string subheader;
 
-        public void validate(string nodeName, int entryIndex) {
+        public void validate(string path) {
             if (String.IsNullOrEmpty(id) || String.IsNullOrEmpty(header) || String.IsNullOrEmpty(subheader)) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].conversation must have all of [id, header, subheader]. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have all of [id, header, subheader]. THE CAMPAIGN WILL NOT WORK.");
             }
         }
     }
@@ -101,7 +151,7 @@ namespace WarTechIIC {
         public CampaignContract contract;
         public CampaignConversation conversation;
 
-        public void validate(string nodeName, int entryIndex, Dictionary<string, List<CampaignEntry>> nodes, bool isLastEntry) {
+        public void validate(string path, CampaignNodes nodes, bool isLastEntry) {
             int count = 0;
             count += @goto == null ? 0 : 1;
             count += @event == null ? 0 : 1;
@@ -112,25 +162,25 @@ namespace WarTechIIC {
             count += conversation == null ? 0 : 1;
 
             if (count != 1) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}] must have exactly one of [goto, event, video, lootbox, fakeFlashpoint, contract]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have exactly one of [goto, event, video, lootbox, fakeFlashpoint, contract]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
             }
             if (@goto != null && @goto != "Exit" && !nodes.ContainsKey(@goto)) {
-                throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}].goto must point to another node or be \"Exit\"; \"{@goto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path}.goto must point to another node or be \"Exit\"; \"{@goto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
             }
 
-            if (@if != null) { @if.validate(nodeName, entryIndex); }
-            if (@event != null) { @event.validate(nodeName, entryIndex); }
-            if (fakeFlashpoint != null) { fakeFlashpoint.validate(nodeName, entryIndex); }
-            if (contract != null) { contract.validate(nodeName, entryIndex, nodes); }
-            if (conversation != null) { conversation.validate(nodeName, entryIndex); }
+            if (@if != null) { @if.validate($"{path}.if"); }
+            if (@event != null) { @event.validate($"{path}.event"); }
+            if (fakeFlashpoint != null) { fakeFlashpoint.validate($"{path}.fakeFlashpoint"); }
+            if (contract != null) { contract.validate($"{path}.contract", nodes); }
+            if (conversation != null) { conversation.validate($"{path}.conversation"); }
 
             if (isLastEntry) {
                 if (@goto == null) {
-                    throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}] is the last entry in the node, and is missing \"goto\". You must say what happens next! Use \"goto: Exit\" if this the end of the campaign. THE CAMPAIGN WILL NOT WORK.");
+                    throw new Exception($"VALIDATION: {path} is the last entry in the node, and is missing \"goto\". You must say what happens next! Use \"goto: Exit\" if this the end of the campaign. THE CAMPAIGN WILL NOT WORK.");
                 }
 
                 if ( @if != null) {
-                    throw new Exception($"VALIDATION: nodes[\"{nodeName}\"][{entryIndex}] is the last entry in the node, and cannot have an \"if\" clause. THE CAMPAIGN WILL NOT WORK.");
+                    throw new Exception($"VALIDATION: {path} is the last entry in the node, and cannot have an \"if\" clause. THE CAMPAIGN WILL NOT WORK.");
                 }
             }
         }
@@ -138,12 +188,15 @@ namespace WarTechIIC {
 
     public class Campaign {
         public string name;
-        Dictionary<string, List<CampaignEntry>> nodes = new Dictionary<string, List<CampaignEntry>>();
+        public CampaignFakeFlashpoint entrypoint;
+        public CampaignNodes nodes = new CampaignNodes();
 
         public void validate() {
-            if (String.IsNullOrEmpty(name)) {
-                throw new Exception($"VALIDATION: Campaign is missing a \"name\". THE CAMPAIGN WILL NOT WORK.");
+            if (String.IsNullOrEmpty(name) || entrypoint == null) {
+                throw new Exception($"VALIDATION: Campaign is missing a \"name\" or \"entrypoint\". THE CAMPAIGN WILL NOT WORK.");
             }
+
+            entrypoint.validate("\"entrypoint\"");
 
             if (!nodes.ContainsKey("Start")) {
                 throw new Exception($"VALIDATION: nodes[\"Start\"] is required; campaign needs a starting point. THE CAMPAIGN WILL NOT WORK.");
@@ -160,7 +213,7 @@ namespace WarTechIIC {
                 }
 
                 for (int i = 0; i < node.Count; i++) {
-                    node[i].validate(nodeKey, i, nodes, i == node.Count - 1);
+                    node[i].validate($"nodes[\"{nodeKey}\"][{i}]", nodes, i == node.Count - 1);
                 }
             }
         }

@@ -284,4 +284,42 @@ namespace WarTechIIC {
             __instance.contractAccepted(skipCombat);
         }
     }
+
+    [HarmonyPatch(typeof(SimGameState), "GetFlashpointInSystem")]
+    public static class SimGameState_GetFlashpointInSystem_Patch {
+        public static bool Prefix(ref Flashpoint __result, StarSystem theSystem) {
+            try {
+                ActiveCampaign ac;
+                if (WIIC.activeCampaigns.TryGetValue(theSystem.ID, out ac)) {
+                    __result = ac.currentFakeFlashpoint;
+                    return __result == null;
+                }
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(SimGameState), "SetActiveFlashpoint")]
+    public static class SimGameState_SetActiveFlashpoint_Patch {
+        public static bool Prefix(Flashpoint fp, SimGameState __instance) {
+            if (fp.GUID != "CampaignFakeFlashpoint") {
+                return true;
+            }
+
+            try {
+                __instance.ClearActiveFlashpoint();
+                ActiveCampaign ac = WIIC.activeCampaigns[__instance.CurSystem.ID];
+                ac.fakeFlashpointComplete();
+            } catch (Exception e) {
+                WIIC.modLog.Error?.Write(e);
+            }
+
+            return false;
+        }
+    }
+
+    // TODO: Block SetActiveFlashpoint, accept / progress campaign
 }
