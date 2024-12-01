@@ -10,15 +10,17 @@ using Localize;
 namespace WarTechIIC {
     public class Attack : ExtendedContract {
         [JsonProperty]
-        public string attackerName;
-        [JsonProperty]
         public int attackerStrength;
         [JsonProperty]
         public int defenderStrength;
         [JsonProperty]
-        public int currentContractForceLoss = 0;
+        public int? currentContractForceLoss = null;
+        [JsonProperty]
+        public int? playerDrops = null;
         [JsonProperty]
         public string giveOnWin;
+        [JsonProperty]
+        public bool? workingForDefender;
 
         public Attack() {
             // Empty constructor used for deserialization.
@@ -51,7 +53,6 @@ namespace WarTechIIC {
             }
 
             WIIC.modLog.Debug?.Write($"    After tags: attackerStrength - {attackerStrength}, defenderStrength: {defenderStrength}");
-            attackerName = attacker.Name;
 
             attackerStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
             defenderStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
@@ -66,38 +67,46 @@ namespace WarTechIIC {
             WIIC.modLog.Debug?.Write($"    After company stats - attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
         }
 
-        public FactionValue attacker {
-            get {
-                if (attackerName == employer.Name) {
-                    return employer;
-                }
-                return target;
-            }
-        }
-
-        public FactionValue defender {
-            get {
-                if (attackerName == employer.Name) {
-                    return target;
-                }
-                return employer;
-            }
-        }
-
         // Attacks loop over their schedule, so possible that currentDay > schedule.Length
         public override Entry currentEntry {
             get {
-                if (currentDay == -1) {
+                if (currentDay == null) {
                     return null;
                 }
 
-                string entryName = extendedType.schedule[currentDay % extendedType.schedule.Length];
+                string entryName = extendedType.schedule[(currentDay ?? 0) % extendedType.schedule.Length];
 
                 if (entryName == "") {
                     return null;
                 }
 
                 return extendedType.entries[entryName];
+            }
+        }
+
+        public override void acceptContract(string contract) {
+            if (contract == extendedType.targetHireContract) {
+                workingForDefender = true;
+            }
+
+            base.acceptContract(contract);
+        }
+
+        public FactionValue attacker {
+            get {
+                if (workingForDefender == true) {
+                    return target;
+                }
+                return employer;
+            }
+        }
+
+        public FactionValue defender {
+            get {
+                if (workingForDefender == true) {
+                    return employer;
+                }
+                return target;
             }
         }
 
@@ -114,6 +123,9 @@ namespace WarTechIIC {
                 return false;
             }
 
+            if (currentDay == null) {
+                currentDay = -1;
+            }
             currentDay++;
 
             if (currentEntry != null) {
@@ -264,10 +276,10 @@ namespace WarTechIIC {
 
         public override void applyDeclinePenalty(DeclinePenalty declinePenalty) {
             if (employer == attacker) {
-                attackerStrength -= currentContractForceLoss;
+                attackerStrength -= currentContractForceLoss ?? 0;
                 WIIC.modLog.Debug?.Write($"defenderStrength -= {currentContractForceLoss}");
             } else {
-                defenderStrength -= currentContractForceLoss;
+                defenderStrength -= currentContractForceLoss ?? 0;
                 WIIC.modLog.Debug?.Write($"attackerStrength -= {currentContractForceLoss}");
             }
 
@@ -285,7 +297,7 @@ namespace WarTechIIC {
                     _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractComplete", title);
                 }
 
-                _workOrder.SetCost(extendedType.schedule.Length - ((currentDay + 1) % extendedType.schedule.Length));
+                _workOrder.SetCost(extendedType.schedule.Length - (((currentDay ?? 0) + 1) % extendedType.schedule.Length));
                 return _workOrder;
             }
             set {
@@ -293,23 +305,23 @@ namespace WarTechIIC {
             }
         }
 
-        public void fixOldEmployer() {
+        public void fixOldEmployer(string attacker) {
+
             string systemOwner = WIIC.sim.GetSystemById(locationID).OwnerValue.Name;
-            string originalEmployer = "attacker";
             bool workingHere = WIIC.sim.CurSystem.ID == locationID;
 
             if (WIIC.sim.CompanyTags.Contains("WIIC_helping_attacker")) {
                 WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
                 WIIC.sim.CompanyTags.Remove("WIIC_helping_attacker");
             } else if (WIIC.sim.CompanyTags.Contains("WIIC_helping_defender") && workingHere) {
-                originalEmployer = "defender";
+                workingForDefender = true;
                 WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
                 WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
             }
 
-            WIIC.modLog.Debug?.Write($"fixOldEmployer: originalEmployer {originalEmployer}, workingHere {workingHere}, attackerName {attackerName}, systemOwner {systemOwner}");
-            employerName = originalEmployer == "attacker" ? attackerName : systemOwner;
-            targetName = originalEmployer == "attacker" ? systemOwner : attackerName;
+            WIIC.modLog.Debug?.Write($"fixOldEmployer: workingHere {workingHere}, workingForDefender {workingForDefender ?? false}, attacker {attacker}, systemOwner {systemOwner}");
+            employerName = workingForDefender == true ? systemOwner : attacker;
+            targetName = workingForDefender == true ? attacker : systemOwner;
         }
     }
 }

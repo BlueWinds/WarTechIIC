@@ -1,0 +1,51 @@
+{
+	"name": "Field Testing",
+	"requirementList": [],
+	"weight": 1,
+	"spawnLocation": "OwnSystem",
+	"employer": ["Allied"],
+	"target": ["NearbyEnemy"],
+	"hireContract": "wiic_field_testing",
+	"availableFor": [20, 35],
+	"travelContracts": true,
+	"blockOtherContracts": true,
+	"schedule": [
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"PaymentDelivered"
+	],
+	"entries": {
+		"FieldTesting": {
+			"contractChance": 1,
+			"workOrder": "Testing, Testing",
+			"contract": [ "SimpleBattle_TestDriveEC" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractPayoutMultiplier": 1.15,
+			"contractBonusSalvage": -60,
+			"contractMessage": "Our employer has lined up another scenario for us to run through. Time to put their new machine to the test."
+		},
+		"PaymentDelivered": {
+			"workOrder": "Thanks For The Testing!",
+			"rewardByDifficulty": {
+				"2": "BTA_standard_Minor_Loot_EC",
+				"5": "BTA_standard_Major_Loot_EC",
+				"8": "BTA_standard_Superior_Loot_EC"
+			}
+		}
+  }
+}

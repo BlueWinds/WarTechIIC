@@ -19,6 +19,7 @@ namespace WarTechIIC {
         internal static Dictionary<string, string> fluffDescriptions = new Dictionary<string, string>();
         internal static List<(string, string)> eventResultsCache = new List<(string, string)>();
         internal static SimGameState sim;
+        internal static JsonSerializerSettings serializerSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
 
         public static void Init(string modDirectory, string settingsJSON) {
             modDir = modDirectory;

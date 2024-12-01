@@ -4,9 +4,9 @@
 	"weight": 1,
 	"spawnLocation": "OwnSystem",
 	"employer": ["ComStar", "Cameron"],
-	"target": ["ComStar"],
+	"target": ["2ndArmyVMu"],
 	"hireContract": "wiic_gunslingers",
-	"availableFor": [20, 30],
+	"availableFor": [20, 35],
 	"travelContracts": true,
 	"blockOtherContracts": true,
 	"schedule": [
@@ -29,7 +29,7 @@
 			"workOrder": "Gunslinger Duel",
 			"contract": [ "SoloDuel_GunslingerProgram" ],
 			"declinePenalty": "BreakContract",
-			"contractPayoutMultiplier": 1.25,
+			"contractPayoutMultiplier": 0.85,
 			"contractBonusSalvage": -60,
 			"contractMessage": "Alright, Commander, time to get out there and train up these ComGuard MechWarriors. They're taking things seriously, so we should too."
 		},

@@ -6,7 +6,7 @@
 	"employer": ["Any"],
 	"target": ["Employer"],
 	"hireContract": "wiic_training_duty",
-	"availableFor": [20, 30],
+	"availableFor": [20, 35],
 	"travelContracts": true,
 	"blockOtherContracts": true,
 	"schedule": [
@@ -26,7 +26,7 @@
 		"",
 		"",
 		"TrainingContract",
-		"TrainingEvent_HalfwayPoint",
+		"",
 		"",
 		"",
 		"",
@@ -44,12 +44,10 @@
 		"TrainingReward"
 	],
 	"entries": {
-		"TrainingEvent_HalfwayPoint": {
-			"workOrder": "Halfway Point of Training Duty"
-		},
 		"TrainingContract": {
+			"workOrder": "Time to Train the Troops",
 			"contractChance": 1,
-			"contract": ["ThreeWayBattle_TrainingDay", "ThreeWayBattle_TrainingDay_Alt", "ThreeWayBattle_TrainingDay_Alt_2", "CaptureBase_TheBTeam", "CaptureBase_TheBTeam_Alt"],
+			"randomContract": ["ThreeWayBattle_TrainingDay", "ThreeWayBattle_TrainingDay_Alt", "ThreeWayBattle_TrainingDay_Alt_2", "CaptureBase_TheBTeam", "CaptureBase_TheBTeam_Alt"],
 			"declinePenalty": "BreakContract",
 			"contractPayoutMultiplier": 0.75,
 			"contractBonusSalvage": -60,

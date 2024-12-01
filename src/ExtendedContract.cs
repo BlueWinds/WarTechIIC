@@ -25,13 +25,8 @@ namespace WarTechIIC {
         [JsonProperty]
         public int countdown;
 
-        // Inits to -1 because acceptContract() immediately invokes passDayEmployed()
-        // in order to run the day 0 entry.
         [JsonProperty]
-        public int currentDay = -1;
-
-        [JsonProperty]
-        public int playerDrops = 0;
+        public int? currentDay = null;
 
         [JsonProperty]
         public string employerName;
@@ -52,12 +47,13 @@ namespace WarTechIIC {
         private static Regex SERIALIZED_TAG = new Regex("^WIIC:(?<type>.*?):(?<json>\\{.*\\})$", RegexOptions.Compiled);
         private static Regex OLD_SERIALIZED_TAG = new Regex("^WIIC:(?<json>\\{.*\\})$", RegexOptions.Compiled);
         private static Regex OLD_SERIALIZED_TAG_TYPE = new Regex("\"type\":\"(?<type>Attack|Raid)\"", RegexOptions.Compiled);
+        private static Regex OLD_SERIALIZED_TAG_ATTACKER = new Regex("\"attackerName\":\"(?<attacker>.+?)\"", RegexOptions.Compiled);
         public static bool isSerializedExtendedContract(string tag) {
             return tag.StartsWith("WIIC:");
         }
 
         public string Serialize() {
-            string json = JsonConvert.SerializeObject(this);
+            string json = JsonConvert.SerializeObject(this, WIIC.serializerSettings);
             return $"WIIC:{this.type}:{json}";
         }
 
@@ -101,11 +97,11 @@ namespace WarTechIIC {
 
         public virtual Entry currentEntry {
             get {
-                if (currentDay == -1) {
+                if (currentDay == null) {
                     return null;
                 }
 
-                string entryName = extendedType.schedule[currentDay];
+                string entryName = extendedType.schedule[currentDay ?? 0];
 
                 if (entryName == "") {
                     return null;
@@ -116,7 +112,6 @@ namespace WarTechIIC {
         }
 
         public virtual bool passDay() {
-
             if (isEmployedHere) {
                 return passDayEmployed();
             }
@@ -282,6 +277,7 @@ namespace WarTechIIC {
             WIIC.sim.CompanyTags.Add("WIIC_extended_contract");
             WIIC.sim.SetSimRoomState(DropshipLocation.SHIP);
 
+            currentDay = -1;
             passDayEmployed();
             WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
             if (extraWorkOrder != null) {
@@ -397,7 +393,7 @@ namespace WarTechIIC {
                     _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractComplete", title);
                 }
 
-                _workOrder.SetCost(extendedType.schedule.Length - currentDay - 1);
+                _workOrder.SetCost(extendedType.schedule.Length - (currentDay ?? 0) - 1);
                 return _workOrder;
             }
             set {
@@ -413,13 +409,13 @@ namespace WarTechIIC {
                     WIIC.modLog.Debug?.Write("Generated _extraWorkOrder");
                 }
 
-                for (int day = currentDay + 1; day < extendedType.schedule.Length; day++) {
+                for (int day = (currentDay ?? 0) + 1; day < extendedType.schedule.Length; day++) {
                     string entryName = extendedType.schedule[day];
                     if (extendedType.entries.ContainsKey(entryName)) {
                         Entry entry = extendedType.entries[entryName];
                         if (entry.workOrder != null) {
                             _extraWorkOrder.SetDescription(entry.workOrder);
-                            _extraWorkOrder.SetCost(day - currentDay);
+                            _extraWorkOrder.SetCost(day - (currentDay ?? 0));
 
                             return _extraWorkOrder;
                         }
@@ -458,7 +454,7 @@ namespace WarTechIIC {
             MatchCollection matches = SERIALIZED_TAG.Matches(tag);
             string type;
             string json;
-            bool old = false;
+            string oldAttacker = "";
 
             if (matches.Count > 0) {
                 json = matches[0].Groups["json"].Value;
@@ -472,20 +468,20 @@ namespace WarTechIIC {
 
                 // This is a flareup from before the Extended Contract rewrite; we'll have to do some
                 // massaging to read it into the new format
-                old = true;
                 json =  matches[0].Groups["json"].Value;
                 type = OLD_SERIALIZED_TAG_TYPE.Matches(json)[0].Groups["type"].Value;
+                oldAttacker = OLD_SERIALIZED_TAG_ATTACKER.Matches(json)[0].Groups["attacker"].Value;
             }
 
             if (type == "Attack") {
                 Attack attack = JsonConvert.DeserializeObject<Attack>(json);
-                if (old) { attack.fixOldEmployer(); }
+                if (oldAttacker != "") { attack.fixOldEmployer(oldAttacker); }
                 attack.initAfterDeserialization();
                 return attack;
             }
             if (type == "Raid") {
                 Raid raid = JsonConvert.DeserializeObject<Raid>(json);
-                if (old) { raid.fixOldEmployer(); }
+                if (oldAttacker != "") { raid.fixOldEmployer(oldAttacker); }
                 raid.initAfterDeserialization();
                 return raid;
             }

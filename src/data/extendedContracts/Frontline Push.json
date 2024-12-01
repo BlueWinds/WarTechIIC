@@ -6,7 +6,7 @@
 	"employer": ["Any"],
 	"target": ["SystemOwner"],
 	"hireContract": "wiic_frontline_push",
-	"availableFor": [20, 30],
+	"availableFor": [20, 35],
 	"travelContracts": true,
 	"blockOtherContracts": true,
 	"schedule": [

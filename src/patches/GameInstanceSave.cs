@@ -9,8 +9,11 @@ using BattleTech.Save.Test;
 namespace WarTechIIC {
     [HarmonyPatch(typeof(GameInstanceSave), "PreSerialization")]
     public static class GameInstanceSave_PreSerialization_Patch {
-        [HarmonyPrefix]
-        public static void SaveFlareups() {
+        public static void Prefix(GameInstanceSave __instance) {
+            if (__instance.serializePassOne) {
+                return;
+            }
+
             WIIC.modLog.Debug?.Write($"Saving {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
 
             string saves = "";
@@ -35,8 +38,11 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(GameInstanceSave), "PostSerialization")]
     public static class GameInstanceSave_PostSerialization_Patch {
-        [HarmonyPostfix]
-        public static void RemoveFlareupTags() {
+        public static void Prefix(GameInstanceSave __instance) {
+            if (!__instance.serializePassOne) {
+                return;
+            }
+
             WIIC.modLog.Debug?.Write("Clearing extendedContract system tags post-save");
 
             try {

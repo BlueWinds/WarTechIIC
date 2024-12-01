@@ -1,0 +1,69 @@
+{
+	"name": "VIP Protection",
+	"requirementList": [],
+	"weight": 1,
+	"spawnLocation": "Any",
+	"employer": ["OwnSystem"],
+	"target": ["NearbyEnemy"],
+	"hireContract": "wiic_vip_protection",
+	"availableFor": [20, 35],
+	"travelContracts": true,
+	"blockOtherContracts": true,
+	"schedule": [
+		"",
+		"InitialEscort",
+		"",
+		"",
+		"",
+		"DefendingTheBase",
+		"",
+		"",
+		"",
+		"DestroyingEnemyBase",
+		"",
+		"Evacuation",
+		"PaymentDelivered"
+	],
+	"entries": {
+		"InitialEscort": {
+			"contractChance": 1,
+			"workOrder": "Escorting the VIP",
+			"contract": [ "CaptureEscort_ManOfThePeople" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "The VIP is waiting for us to escort them to their ship, Commander. Let's get to it."
+		},
+		"DefendingTheBase": {
+			"contractChance": 1,
+			"workOrder": "Holding The Line",
+			"contract": [ "DefendBase_TitanAttack" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "Apparently enemy forces are moving against the VIP's location. They need us to hold off the assault, we better get down there."
+		},
+		"DestroyingEnemyBase": {
+			"contractChance": 1,
+			"workOrder": "Time To Counter-Attack",
+			"contract": [ "DestroyBase_Liberation" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "Our employer has identified where the previous attack came from and now it's our job to go put a stop to any future attacks. Time to smash a base, Commander."
+		},
+		"Evacuation": {
+			"contractChance": 1,
+			"workOrder": "Evacuation",
+			"contract": [ "CaptureEscort_TimeToLeave" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "The VIP's negoatiations here are finished, it's time to get them to their ship so they can evac off this rock."
+		},
+		"PaymentDelivered": {
+			"workOrder": "Payment For a Job Well Done",
+			"rewardByDifficulty": {
+				"2": "BTA_standard_Minor_Loot_EC",
+				"5": "BTA_standard_Major_Loot_EC",
+				"8": "BTA_standard_Superior_Loot_EC"
+			}
+		}
+  }
+}
