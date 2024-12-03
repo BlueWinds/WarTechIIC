@@ -11,7 +11,7 @@ namespace WarTechIIC {
     public static class Starmap_PopulateMap_Patch {
         static void Postfix(Starmap __instance) {
             try {
-                WIIC.modLog.Info?.Write($"Patching starmap with new owners (setActiveFactionsForAllSystems: {WIIC.settings.setActiveFactionsForAllSystems})");
+                WIIC.l.Log($"Patching starmap with new owners (setActiveFactionsForAllSystems: {WIIC.settings.setActiveFactionsForAllSystems})");
                 int count = 0;
                 int controlCount = 0;
                 int clearCount = 0;
@@ -33,10 +33,10 @@ namespace WarTechIIC {
                     count++;
                 }
                 Utilities.redrawMap();
-                WIIC.modLog.Info?.Write($"Finished patching starmap (checked {count} systems, flipped control of {controlCount}, cleared targets and employers for {clearCount})");
+                WIIC.l.Log($"Finished patching starmap (checked {count} systems, flipped control of {controlCount}, cleared targets and employers for {clearCount})");
 
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }

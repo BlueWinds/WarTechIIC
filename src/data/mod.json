@@ -4,9 +4,7 @@
   "Version": "0.2.0",
   "Author": "BlueWinds",
   "DLL": "WarTechIIC.dll",
-  "DependsOn": [
-    "IRBTModUtils"
-  ],
+  "DependsOn": [],
   "CustomResourceTypes": [
     "ExtendedContractType"
   ],
@@ -14,5 +12,12 @@
     { "Type": "ContractOverride", "Path": "contracts" },
     { "Type": "BaseDescriptionDef", "Path": "descriptions" },
     { "Type": "ExtendedContractType", "Path": "extendedContracts" }
-  ]
+  ],
+  "Logs": {
+    "WartechIIC.log": {
+      "Includes": [
+      { "LoggerNames": ["WartechIIC"] }
+      ]
+    }
+  }
 }

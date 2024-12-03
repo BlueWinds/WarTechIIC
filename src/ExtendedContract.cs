@@ -70,7 +70,7 @@ namespace WarTechIIC {
             type = contractType.name;
             countdown = Utilities.rng.Next(extendedType.availableFor[0], extendedType.availableFor[1]);
 
-            if (extendedType.travelContracts) {
+            if (extendedType.travelContracts || WIIC.sim.CurSystem == location) {
                 spawnParticipationContracts();
             }
         }
@@ -82,14 +82,14 @@ namespace WarTechIIC {
         }
 
         public virtual void onEnterSystem() {
-            WIIC.modLog.Debug?.Write($"Entering Extended Contract system ({type}). In-system contracts: {!extendedType.travelContracts}");
+            WIIC.l.Log($"Entering Extended Contract system ({type}). In-system contracts: {!extendedType.travelContracts}");
             if (!extendedType.travelContracts) {
                 this.spawnParticipationContracts();
             }
         }
 
         public virtual void onLeaveSystem() {
-            WIIC.modLog.Debug?.Write($"Leaving Extended Contract system ({type}). In-system contracts: {!extendedType.travelContracts}");
+            WIIC.l.Log($"Leaving Extended Contract system ({type}). In-system contracts: {!extendedType.travelContracts}");
             if (!extendedType.travelContracts) {
                 this.removeParticipationContracts();
             }
@@ -117,14 +117,14 @@ namespace WarTechIIC {
             }
 
             countdown--;
-            WIIC.modLog.Trace?.Write($"Countdown {countdown} for {type} at {locationID}.");
+            WIIC.l.Log($"Countdown {countdown} for {type} at {locationID}.");
             // Don't remove this extended contract if the player has accepted it and is flying there to participate.
             if (countdown <= 0) {
                 if (!isParticipationContract(WIIC.sim.ActiveTravelContract)) {
                     removeParticipationContracts();
                     return true;
                 }
-                WIIC.modLog.Trace?.Write($"    Leaving active because participation contract has been accepted.");
+                WIIC.l.Log($"    Leaving active because participation contract has been accepted.");
             }
 
             return false;
@@ -140,9 +140,9 @@ namespace WarTechIIC {
             }
 
             if (currentEntry == null) {
-                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, nothing happening.");
+                WIIC.l.Log($"Day {currentDay} of {type}, nothing happening.");
             } else {
-                WIIC.modLog.Info?.Write($"Day {currentDay} of {type}, running {currentEntry}.");
+                WIIC.l.Log($"Day {currentDay} of {type}, running {currentEntry}.");
                 runEntry(currentEntry);
             }
 
@@ -156,12 +156,12 @@ namespace WarTechIIC {
 
             foreach (string eventID in entry.triggerEvent) {
                 if (!WIIC.sim.DataManager.SimGameEventDefs.TryGet(eventID, out SimGameEventDef eventDef)) {
-                    WIIC.modLog.Error?.Write($"Couldn't find event {eventID} on day {currentDay} of {type}.");
+                    WIIC.l.LogError($"Couldn't find event {eventID} on day {currentDay} of {type}.");
                     return;
                 }
 
                 if (WIIC.sim.MeetsRequirements(eventDef.Requirements) && WIIC.sim.MeetsRequirements(eventDef.AdditionalRequirements)) {
-                    WIIC.modLog.Info?.Write($"Triggering event {eventID} on day {currentDay} of {type}.");
+                    WIIC.l.Log($"Triggering event {eventID} on day {currentDay} of {type}.");
 
                     SimGameEventTracker eventTracker = new SimGameEventTracker();
                     eventTracker.Init(new[] { EventScope.Company }, 0, 0, SimGameEventDef.SimEventType.NORMAL, WIIC.sim);
@@ -170,26 +170,26 @@ namespace WarTechIIC {
                     return;
                 }
 
-                WIIC.modLog.Debug?.Write($"Considered event {eventID}, but requirements did not match.");
+                WIIC.l.Log($"Considered event {eventID}, but requirements did not match.");
             }
 
             double rand = Utilities.rng.NextDouble();
             if (rand <= entry.contractChance) {
-                WIIC.modLog.Info?.Write($"Triggering contract on day {currentDay} of {type} ({entry.contractChance} chance)");
+                WIIC.l.Log($"Triggering contract on day {currentDay} of {type} ({entry.contractChance} chance)");
                 Contract contract = null;
 
                 if (entry.contract.Length > 0) {
                     foreach (string contractName in entry.contract) {
                         contract = ContractManager.getContractByName(contractName, location, employer, target);
                         if (entry.ignoreContractRequirements) {
-                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Ignoring requirements");
+                            WIIC.l.Log($"Considering {contractName} - Ignoring requirements");
                             break;
                         }
                         else if (WIIC.sim.MeetsRequirements(contract.Override.requirementList.ToArray())) {
-                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Meets requirements");
+                            WIIC.l.Log($"Considering {contractName} - Meets requirements");
                             break;
                         } else {
-                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Does not meet requirements");
+                            WIIC.l.Log($"Considering {contractName} - Does not meet requirements");
                             contract = null;
                         }
                     }
@@ -198,19 +198,19 @@ namespace WarTechIIC {
                     foreach (string contractName in entry.randomContract) {
                         contract = ContractManager.getContractByName(contractName, location, employer, target);
                         if (entry.ignoreContractRequirements) {
-                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Ignoring requirements");
+                            WIIC.l.Log($"Considering {contractName} - Ignoring requirements");
                             contracts.Add(contract);
                         }
                         else if (WIIC.sim.MeetsRequirements(contract.Override.requirementList.ToArray())) {
-                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Meets requirements");
+                            WIIC.l.Log($"Considering {contractName} - Meets requirements");
                             contracts.Add(contract);
                         } else {
-                            WIIC.modLog.Debug?.Write($"Considering {contractName} - Does not meet requirements");
+                            WIIC.l.Log($"Considering {contractName} - Does not meet requirements");
                         }
                     }
                     contract = contracts.Count > 0 ? Utilities.Choice(contracts) : null;
                 } else {
-                    WIIC.modLog.Debug?.Write($"Generating procedural contract.");
+                    WIIC.l.Log($"Generating procedural contract.");
                     contract = ContractManager.getNewProceduralContract(location, employer, target, entry.allowedContractTypes);
                 }
 
@@ -223,13 +223,13 @@ namespace WarTechIIC {
 
             if (entry.rewardByDifficulty.Keys.Count > 1) {
                 int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-                WIIC.modLog.Debug?.Write($"Considering rewardByDifficulty on day {currentDay} of {type}. System difficulty is {diff}");
+                WIIC.l.Log($"Considering rewardByDifficulty on day {currentDay} of {type}. System difficulty is {diff}");
                 string itemCollection = null;
                 for (int i = 0; i <= diff; i++) {
                     if (entry.rewardByDifficulty.ContainsKey(i)) { itemCollection = entry.rewardByDifficulty[i]; }
                 }
 
-                WIIC.modLog.Info?.Write($"rewardByDifficulty chose {itemCollection}.");
+                WIIC.l.Log($"rewardByDifficulty chose {itemCollection}.");
                 Utilities.giveReward(itemCollection);
             }
         }
@@ -238,17 +238,17 @@ namespace WarTechIIC {
             int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
 
             if (WIIC.settings.wontHirePlayer.Contains(employer.Name)) {
-                WIIC.modLog.Trace?.Write($"Skipping hireContract for {type} at {location.Name} because employer {employer.Name} wontHirePlayer");
+                WIIC.l.Log($"Skipping hireContract for {type} at {location.Name} because employer {employer.Name} wontHirePlayer");
             } else {
-                WIIC.modLog.Trace?.Write($"Spawning travel hireContract {extendedType.hireContract} at {location.Name} for {type}");
+                WIIC.l.Log($"Spawning travel hireContract {extendedType.hireContract} at {location.Name} for {type}");
                 ContractManager.addTravelContract(extendedType.hireContract, location, employer, target, diff);
             }
 
             if (extendedType.targetHireContract != null) {
                 if (WIIC.settings.wontHirePlayer.Contains(target.Name)) {
-                    WIIC.modLog.Trace?.Write($"Skipping targetHireContract for {type} at {location.Name} because target {target.Name} wontHirePlayer");
+                    WIIC.l.Log($"Skipping targetHireContract for {type} at {location.Name} because target {target.Name} wontHirePlayer");
                 } else {
-                    WIIC.modLog.Trace?.Write($"    Also adding {extendedType.targetHireContract} from targetHireContract");
+                    WIIC.l.Log($"    Also adding {extendedType.targetHireContract} from targetHireContract");
                     ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer, diff);
                 }
             }
@@ -260,13 +260,13 @@ namespace WarTechIIC {
         }
 
         public virtual void removeParticipationContracts() {
-            WIIC.modLog.Debug?.Write($"Cleaning up participation contracts for {type} at {location.Name}.");
+            WIIC.l.Log($"Cleaning up participation contracts for {type} at {location.Name}.");
             WIIC.sim.GlobalContracts.RemoveAll(isParticipationContract);
         }
 
         public virtual void acceptContract(string contract) {
             countdown = 0;
-            WIIC.modLog.Info?.Write($"Player embarked on {type} at {location.Name}. Adding WIIC_extended_contract company tag and work order item.");
+            WIIC.l.Log($"Player embarked on {type} at {location.Name}. Adding WIIC_extended_contract company tag and work order item.");
 
             if (contract == extendedType.targetHireContract) {
                 (employer, target) = (target, employer);
@@ -289,16 +289,16 @@ namespace WarTechIIC {
 
         public virtual void launchContract(Entry entry, Contract contract) {
             if (contract.Override.contractRewardOverride < 0) {
-                WIIC.modLog.Debug?.Write($"contractRewardOverride < 0, generating.");
+                WIIC.l.Log($"contractRewardOverride < 0, generating.");
                 contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
             }
 
-            WIIC.modLog.Debug?.Write($"contractRewardOverride: {contract.Override.contractRewardOverride}, contractPayoutMultiplier: {entry.contractPayoutMultiplier}, InitialContractValue: {contract.InitialContractValue}");
+            WIIC.l.Log($"contractRewardOverride: {contract.Override.contractRewardOverride}, contractPayoutMultiplier: {entry.contractPayoutMultiplier}, InitialContractValue: {contract.InitialContractValue}");
             contract.SetInitialReward((int)Math.Floor(contract.Override.contractRewardOverride * entry.contractPayoutMultiplier));
 
             contract.SetupContext();
 
-            WIIC.modLog.Debug?.Write($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
+            WIIC.l.Log($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
             contract.SalvagePotential += entry.contractBonusSalvage;
             contract.SalvagePotential = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, contract.SalvagePotential));
 
@@ -319,12 +319,12 @@ namespace WarTechIIC {
                 message += $"\n\nDeclining this contract will break our {type} contract with {employer.FactionDef.ShortName}.";
             }
 
-            WIIC.modLog.Debug?.Write(message);
+            WIIC.l.Log(message);
 
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
-                    WIIC.modLog.Info?.Write($"Accepted {type} mission {contract.Name}.");
+                    WIIC.l.Log($"Accepted {type} mission {contract.Name}.");
 
                     if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
                         // Add it to the command center, so that it gets persisted in the pre-drop save.
@@ -338,10 +338,10 @@ namespace WarTechIIC {
                     WIIC.sim.ForceTakeContract(contract, false);
                     WIIC.sim.RoomManager.LeftDrawerWidget.SetCollapsed(true);
                 } catch (Exception e) {
-                    WIIC.modLog.Error?.Write(e);
+                    WIIC.l.LogException(e);
                 }
             }, primaryButtonText, delegate {
-                WIIC.modLog.Info?.Write($"Passed on {type} mission, declinePenalty is {entry.declinePenalty.ToString()}.");
+                WIIC.l.Log($"Passed on {type} mission, declinePenalty is {entry.declinePenalty.ToString()}.");
                 if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
                     // Happens when restoring a pre-drop save and declining a contract they had previously accepted
                     WIIC.sim.CurSystem.SystemContracts.Remove(contract);
@@ -355,13 +355,13 @@ namespace WarTechIIC {
         }
 
         public virtual void applyDeclinePenalty(DeclinePenalty declinePenalty) {
-            WIIC.modLog.Info?.Write($"Applying DeclinePenalty {declinePenalty.ToString()} for {type} with employer {employer.Name}");
+            WIIC.l.Log($"Applying DeclinePenalty {declinePenalty.ToString()} for {type} with employer {employer.Name}");
 
             if (declinePenalty == DeclinePenalty.BadFaith || declinePenalty == DeclinePenalty.BreakContract) {
                 if (employer.DoesGainReputation) {
                     float employerRepBadFaithMod = WIIC.sim.Constants.Story.EmployerRepBadFaithMod;
-                    WIIC.modLog.Info?.Write($"employerRepBadFaithMod: {employerRepBadFaithMod}");
-                    WIIC.modLog.Info?.Write($"difficulty: {location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
+                    WIIC.l.Log($"employerRepBadFaithMod: {employerRepBadFaithMod}");
+                    WIIC.l.Log($"difficulty: {location.Def.GetDifficulty(SimGameState.SimGameType.CAREER)}");
                     int num = (int) Math.Round(location.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
 
                     WIIC.sim.SetReputation(employer, num);
@@ -406,7 +406,7 @@ namespace WarTechIIC {
             get {
                 if (_extraWorkOrder == null) {
                     _extraWorkOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractExtra", "");
-                    WIIC.modLog.Debug?.Write("Generated _extraWorkOrder");
+                    WIIC.l.Log("Generated _extraWorkOrder");
                 }
 
                 for (int day = (currentDay ?? 0) + 1; day < extendedType.schedule.Length; day++) {
@@ -438,7 +438,7 @@ namespace WarTechIIC {
             ColourfulFlashPoints.Main.addMapMarker(mapMarker);
 
             if (!WIIC.fluffDescriptions.ContainsKey(location.ID)) {
-                WIIC.modLog.Trace?.Write($"Filled fluff description entry for {location.ID}: {location.Def.Description.Details}");
+                WIIC.l.Log($"Filled fluff description entry for {location.ID}: {location.Def.Description.Details}");
                 WIIC.fluffDescriptions[location.ID] = location.Def.Description.Details;
             }
 

@@ -14,7 +14,7 @@ namespace WarTechIIC {
                     return false;
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
             return true;
         }
@@ -23,7 +23,7 @@ namespace WarTechIIC {
     [HarmonyPatch(typeof(TaskTimelineWidget), "RegenerateEntries")]
     public static class TaskTimelineWidget_RegenerateEntries_Patch {
         static void Postfix(TaskTimelineWidget __instance) {
-            WIIC.modLog.Debug?.Write("TaskTimelineWidget.RegenerateEntries");
+            WIIC.l.Log("TaskTimelineWidget.RegenerateEntries");
 
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
@@ -40,7 +40,7 @@ namespace WarTechIIC {
                 __instance.RefreshEntries();
             }
             catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -57,7 +57,7 @@ namespace WarTechIIC {
                 WIIC.sim.SetTimeMoving(false);
                 PauseNotification.Show($"{extendedContract.type} Details", extendedContract.getDescription(), WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), "", true, null);
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }

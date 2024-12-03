@@ -24,16 +24,16 @@ namespace WarTechIIC {
             // Initializing tagsets for use when creating attacks and raids
             foreach (string faction in s.factionActivityTags.Keys) {
                 if (FactionEnumeration.GetFactionByName(faction) == invalid) {
-                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from factionActivityTags");
-                   continue;
+                    WIIC.l.LogError($"Can't find faction {faction} from factionActivityTags");
+                    continue;
                 }
                 factionActivityTags[faction] = new TagSet(s.factionActivityTags[faction]);
             }
 
             foreach (string faction in s.factionInvasionTags.Keys) {
                 if (FactionEnumeration.GetFactionByName(faction) == invalid) {
-                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from factionInvasionTags");
-                   continue;
+                    WIIC.l.LogError($"Can't find faction {faction} from factionInvasionTags");
+                    continue;
                 }
                 factionInvasionTags[faction] = new TagSet(s.factionInvasionTags[faction]);
             }
@@ -41,22 +41,22 @@ namespace WarTechIIC {
             // Validation for factions in various settings
             foreach (string faction in s.aggression.Keys) {
                 if (FactionEnumeration.GetFactionByName(faction) == invalid) {
-                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from aggression");
+                    WIIC.l.LogError($"Can't find faction {faction} from aggression");
                 }
             }
             foreach (string faction in s.hatred.Keys) {
                 if (FactionEnumeration.GetFactionByName(faction) == invalid) {
-                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from hatred");
+                    WIIC.l.LogError($"Can't find faction {faction} from hatred");
                 }
                 foreach (string target in s.hatred[faction].Keys) {
                     if (FactionEnumeration.GetFactionByName(target) == invalid) {
-                        WIIC.modLog.Warn?.Write($"Can't find faction {target} from hatred[{faction}]");
+                        WIIC.l.LogError($"Can't find faction {target} from hatred[{faction}]");
                     }
                 }
             }
             foreach (string faction in s.cantBeAttacked) {
                 if (FactionEnumeration.GetFactionByName(faction) == invalid) {
-                    WIIC.modLog.Warn?.Write($"Can't find faction {faction} from cantBeAttacked");
+                    WIIC.l.LogError($"Can't find faction {faction} from cantBeAttacked");
                 }
             }
         }
@@ -65,7 +65,7 @@ namespace WarTechIIC {
             double rand = Utilities.rng.NextDouble();
             double flareupChance = Utilities.statOrDefault("WIIC_dailyAttackChance", WIIC.settings.dailyAttackChance);
             double raidChance = Utilities.statOrDefault("WIIC_dailyRaidChance", WIIC.settings.dailyRaidChance);
-            WIIC.modLog.Debug?.Write($"Checking for new flareup: {rand} flareupChance: {flareupChance}, raidChance: {raidChance}");
+            WIIC.l.Log($"Checking for new flareup: {rand} flareupChance: {flareupChance}, raidChance: {raidChance}");
 
             ExtendedContractType type;
             if (rand < flareupChance) {
@@ -91,7 +91,7 @@ namespace WarTechIIC {
 
             double rand = Utilities.rng.NextDouble();
             int count = WIIC.extendedContracts.Values.Count(ec => ec.type != "Attack" && ec.type != "Raid");
-            WIIC.modLog.Debug?.Write($"Checking for new extended contract: {rand} existing contracts: {count}, chance if 0: {s.dailyExtConChanceIfNoneAvailable}, chance if < {s.maxAvailableExtendedContracts}: {s.dailyExtConChanceIfSomeAvailable}");
+            WIIC.l.Log($"Checking for new extended contract: {rand} existing contracts: {count}, chance if 0: {s.dailyExtConChanceIfNoneAvailable}, chance if < {s.maxAvailableExtendedContracts}: {s.dailyExtConChanceIfSomeAvailable}");
 
             if (count >= s.maxAvailableExtendedContracts) { return false; }
             if (count> 0 && rand > s.dailyExtConChanceIfSomeAvailable) { return false; }
@@ -116,14 +116,14 @@ namespace WarTechIIC {
                 try {
                     (system, employer) = getExtendedEmployerAndLocation(type.employer, type.spawnLocation, systemReqs);
                 } catch (InvalidOperationException) {
-                    WIIC.modLog.Debug?.Write($"Chose {type.name}, but couldn't find a system and employer. i={i}");
+                    WIIC.l.Log($"Chose {type.name}, but couldn't find a system and employer. i={i}");
                     continue;
                 }
 
                 for (int j = 0; j < 3; j++) {
                     FactionValue target = getExtendedTarget(system, employer, type.target);
                     if (target == null) {
-                        WIIC.modLog.Info?.Write($"Chose {type.name}, but couldn't find target at {system.Name} with employer {employer.Name}. i={i}, j={j}");
+                        WIIC.l.Log($"Chose {type.name}, but couldn't find target at {system.Name} with employer {employer.Name}. i={i}, j={j}");
                         continue;
                     }
                     ExtendedContract contract = new ExtendedContract(system, employer, target, type);
@@ -216,7 +216,7 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                // WIIC.modLog.Trace?.Write($"Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
+                // WIIC.l.Log($"Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
 
                 Action<FactionValue> considerEmployer = (FactionValue employer) => {
                     if (forceEmployer != null && employer != forceEmployer) {
@@ -249,7 +249,7 @@ namespace WarTechIIC {
                     }
 
                     double weight = systemMultiplier * aggressions[employer] * (reputations[employer] + reputations[owner]) * distanceMult * hatred[(employer, owner)];
-                    // WIIC.modLog.Trace?.Write($"    {employer.Name}: {weightedLocations[(system, employer)]} + {weight} from systemMultiplier {systemMultiplier}, rep[att] {reputations[employer]}, rep[own] {reputations[owner]}, mult {distanceMult}, hatred[(att, own)] {hatred[(employer, owner)]}");
+                    // WIIC.l.Log($"    {employer.Name}: {weightedLocations[(system, employer)]} + {weight} from systemMultiplier {systemMultiplier}, rep[att] {reputations[employer]}, rep[own] {reputations[owner]}, mult {distanceMult}, hatred[(att, own)] {hatred[(employer, owner)]}");
                     weightedLocations[(system, employer)] += weight;
                 };
 
@@ -284,7 +284,7 @@ namespace WarTechIIC {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
 
-            WIIC.modLog.Trace?.Write($"Checking locations for extended contract, using distanceFactor: {s.distanceFactor}");
+            WIIC.l.Log($"Checking locations for extended contract, using distanceFactor: {s.distanceFactor}");
             foreach (StarSystem system in WIIC.sim.StarSystems) {
                 if (getDistance(system) > WIIC.settings.maxExtendedContractDistance) {
                     continue;
@@ -301,7 +301,7 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                // WIIC.modLog.Trace?.Write($"    {system.Name}, distanceMult: {distanceMult}, owner {owner.Name}");
+                // WIIC.l.Log($"    {system.Name}, distanceMult: {distanceMult}, owner {owner.Name}");
 
                 foreach (FactionValue employer in potentialExtendedEmployers(system, spawnLocation, potentialEmployers)) {
                     weightedLocations[(system, employer)] = distanceMult;
@@ -331,6 +331,9 @@ namespace WarTechIIC {
                     else if (employerOption == owner.Name) { employers.Add(owner); }
                 }
             } else if (spawnLocation == SpawnLocation.NearbyEnemy) {
+                if (WIIC.sim.IsFactionAlly(owner)) {
+                    return employers;
+                }
                 foreach (string employerOption in potentialEmployers) {
                     if (employerOption == "Any") {
                         foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
@@ -365,10 +368,10 @@ namespace WarTechIIC {
             List<FactionValue> factions = new List<FactionValue>();
             foreach (string target in potentialTargets) {
                 if (target == "Employer") { factions.Add(employer); }
-                else if (target == "SystemOwner") { factions.Add(system.OwnerValue); }
+                else if (target == "SystemOwner" && !WIIC.sim.IsFactionAlly(system.OwnerValue)) { factions.Add(system.OwnerValue); }
                 else if (target == "NearbyEnemy") {
                     foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
-                        if (employer.FactionDef.Enemies.Contains(neighbor.OwnerValue.Name)) {
+                        if (employer.FactionDef.Enemies.Contains(neighbor.OwnerValue.Name) && !WIIC.sim.IsFactionAlly(neighbor.OwnerValue)) {
                             factions.Add(neighbor.OwnerValue);
                         }
                     }

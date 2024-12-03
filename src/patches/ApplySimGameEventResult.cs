@@ -55,7 +55,7 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string systemId = matches[0].Groups["system"].Value;
                             string factionID = matches[0].Groups["faction"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
+                            WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
@@ -64,10 +64,10 @@ namespace WarTechIIC {
                                     Attack attack = (Attack)WIIC.extendedContracts[system.ID];
                                     attack.giveOnWin = factionID;
                                 } else {
-                                    WIIC.modLog.Error?.Write($"ApplySimGameEventResult: Flareup at {systemId} is '{WIIC.extendedContracts[system.ID].type}' rather than an Attack");
+                                    WIIC.l.LogError($"ApplySimGameEventResult: Flareup at {systemId} is '{WIIC.extendedContracts[system.ID].type}' rather than an Attack");
                                 }
                             } else {
-                                WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
+                                WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
 
                             result.AddedTags.Remove(addedTag);
@@ -78,7 +78,7 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string systemId = matches[0].Groups["system"].Value;
                             string factionID = matches[0].Groups["faction"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionID {factionID}");
+                            WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionID {factionID}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
@@ -96,7 +96,7 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string factionID = matches[0].Groups["faction"].Value;
                             string systemId = matches[0].Groups["system"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
+                            WIIC.l.Log($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
 
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system;
@@ -107,7 +107,7 @@ namespace WarTechIIC {
                             }
 
                             if (system.OwnerValue.Name == faction.Name) {
-                                WIIC.modLog.Info?.Write($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
+                                WIIC.l.Log($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
                                 continue;
                             }
 
@@ -124,7 +124,7 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string factionID = matches[0].Groups["faction"].Value;
                             string systemId = matches[0].Groups["system"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult RAID_SYSTEM: factionID {factionID}, systemId {systemId}");
+                            WIIC.l.Log($"ApplySimGameEventResult RAID_SYSTEM: factionID {factionID}, systemId {systemId}");
 
                             FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                             StarSystem system;
@@ -147,14 +147,14 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string systemId = matches[0].Groups["system"].Value;
                             int strength = int.Parse(matches[0].Groups["strength"].Value);
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
+                            WIIC.l.Log($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                                 (WIIC.extendedContracts[system.ID] as Attack).attackerStrength = strength;
                             } else {
-                                WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
+                                WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
 
                             result.AddedTags.Remove(addedTag);
@@ -165,14 +165,14 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string systemId = matches[0].Groups["system"].Value;
                             int strength = int.Parse(matches[0].Groups["strength"].Value);
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
+                            WIIC.l.Log($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
 
                             if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                                 (WIIC.extendedContracts[system.ID] as Attack).defenderStrength = strength;
                             } else {
-                                WIIC.modLog.Error?.Write($"ApplySimGameEventResult: No flareup found at {systemId}");
+                                WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
                             }
 
                             result.AddedTags.Remove(addedTag);
@@ -183,7 +183,7 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string tag = matches[0].Groups["tag"].Value;
                             string systemId = matches[0].Groups["system"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag {tag}, systemId {systemId}");
+                            WIIC.l.Log($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag {tag}, systemId {systemId}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
                             system.Tags.Add(tag);
@@ -196,7 +196,7 @@ namespace WarTechIIC {
                         if (matches.Count > 0) {
                             string tag = matches[0].Groups["tag"].Value;
                             string systemId = matches[0].Groups["system"].Value;
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {tag}, systemId {systemId}");
+                            WIIC.l.Log($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {tag}, systemId {systemId}");
 
                             StarSystem system = WIIC.sim.GetSystemById(systemId);
                             system.Tags.Remove(tag);
@@ -254,18 +254,18 @@ namespace WarTechIIC {
                             continue;
                         }
                     } catch (Exception e) {
-                        WIIC.modLog.Error?.Write($"Error while processing tag '{addedTag}'");
-                        WIIC.modLog.Error?.Write(e);
+                        WIIC.l.LogError($"Error while processing tag '{addedTag}'");
+                        WIIC.l.LogException(e);
                     }
                 }
             }
 
             try {
                 if (result.Scope == EventScope.Company && result.Stats != null) {
-                    WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Searching for WIIC entries among {result.Stats.Length} stats");
+                    WIIC.l.Log($"ApplySimGameEventResult: Searching for WIIC entries among {result.Stats.Length} stats");
                     foreach (SimGameStat stat in result.Stats) {
                         if (stat.Validate() && stat.name.StartsWith("WIIC")) {
-                            WIIC.modLog.Info?.Write($"ApplySimGameEventResult: Applying {stat.ToEditorString()} and removing from stats");
+                            WIIC.l.Log($"ApplySimGameEventResult: Applying {stat.ToEditorString()} and removing from stats");
                             SimGameState.SetSimGameStat(stat, WIIC.sim.CompanyStats);
                         }
                     }
@@ -273,8 +273,8 @@ namespace WarTechIIC {
                     result.Stats = result.Stats.Where(stat => stat.name == null || !stat.name.StartsWith("WIIC")).ToArray();
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write($"result.ToString(): {result.ToString()}");
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogError($"result.ToString(): {result.ToString()}");
+                WIIC.l.LogException(e);
             }
         }
     }

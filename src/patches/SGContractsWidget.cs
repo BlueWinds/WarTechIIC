@@ -11,12 +11,12 @@ namespace WarTechIIC {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 if (extendedContract != null && __instance.SelectedContract.Name == extendedContract.currentContractName) {
-                    WIIC.modLog.Debug?.Write($"Blocking HandleEscapeKeypress. selected: {__instance.SelectedContract.Name}, selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
+                    WIIC.l.Log($"Blocking HandleEscapeKeypress. selected: {__instance.SelectedContract.Name}, selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
                     return false;
                 }
             }
             catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
             return true;
         }
@@ -28,14 +28,14 @@ namespace WarTechIIC {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 if (extendedContract != null && __instance.SelectedContract.Name == extendedContract.currentContractName) {
-                    WIIC.modLog.Debug?.Write($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
+                    WIIC.l.Log($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
 
                     __instance.NegotiateTitleBackButton.SetState(ButtonState.Disabled);
                     WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(false);
                 }
             }
             catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -61,7 +61,7 @@ namespace WarTechIIC {
                     __result = difficulty + 22;
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
 
             return false;

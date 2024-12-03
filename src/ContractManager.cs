@@ -31,10 +31,10 @@ namespace WarTechIIC {
             enemies.Add(target.Name);
             employer.FactionDef.Enemies = enemies.ToArray();
 
-            WIIC.modLog.Debug?.Write($"getNewProceduralContract: SimGameMode {WIIC.sim.SimGameMode}, GlobalDifficulty {WIIC.sim.GlobalDifficulty}");
+            WIIC.l.Log($"getNewProceduralContract: SimGameMode {WIIC.sim.SimGameMode}, GlobalDifficulty {WIIC.sim.GlobalDifficulty}");
             var difficultyRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
 
-            WIIC.modLog.Debug?.Write($"difficultyRange: MinDifficulty {difficultyRange.MinDifficulty}, MaxDifficulty {difficultyRange.MaxDifficulty}, MinClamped {difficultyRange.MinDifficultyClamped}, MaxClamped {difficultyRange.MaxDifficultyClamped}");
+            WIIC.l.Log($"difficultyRange: MinDifficulty {difficultyRange.MinDifficulty}, MaxDifficulty {difficultyRange.MaxDifficulty}, MinClamped {difficultyRange.MinDifficultyClamped}, MaxClamped {difficultyRange.MaxDifficultyClamped}");
 
             if (validTypes.Length == 0) {
                 validTypes = WIIC.settings.customContractEnums.Concat(contractTypes).ToArray();
@@ -78,7 +78,7 @@ namespace WarTechIIC {
                 if (WIIC.sim.mapDiscardPile.Count > 0) {
                     WIIC.sim.mapDiscardPile.Clear();
                 } else {
-                    WIIC.modLog.Error?.Write($"Unable to find any valid contracts for available map pool.");
+                    WIIC.l.LogError($"Unable to find any valid contracts for available map pool.");
                 }
             }
 
@@ -109,7 +109,7 @@ namespace WarTechIIC {
         }
 
         public static Contract addTravelContract(string contractName, StarSystem location, FactionValue employer, FactionValue target, int difficulty) {
-            WIIC.modLog.Info?.Write($"Adding travel contract {contractName} to {location.ID}. employer: {employer.Name}, target: {target.Name}, difficulty: {difficulty}");
+            WIIC.l.Log($"Adding travel contract {contractName} to {location.ID}. employer: {employer.Name}, target: {target.Name}, difficulty: {difficulty}");
 
             FactionValue inv = FactionEnumeration.GetInvalidUnsetFactionValue();
 

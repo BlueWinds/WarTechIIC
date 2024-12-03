@@ -5,8 +5,6 @@ using Newtonsoft.Json.Converters;
 
 namespace WarTechIIC {
     public class Settings {
-        public bool debug = false;
-        public bool trace = false;
         public double dailyAttackChance = 0;
         public double dailyRaidChance = 0;
         public double dailyExtConChanceIfNoneAvailable = 0;

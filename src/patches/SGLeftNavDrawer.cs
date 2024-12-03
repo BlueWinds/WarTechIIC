@@ -17,12 +17,12 @@ namespace WarTechIIC {
                 }
 
                 if (WIIC.sim.SelectedContract.Name == extendedContract.currentContractName && !isCollapsed) {
-                    WIIC.modLog.Debug?.Write($"SGLeftNavDrawer.SetCollapsed -> blocking because selectedContract");
+                    WIIC.l.Log($"SGLeftNavDrawer.SetCollapsed -> blocking because selectedContract");
                     return false;
                 }
             }
             catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
             return true;
         }

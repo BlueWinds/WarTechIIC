@@ -14,7 +14,7 @@ namespace WarTechIIC {
                 return;
             }
 
-            WIIC.modLog.Debug?.Write($"Saving {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
+            WIIC.l.Log($"Saving {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
 
             string saves = "";
 
@@ -27,12 +27,12 @@ namespace WarTechIIC {
                     WIIC.sim.GetSystemById(control.Key).Tags.Add(control.Value);
                 }
             } catch (Exception e) {
-                WIIC.modLog.Trace?.Write(saves);
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.Log(saves);
+                WIIC.l.LogException(e);
                 saves = "";
             }
 
-            WIIC.modLog.Trace?.Write(saves);
+            WIIC.l.Log(saves);
         }
     }
 
@@ -43,7 +43,7 @@ namespace WarTechIIC {
                 return;
             }
 
-            WIIC.modLog.Debug?.Write("Clearing extendedContract system tags post-save");
+            WIIC.l.Log("Clearing extendedContract system tags post-save");
 
             try {
                 foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
@@ -56,7 +56,7 @@ namespace WarTechIIC {
                     WIIC.sim.GetSystemById(control.Key).Tags.Remove(control.Value);
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
