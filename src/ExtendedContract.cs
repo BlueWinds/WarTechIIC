@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Localize;
 using BattleTech;
 using BattleTech.Data;
+using BattleTech.StringInterpolation;
 using BattleTech.UI;
 using ColourfulFlashPoints.Data;
 
@@ -142,7 +143,7 @@ namespace WarTechIIC {
             if (currentEntry == null) {
                 WIIC.l.Log($"Day {currentDay} of {type}, nothing happening.");
             } else {
-                WIIC.l.Log($"Day {currentDay} of {type}, running {currentEntry}.");
+                WIIC.l.Log($"Day {currentDay} of {type}, running {extendedType.schedule[currentDay ?? 0]}.");
                 runEntry(currentEntry);
             }
 
@@ -221,17 +222,41 @@ namespace WarTechIIC {
                 }
             }
 
-            if (entry.rewardByDifficulty.Keys.Count > 1) {
-                int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-                WIIC.l.Log($"Considering rewardByDifficulty on day {currentDay} of {type}. System difficulty is {diff}");
-                string itemCollection = null;
-                for (int i = 0; i <= diff; i++) {
-                    if (entry.rewardByDifficulty.ContainsKey(i)) { itemCollection = entry.rewardByDifficulty[i]; }
-                }
+            if (!String.IsNullOrEmpty(entry.popupMessage)) {
+                WIIC.l.Log($"Running popupMessage on day {currentDay} of {type}.");
+                GameContext context = new GameContext(WIIC.sim.Context);
+                context.SetObject(GameContextObjectTagEnum.TeamEmployer, employer);
+                context.SetObject(GameContextObjectTagEnum.TeamTarget, target);
+                string title = Interpolator.Interpolate(String.IsNullOrEmpty(entry.popupTitle) ? type : entry.popupTitle, context);
+                WIIC.l.Log($"    {title}");
+                string message = Interpolator.Interpolate(entry.popupMessage, context);
+                WIIC.l.Log($"    {message}");
 
-                WIIC.l.Log($"rewardByDifficulty chose {itemCollection}.");
-                Utilities.giveReward(itemCollection);
+                SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
+                queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
+                    try {
+                        WIIC.l.Log($"popupMessage button clicked.");
+                        giveRewardByDifficulty(entry);
+                    } catch (Exception e) {
+                        WIIC.l.LogException(e);
+                    }
+                });
+                return;
             }
+
+            giveRewardByDifficulty(entry);
+        }
+
+        public void giveRewardByDifficulty(Entry entry) {
+            int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+            WIIC.l.Log($"Considering rewardByDifficulty on day {currentDay} of {type}. System difficulty is {diff}");
+            string itemCollection = null;
+            for (int i = 0; i <= diff; i++) {
+                if (entry.rewardByDifficulty.ContainsKey(i)) { itemCollection = entry.rewardByDifficulty[i]; }
+            }
+
+            WIIC.l.Log($"rewardByDifficulty chose {itemCollection}.");
+            Utilities.giveReward(itemCollection);
         }
 
         public virtual void spawnParticipationContracts() {
