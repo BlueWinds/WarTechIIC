@@ -97,7 +97,7 @@ namespace WarTechIIC {
 
         public void runEntry() {
             CampaignEntry e = currentEntry;
-            WIIC.modLog.Info?.Write($"{campaign}: Running nodes[{node}][{nodeIndex}]: {e}");
+            WIIC.l.Log($"{campaign}: Running nodes[{node}][{nodeIndex}]: {e}");
 
             if (e == null) {
                 throw new Exception("Ran into null currentEntry. This should be impossible.");
@@ -105,19 +105,19 @@ namespace WarTechIIC {
 
 
             if (e.@if != null && !e.@if.check()) {
-                WIIC.modLog.Info?.Write($"    \"if\" failed. Continuing to next entry in {node}.");
+                WIIC.l.Log($"    \"if\" failed. Continuing to next entry in {node}.");
                 entryComplete();
                 return;
             }
 
             if (e.@goto != null) {
                 if (e.@goto == "Exit") {
-                    WIIC.modLog.Info?.Write($"goto Exit. Campaign complete!");
+                    WIIC.l.Log($"goto Exit. Campaign complete!");
                     WIIC.activeCampaigns.Remove(location);
                     return;
                 }
 
-                WIIC.modLog.Info?.Write($"goto {e.@goto}. Starting new node.");
+                WIIC.l.Log($"goto {e.@goto}. Starting new node.");
                 node = e.@goto;
                 nodeIndex = -1;
                 entryComplete();

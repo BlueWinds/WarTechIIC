@@ -10,10 +10,10 @@ namespace WarTechIIC {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.modLog.Debug?.Write($"SGContractsListItem_setMode_Patch extendedContract={extendedContract}");
+                WIIC.l.Log($"SGContractsListItem_setMode_Patch extendedContract={extendedContract}");
 
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts) {
-                    WIIC.modLog.Debug?.Write($"Blocking contract because blockOtherContracts=true");
+                    WIIC.l.Log($"Blocking contract because blockOtherContracts=true");
 
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
                     __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj));
@@ -23,7 +23,7 @@ namespace WarTechIIC {
                     return false;
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
 
             return true;
@@ -43,13 +43,13 @@ namespace WarTechIIC {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.modLog.Debug?.Write($"SGContractsListItem_OnClicked_Patch extendedContract={extendedContract}");
+                WIIC.l.Log($"SGContractsListItem_OnClicked_Patch extendedContract={extendedContract}");
 
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
                     return false;
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
 
             return true;

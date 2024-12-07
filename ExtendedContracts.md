@@ -85,7 +85,10 @@ The first entry occurs immediately upon accepting the extended contract - it's "
       - `BadFaith`: Reputation penalty as if they'd performed a bad-faith withdrawal.
       - `BreakContract`: Declining this mission terminates the Extended Contract as if the player had flown away.
     - If the contract is accepted and completed, then if `postContractEvent` is defined, this event will *replace the contract objectives* on the after action report screen.
-  - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that. If the player is given a lootbox, no contract will be generated.
+  - If no contract triggered, then any `popupMessage` will display. This is a "system alert", similar to the way ECs / flareups offer contracts (though there's only one button, "Continue", rather than accept / decline. The string will be mad-libbed; you can use `COMPANY`, `COMANDER`, `TGT_SYSTEM`, `TEAM_EMP` and `TEAM_TARGET` to fill in text.
+    - `popupTitle` will be used if present, otherwise WIIC will use the name of the extended contract type for a title.
+    - Sumire is always the one speaking. Sorry, being lazy right now and I like her.
+  - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that.
   - `invokeMethod` is developer-only, and its usage requires writing C# code. An explanation is beyond the scope of this documentation; ask BlueWinds on the BTA discord or read the code.
 
 ## Generating Extended Contracts

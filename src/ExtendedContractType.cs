@@ -35,6 +35,8 @@ namespace WarTechIIC {
         public double contractPayoutMultiplier = 1;
         public int contractBonusSalvage = 0;
         public string contractMessage;
+        public string popupTitle;
+        public string popupMessage;
         public Dictionary<int, string> rewardByDifficulty = new Dictionary<int, string>();
         public string invokeMethod;
         public string workOrder;

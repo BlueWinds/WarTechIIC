@@ -11,7 +11,7 @@ namespace WarTechIIC {
         private static bool Prefix(SGNavigationScreen __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.modLog.Warn?.Write($"OnTravelCourseAccepted. extendedContract: {extendedContract}, ActiveTravelContract: {WIIC.sim.ActiveTravelContract}");
+                WIIC.l.Log($"OnTravelCourseAccepted. extendedContract: {extendedContract}, ActiveTravelContract: {WIIC.sim.ActiveTravelContract}");
                 if (extendedContract == null) {
                     return true;
                 }
@@ -25,13 +25,13 @@ namespace WarTechIIC {
                 string primaryButtonText = Strings.T("Break Contract");
                 string cancel = Strings.T("Cancel");
                 string message = Strings.T("Leaving {0} will break our current contract. Our reputation with {1} and the MRB will suffer, Commander.", extendedContract.location.Name, extendedContract.employer.FactionDef.ShortName);
-                WIIC.modLog.Info?.Write(message);
+                WIIC.l.Log(message);
                 PauseNotification.Show(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
                     try {
-                        WIIC.modLog.Info?.Write("Breaking {extendedContract.type.Name} contract");
+                        WIIC.l.Log("Breaking {extendedContract.type.Name} contract");
 
                         ExtendedContract extendedContract2 = Utilities.currentExtendedContract();
-                        WIIC.modLog.Info?.Write("ExtendedContract: {extendedContract2}");
+                        WIIC.l.Log("ExtendedContract: {extendedContract2}");
 
 
                         if (extendedContract2 != null) {
@@ -43,7 +43,7 @@ namespace WarTechIIC {
 
                         cleanup();
                     } catch (Exception e) {
-                        WIIC.modLog.Error?.Write(e);
+                        WIIC.l.LogException(e);
                     }
                 }, primaryButtonText, cleanup, cancel);
 
@@ -55,7 +55,7 @@ namespace WarTechIIC {
                 );
                 return false;
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
                 return true;
             }
         }

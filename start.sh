@@ -1,3 +1,4 @@
 #!/bin/bash
 
-../game/run.sh
+cd ../game
+./run.sh

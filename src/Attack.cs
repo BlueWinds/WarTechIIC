@@ -43,7 +43,7 @@ namespace WarTechIIC {
             int v;
             attackerStrength = s.attackStrength.TryGetValue(employer.Name, out v) ? v : s.defaultAttackStrength;
             defenderStrength = s.defenseStrength.TryGetValue(target.Name, out v) ? v : s.defaultDefenseStrength;
-            WIIC.modLog.Debug?.Write($"{type} at {location.Name} - initial attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
+            WIIC.l.Log($"{type} at {location.Name} - initial attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
 
             foreach (string tag in s.addStrengthTags.Keys) {
                 if (location.Tags.Contains(tag)) {
@@ -52,19 +52,19 @@ namespace WarTechIIC {
                 }
             }
 
-            WIIC.modLog.Debug?.Write($"    After tags: attackerStrength - {attackerStrength}, defenderStrength: {defenderStrength}");
+            WIIC.l.Log($"    After tags: attackerStrength - {attackerStrength}, defenderStrength: {defenderStrength}");
 
             attackerStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
             defenderStrength += Utilities.rng.Next(-s.strengthVariation, s.strengthVariation);
 
-            WIIC.modLog.Debug?.Write($"    After randomness - attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
+            WIIC.l.Log($"    After randomness - attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
 
             string stat = $"WIIC_{employer.Name}_attack_strength";
             attackerStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
             stat = $"WIIC_{target.Name}_defense_strength";
             defenderStrength += WIIC.sim.CompanyStats.ContainsStatistic(stat) ? WIIC.sim.CompanyStats.GetValue<int>(stat) : 0;
 
-            WIIC.modLog.Debug?.Write($"    After company stats - attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
+            WIIC.l.Log($"    After company stats - attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
         }
 
         // Attacks loop over their schedule, so possible that currentDay > schedule.Length
@@ -141,16 +141,16 @@ namespace WarTechIIC {
         }
 
         public void flareupForceLoss() {
-            WIIC.modLog.Debug?.Write($"{type} progressing at {location.Name}. attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
+            WIIC.l.Log($"{type} progressing at {location.Name}. attackerStrength: {attackerStrength}, defenderStrength: {defenderStrength}");
 
             Settings s = WIIC.settings;
             double rand = Utilities.rng.NextDouble();
             if (rand > 0.5) {
                 attackerStrength -= Utilities.rng.Next(s.combatForceLossMin, s.combatForceLossMax);
-                WIIC.modLog.Debug?.Write($"    attackerStrength changed to {attackerStrength}");
+                WIIC.l.Log($"    attackerStrength changed to {attackerStrength}");
             } else {
                 defenderStrength -= Utilities.rng.Next(s.combatForceLossMin, s.combatForceLossMax);
-                WIIC.modLog.Debug?.Write($"    defenderStrength changed to {defenderStrength}");
+                WIIC.l.Log($"    defenderStrength changed to {defenderStrength}");
             }
 
         }
@@ -208,7 +208,7 @@ namespace WarTechIIC {
             // Because shortnames can start with a lowercase 'the' ("the Aurigan Coalition", for example), we have to fix the capitalization or the result can look weird.
             text = text.Replace(". the ", ". The ");
             text = char.ToUpper(text[0]) + text.Substring(1);
-            WIIC.modLog.Info?.Write(text);
+            WIIC.l.Log(text);
 
             // At the current location, an attack gets a popup - whether or not the player was involved, it's important.
             if (WIIC.sim.CurSystem == location) {
@@ -245,8 +245,8 @@ namespace WarTechIIC {
                     FactionValue giveTo = string.IsNullOrEmpty(giveOnWin) ? attacker : Utilities.getFactionValueByFactionID(giveOnWin);
                     Utilities.applyOwner(location, giveTo, true);
                 } catch (Exception e) {
-                    WIIC.modLog.Error?.Write($"Tried to apply owner after attack, but got an error. giveOnWin={giveOnWin}");
-                    WIIC.modLog.Error?.Write(e);
+                    WIIC.l.LogError($"Tried to apply owner after attack, but got an error. giveOnWin={giveOnWin}");
+                    WIIC.l.LogException(e);
                 }
             }
         }
@@ -277,10 +277,10 @@ namespace WarTechIIC {
         public override void applyDeclinePenalty(DeclinePenalty declinePenalty) {
             if (employer == attacker) {
                 attackerStrength -= currentContractForceLoss ?? 0;
-                WIIC.modLog.Debug?.Write($"defenderStrength -= {currentContractForceLoss}");
+                WIIC.l.Log($"defenderStrength -= {currentContractForceLoss}");
             } else {
                 defenderStrength -= currentContractForceLoss ?? 0;
-                WIIC.modLog.Debug?.Write($"attackerStrength -= {currentContractForceLoss}");
+                WIIC.l.Log($"attackerStrength -= {currentContractForceLoss}");
             }
 
             base.applyDeclinePenalty(declinePenalty);
@@ -319,7 +319,7 @@ namespace WarTechIIC {
                 WIIC.sim.CompanyTags.Remove("WIIC_helping_defender");
             }
 
-            WIIC.modLog.Debug?.Write($"fixOldEmployer: workingHere {workingHere}, workingForDefender {workingForDefender ?? false}, attacker {attacker}, systemOwner {systemOwner}");
+            WIIC.l.Log($"fixOldEmployer: workingHere {workingHere}, workingForDefender {workingForDefender ?? false}, attacker {attacker}, systemOwner {systemOwner}");
             employerName = workingForDefender == true ? systemOwner : attacker;
             targetName = workingForDefender == true ? attacker : systemOwner;
         }

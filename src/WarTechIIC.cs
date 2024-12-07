@@ -4,16 +4,16 @@ using System.Reflection;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Harmony;
-using IRBTModUtils.Logging;
 using BattleTech;
 using YamlDotNet.Serialization;
+using HBS.Logging;
 
 namespace WarTechIIC {
     public class WIIC {
         public static Dictionary<string, ExtendedContractType> extendedContractTypes = new Dictionary<string, ExtendedContractType>();
         internal static Dictionary<string, ExtendedContract> extendedContracts = new Dictionary<string, ExtendedContract>();
 
-        internal static DeferringLogger modLog;
+        internal static ILog l;
         internal static string modDir;
         internal static Settings settings;
         internal static Dictionary<string, string> systemControl = new Dictionary<string, string>();
@@ -39,14 +39,14 @@ namespace WarTechIIC {
                     string jdata = reader.ReadToEnd();
                     campaignSettings = JsonConvert.DeserializeObject<CampaignSettings>(jdata);
                 }
-                modLog = new DeferringLogger(modDirectory, "WarTechIIC", "WIIC", settings.debug, settings.trace);
-                modLog.Debug?.Write($"Loaded settings from {modDir}/settings.json and campaignSettings.json");
+                l = Logger.GetLogger("WartechIIC");
+                l.Log($"Loaded settings from {modDir}/settings.json and campaignSettings.json");
             }
 
             catch (Exception e) {
                 settings = new Settings();
-                modLog = new DeferringLogger(modDir, "WarTechIIC", "WIIC", true, true);
-                modLog.Error?.Write(e);
+                l = Logger.GetLogger("WartechIIC");
+                l.LogException(e);
             }
 
             var harmony = HarmonyInstance.Create("blue.winds.WarTechIIC");
@@ -56,7 +56,7 @@ namespace WarTechIIC {
         public static void FinishedLoading(Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources) {
             if (customResources != null && customResources.ContainsKey("ExtendedContractType")) {
                 foreach (VersionManifestEntry entry in customResources["ExtendedContractType"].Values) {
-                    WIIC.modLog.Info?.Write($"Loading ExtendedContractType from {entry.FilePath}.");
+                    l.Log($"Loading ExtendedContractType from {entry.FilePath}.");
                     try {
                         string jdata;
                         using (StreamReader reader = new StreamReader(entry.FilePath)) {
@@ -66,7 +66,7 @@ namespace WarTechIIC {
                         ect.validate();
                         extendedContractTypes[ect.name] = ect;
                     } catch (Exception e) {
-                        WIIC.modLog.Error?.Write(e);
+                        l.LogException(e);
                     }
                 }
             }
@@ -75,7 +75,7 @@ namespace WarTechIIC {
 
             if (customResources != null && customResources.ContainsKey("Campaign")) {
                 foreach (VersionManifestEntry entry in customResources["Campaign"].Values) {
-                    WIIC.modLog.Info?.Write($"Loading Campaign from {entry.FilePath}.");
+                    WIIC.l.Log($"Loading Campaign from {entry.FilePath}.");
                     try {
                         string yaml;
                         using (StreamReader reader = new StreamReader(entry.FilePath)) {
@@ -86,7 +86,7 @@ namespace WarTechIIC {
                         campaign.validate();
                         campaigns[campaign.name] = campaign;
                     } catch (Exception e) {
-                        WIIC.modLog.Error?.Write(e);
+                        WIIC.l.LogException(e);
                     }
                 }
             }

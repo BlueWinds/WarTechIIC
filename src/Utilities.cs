@@ -13,7 +13,7 @@ namespace WarTechIIC {
             try {
                 return WIIC.sim.DataManager.Factions.FirstOrDefault(x => x.Value.FactionValue.Name == id).Value.FactionValue;
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write($"Error getting faction: {id}");
+                WIIC.l.LogError($"Error getting faction: {id}");
                 throw e;
             }
         }
@@ -29,7 +29,7 @@ namespace WarTechIIC {
             }
 
             double rand = totalWeight * rng.NextDouble();
-            WIIC.modLog.Debug?.Write($"WeightedChoice totalWeight: {totalWeight}, rand: {rand}");
+            WIIC.l.Log($"WeightedChoice totalWeight: {totalWeight}, rand: {rand}");
             foreach (KeyValuePair<TKey, double> entry in weights) {
                 rand -= entry.Value;
                 if (rand <= 0) {
@@ -50,7 +50,7 @@ namespace WarTechIIC {
         }
 
         public static void applyOwner(StarSystem system, FactionValue newOwner, bool refresh) {
-            WIIC.modLog.Trace?.Write($"Flipping control of {system.Name} to {newOwner.Name}");
+            WIIC.l.Log($"Flipping control of {system.Name} to {newOwner.Name}");
 
             WhoAndWhere.clearLocationCache();
 
@@ -99,7 +99,7 @@ namespace WarTechIIC {
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     return WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
                 }
-                WIIC.modLog.Warn?.Write($"Found company tag indicating extended contract participation, but no matching contract for {WIIC.sim.CurSystem.ID}");
+                WIIC.l.LogError($"Found company tag indicating extended contract participation, but no matching contract for {WIIC.sim.CurSystem.ID}");
                 WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
             }
 
@@ -131,18 +131,18 @@ namespace WarTechIIC {
 
         public static void cleanupSystem(StarSystem system) {
             if (WIIC.extendedContracts.ContainsKey(system.ID)) {
-                WIIC.modLog.Debug?.Write($"Removing ExtendedContract at {system.ID}");
+                WIIC.l.Log($"Removing ExtendedContract at {system.ID}");
                 WIIC.extendedContracts.Remove(system.ID);
             }
 
             if (system == WIIC.sim.CurSystem) {
-                WIIC.modLog.Debug?.Write($"Player was participating in flareup at {system.ID}; Removing company tags");
+                WIIC.l.Log($"Player was participating in flareup at {system.ID}; Removing company tags");
                 WIIC.sim.CompanyTags.Remove("WIIC_extended_contract");
             }
 
             // Revert system description to the default
             if (WIIC.fluffDescriptions.ContainsKey(system.ID)) {
-                WIIC.modLog.Debug?.Write($"Reverting map description for {system.ID}");
+                WIIC.l.Log($"Reverting map description for {system.ID}");
                 system.Def.Description.Details = WIIC.fluffDescriptions[system.ID];
             }
 
@@ -158,12 +158,12 @@ namespace WarTechIIC {
             // The enum for "ALLIED" is the same as "HONORED". HBS_why.
             // Apparently the player is also allied to the locals? HBS_why_9000
             if (WIIC.sim.IsFactionAlly(faction) && faction.Name != "Locals") {
-                WIIC.modLog.Trace?.Write($"Allied with {faction.Name}, reputationMultiplier is {WIIC.settings.reputationMultiplier["ALLIED"]}");
+                WIIC.l.Log($"Allied with {faction.Name}, reputationMultiplier is {WIIC.settings.reputationMultiplier["ALLIED"]}");
                 return WIIC.settings.reputationMultiplier["ALLIED"];
             }
 
             SimGameReputation reputation = WIIC.sim.GetReputation(faction);
-            WIIC.modLog.Trace?.Write($"{faction.Name} is {reputation.ToString()}, reputationMultiplier is {WIIC.settings.reputationMultiplier[reputation.ToString()]}");
+            WIIC.l.Log($"{faction.Name} is {reputation.ToString()}, reputationMultiplier is {WIIC.settings.reputationMultiplier[reputation.ToString()]}");
             return WIIC.settings.reputationMultiplier[reputation.ToString()];
         }
 
@@ -187,7 +187,7 @@ namespace WarTechIIC {
                     SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
                     queue.QueueRewardsPopup(itemCollection);
                 } catch (Exception e) {
-                    WIIC.modLog.Error?.Write(e);
+                    WIIC.l.LogException(e);
                 }
             }
         }

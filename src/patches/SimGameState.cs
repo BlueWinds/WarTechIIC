@@ -18,11 +18,11 @@ namespace WarTechIIC {
         public static void Postfix(SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
-                WIIC.modLog.Debug?.Write("Clearing Extended Contracts for new SimGameState");
+                WIIC.l.Log("Clearing Extended Contracts for new SimGameState");
                 WIIC.extendedContracts.Clear();
                 WIIC.systemControl.Clear();
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -32,7 +32,7 @@ namespace WarTechIIC {
         public static void Postfix(GameInstanceSave gameInstanceSave, SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
-                WIIC.modLog.Info?.Write($"Player currently at {__instance.CurSystem.ID}. Loading Extended Contracts.");
+                WIIC.l.Log($"Player currently at {__instance.CurSystem.ID}. Loading Extended Contracts.");
 
                 WIIC.extendedContracts.Clear();
                 __instance.CompanyTags.Add("WIIC_enabled");
@@ -43,7 +43,7 @@ namespace WarTechIIC {
                         string tag = system.Tags.ToList().Find(ExtendedContract.isSerializedExtendedContract);
                         if (tag != null) {
                             system.Tags.Remove(tag);
-                            WIIC.modLog.Debug?.Write($"    {tag}");
+                            WIIC.l.Log($"    {tag}");
                             ExtendedContract extendedContract = ExtendedContract.Deserialize(tag);
                             WIIC.extendedContracts[system.ID] = extendedContract;
                         }
@@ -54,14 +54,14 @@ namespace WarTechIIC {
                             WIIC.systemControl[system.ID] = tag;
                         }
                     } catch (Exception e) {
-                        WIIC.modLog.Error?.Write(e);
+                        WIIC.l.LogException(e);
                     }
                 }
 
-                WIIC.modLog.Debug?.Write($"Loaded {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
+                WIIC.l.Log($"Loaded {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
                 Utilities.redrawMap();
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -72,20 +72,20 @@ namespace WarTechIIC {
             try {
                 ExtendedContract current = Utilities.currentExtendedContract();
                 if (current == null || String.IsNullOrEmpty(current.currentContractName)) {
-                    WIIC.modLog.Debug?.Write($"_OnAttachUXComplete: No current contract, or current contract not mid-drop. current={current}");
+                    WIIC.l.Log($"_OnAttachUXComplete: No current contract, or current contract not mid-drop. current={current}");
                     return;
                 }
 
                 StarSystem system = WIIC.sim.CurSystem;
                 Contract contract = system.SystemContracts.Find(c => c.Name == current.currentContractName);
                 if (contract == null) {
-                    WIIC.modLog.Error?.Write($"_OnAttachUXComplete: currentContract {current.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.Name}");
+                    WIIC.l.LogError($"_OnAttachUXComplete: currentContract {current.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.Name}");
                 }
 
-                WIIC.modLog.Info?.Write($"_OnAttachUXComplete: Loaded game, launching currentContract {current.currentContractName}.");
+                WIIC.l.Log($"_OnAttachUXComplete: Loaded game, launching currentContract {current.currentContractName}.");
                 current.launchContract(current.currentEntry, contract);
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -135,7 +135,7 @@ namespace WarTechIIC {
 
                 WIIC.sim.RoomManager.RefreshTimeline(false);
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -146,11 +146,11 @@ namespace WarTechIIC {
             try {
                 // If we're in the middle of initializing a new career no need to do anything.
                 if (WIIC.sim != null) {
-                    WIIC.modLog.Info?.Write($"Refreshing contracts in current system at start of month");
+                    WIIC.l.Log($"Refreshing contracts in current system at start of month");
                     WIIC.sim.CurSystem.ResetContracts();
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -162,21 +162,21 @@ namespace WarTechIIC {
             try {
                 __state = __instance.ActiveTravelContract.Override.ID;
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
 
         public static void Postfix(SimGameState __instance, string __state) {
             try {
                 if (String.IsNullOrEmpty(__state)) {
-                    WIIC.modLog.Debug?.Write($"Breadcrumb complete, not a travel contract.");
+                    WIIC.l.Log($"Breadcrumb complete, not a travel contract.");
                     return;
                 }
 
-                WIIC.modLog.Debug?.Write($"Breadcrumb complete {WIIC.sim.CurSystem.ID} - {__state}. GetType={__state.GetType()}");
+                WIIC.l.Log($"Breadcrumb complete {WIIC.sim.CurSystem.ID} - {__state}. GetType={__state.GetType()}");
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
                     ExtendedContract extendedContract = WIIC.extendedContracts[WIIC.sim.CurSystem.ID];
-                    WIIC.modLog.Debug?.Write($"Type: {extendedContract.extendedType.name}, looking for {extendedContract.extendedType.hireContract}{(String.IsNullOrEmpty(extendedContract.extendedType.targetHireContract) ? "" : (" or " + extendedContract.extendedType.targetHireContract))}");
+                    WIIC.l.Log($"Type: {extendedContract.extendedType.name}, looking for {extendedContract.extendedType.hireContract}{(String.IsNullOrEmpty(extendedContract.extendedType.targetHireContract) ? "" : (" or " + extendedContract.extendedType.targetHireContract))}");
                     if (__state == extendedContract.extendedType.hireContract || __state == extendedContract.extendedType.targetHireContract) {
                         extendedContract.acceptContract(__state);
 
@@ -185,7 +185,7 @@ namespace WarTechIIC {
                     }
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -195,7 +195,7 @@ namespace WarTechIIC {
         [HarmonyPrefix]
         public static void SetCurrentSystemPrefix(StarSystem system, bool force = false, bool timeSkip = false) {
             try {
-                WIIC.modLog.Debug?.Write($"Entering system {system.ID} from {WIIC.sim.CurSystem.ID}");
+                WIIC.l.Log($"Entering system {system.ID} from {WIIC.sim.CurSystem.ID}");
 
                 WhoAndWhere.clearLocationCache();
                 if (WIIC.extendedContracts.ContainsKey(WIIC.sim.CurSystem.ID)) {
@@ -206,7 +206,7 @@ namespace WarTechIIC {
                     WIIC.extendedContracts[system.ID].onEnterSystem();
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -216,13 +216,13 @@ namespace WarTechIIC {
         public static void Postfix() {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.modLog.Debug?.Write($"CompleteLanceConfigurationPrep. selectedContract: {WIIC.sim.SelectedContract.Name}, currentContractName: {(extendedContract != null ? extendedContract.currentContractName : null)}");
+                WIIC.l.Log($"CompleteLanceConfigurationPrep. selectedContract: {WIIC.sim.SelectedContract.Name}, currentContractName: {(extendedContract != null ? extendedContract.currentContractName : null)}");
                 if (extendedContract != null && WIIC.sim.SelectedContract.Name == extendedContract.currentContractName) {
-                    WIIC.modLog.Debug?.Write($"Hiding nav drawer from CompleteLanceConfigurationPrep.");
+                    WIIC.l.Log($"Hiding nav drawer from CompleteLanceConfigurationPrep.");
                     WIIC.sim.RoomManager.LeftDrawerWidget.Visible = false;
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -233,11 +233,11 @@ namespace WarTechIIC {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && c.Name != extendedContract.currentContractName) {
-                    WIIC.modLog.Debug?.Write($"Marking as insufficent reputation because blockOtherContracts");
+                    WIIC.l.Log($"Marking as insufficent reputation because blockOtherContracts");
                     __result = false;
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
@@ -247,12 +247,12 @@ namespace WarTechIIC {
     public static class SGContractsWidget_OnContractAccepted_Patch {
         public static bool Prefix(SGContractsWidget __instance, bool skipCombat) {
             try {
-                WIIC.modLog.Debug?.Write($"OnContractAccepted Prefix - Blocking CU's prefix, because it is breaking things for some users? If you understand the purpose of CustomUnits.SGContractsWidget_OnContractAccepted, reach out to BloodyDoves or BlueWinds.");
+                WIIC.l.Log($"OnContractAccepted Prefix - Blocking CU's prefix, because it is breaking things for some users? If you understand the purpose of CustomUnits.SGContractsWidget_OnContractAccepted, reach out to BloodyDoves or BlueWinds.");
                 originalImplementation(__instance, skipCombat);
 
                 return false;
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
 
             return true;
@@ -295,7 +295,7 @@ namespace WarTechIIC {
                     return __result == null;
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
 
             return true;
@@ -314,7 +314,7 @@ namespace WarTechIIC {
                 ActiveCampaign ac = WIIC.activeCampaigns[__instance.CurSystem.ID];
                 ac.fakeFlashpointComplete();
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
 
             return false;

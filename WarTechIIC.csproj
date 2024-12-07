@@ -34,9 +34,6 @@
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
 
-    <Reference Include="IRBTModUtils">
-      <HintPath>$(BattleTechGameDir)/Mods/IRBTModUtils/IRBTModUtils.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml" /><Reference Include="ColourfulFlashpoints">
       <HintPath>$(BattleTechGameDir)/Mods/ColourfulFlashpoints/ColourfulFlashPoints.dll</HintPath>
     </Reference>

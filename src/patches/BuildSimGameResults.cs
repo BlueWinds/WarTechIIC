@@ -22,7 +22,7 @@ namespace WarTechIIC {
                 }
 
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
 
             WIIC.eventResultsCache.Clear();

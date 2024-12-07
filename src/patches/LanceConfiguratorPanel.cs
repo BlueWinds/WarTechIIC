@@ -8,13 +8,13 @@ namespace WarTechIIC {
         public static bool Prefix(SGCmdCenterLanceConfigBG __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.modLog.Debug?.Write($"LanceConfiguratorPanel.OnCancelClicked. selectedContract: {WIIC.sim.SelectedContract.Name}, extendedContract: {extendedContract}");
+                WIIC.l.Log($"LanceConfiguratorPanel.OnCancelClicked. selectedContract: {WIIC.sim.SelectedContract.Name}, extendedContract: {extendedContract}");
                 if (extendedContract != null && WIIC.sim.SelectedContract.Name == extendedContract.currentContractName) {
                     return false;
                 }
             }
             catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
             return true;
         }

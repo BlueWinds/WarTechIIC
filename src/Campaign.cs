@@ -27,12 +27,12 @@ namespace WarTechIIC {
 
         public bool check() {
             if (!String.IsNullOrEmpty(companyHasTag) && !WIIC.sim.CompanyTags.Contains(companyHasTag)) {
-                WIIC.modLog.Info?.Write($"    Company does not have {companyHasTag}, which is required");
+                WIIC.l.Log($"    Company does not have {companyHasTag}, which is required");
                 return false;
             }
 
             if (!String.IsNullOrEmpty(companyDoesNotHaveTag) && WIIC.sim.CompanyTags.Contains(companyDoesNotHaveTag)) {
-                WIIC.modLog.Info?.Write($"    Company has {companyHasTag}, which is not allowed");
+                WIIC.l.Log($"    Company has {companyHasTag}, which is not allowed");
                 return false;
             }
 

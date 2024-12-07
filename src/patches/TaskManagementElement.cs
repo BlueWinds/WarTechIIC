@@ -12,11 +12,11 @@ namespace WarTechIIC {
                 var entry = __instance.entry;
                 if (entry.Type == WorkOrderType.NotificationGeneric && (entry.ID == "extendedContractComplete" || entry.ID == "extendedContractExtra")) {
                     var extended = Utilities.currentExtendedContract();
-                    WIIC.modLog.Trace?.Write($"TaskManagementElement_UpdateTaskInfo_Patch setting icon to {extended.employer.FactionDef.Name}");
+                    WIIC.l.Log($"TaskManagementElement_UpdateTaskInfo_Patch setting icon to {extended.employer.FactionDef.Name}");
                     __instance.SetIcon(extended.employer.FactionDef.GetSprite());
                 }
             } catch (Exception e) {
-                WIIC.modLog.Error?.Write(e);
+                WIIC.l.LogException(e);
             }
         }
     }
