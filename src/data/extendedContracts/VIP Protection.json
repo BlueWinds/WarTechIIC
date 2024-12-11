@@ -58,7 +58,8 @@
 			"contractMessage": "The VIP's negoatiations here are finished, it's time to get them to their ship so they can evac off this rock."
 		},
 		"PaymentDelivered": {
-			"workOrder": "Payment For a Job Well Done",
+			"popupTitle": "The VIP Sends Their Regards",
+			"popupMessage": "The {TEAM_EMP.FactionDef.ShortName} VIP has sent us a care package along with our payment, Commander. They are pretty happy we were there to protect them during their mission and even snuck a bottle of Terran brandy in with the payment for the command staff! We'll have to crack that open at our next poker night, Commander",
 			"rewardByDifficulty": {
 				"2": "BTA_standard_Minor_Loot_EC",
 				"5": "BTA_standard_Major_Loot_EC",
