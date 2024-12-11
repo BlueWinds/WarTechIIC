@@ -47,9 +47,25 @@ namespace WarTechIIC {
             if (String.IsNullOrEmpty(id)) {
                 throw new Exception($"VALIDATION: {path} must have an \"id\". THE CAMPAIGN WILL NOT WORK.");
             }
-            if (MetadataDatabase.Instance.GetEventDef(id) == null) {
+
+            EventDef_MDD eventDefMDD = MetadataDatabase.Instance.GetEventDef(id);
+            if (eventDefMDD == null) {
                 throw new Exception($"VALIDATION: {path}.id \"{id}\" does not seem to exist. THE CAMPAIGN WILL NOT WORK.");
             }
+
+            EventScope scope = eventDefMDD.EventScopeEntry.EventScope;
+            if (scope != EventScope.Company && scope != EventScope.Commander) {
+                throw new Exception($"VALIDATION: {path}.id has scope \"{scope}\". Only Company and Commander events are supported. THE CAMPAIGN WILL NOT WORK.");
+            }
+        }
+
+        public void run() {
+            WIIC.sim.DataManager.SimGameEventDefs.TryGet(id, out SimGameEventDef eventDef);
+
+            SimGameEventTracker eventTracker = new SimGameEventTracker();
+            eventTracker.Init(new[] { eventDef.Scope }, 0, 0, SimGameEventDef.SimEventType.NORMAL, WIIC.sim);
+
+            WIIC.sim.GetInterruptQueue().QueueEventPopup(eventDef, eventDef.Scope, eventTracker);
         }
     }
 
@@ -72,32 +88,28 @@ namespace WarTechIIC {
             }
         }
 
-        private Flashpoint _fp;
         public Flashpoint toFlashpoint() {
-            if (_fp != null) {
-                return _fp;
-            }
-
-            _fp = new Flashpoint();
-            _fp.GUID = "CampaignFakeFlashpoint";
-            _fp.employerID = employer;
-            _fp.CurStatus = Flashpoint.Status.WAITING_FOR_DATA;
-            _fp.Def = new FlashpointDef();
-            _fp.Def.Description = new BaseDescriptionDef(name, name, description, "uixTxrSpot_campaignOutcomeVictory");
-            _fp.Def.Difficulty = difficulty;
-            _fp.Def.FlashpointDescriberCastDefId = employerPortrait;
-            _fp.Def.FlashpointLength = FlashpointDef.EngagementLength.CAMPAIGN;
-            _fp.Def.FlashpointShortDescription = description;
-            _fp.Def.InternalName = name;
+            Flashpoint fp = new Flashpoint();
+            fp.GUID = "CampaignFakeFlashpoint";
+            fp.employerID = employer;
+            fp.CurStatus = Flashpoint.Status.WAITING_FOR_DATA;
+            fp.CurSystem = WIIC.sim.GetSystemById(at);
+            fp.Def = new FlashpointDef();
+            fp.Def.Description = new BaseDescriptionDef(name, name, description, "uixTxrSpot_campaignOutcomeVictory");
+            fp.Def.Difficulty = difficulty;
+            fp.Def.FlashpointDescriberCastDefId = employerPortrait;
+            fp.Def.FlashpointLength = FlashpointDef.EngagementLength.CAMPAIGN;
+            fp.Def.FlashpointShortDescription = description;
+            fp.Def.InternalName = name;
 
             LoadRequest request = WIIC.sim.DataManager.CreateLoadRequest();
             request.AddLoadRequest<CastDef>(BattleTechResourceType.CastDef, employerPortrait, (string id, CastDef castDef) => {
-                _fp.FlashpointDescriberCastDef = castDef;
-                _fp.CurStatus = Flashpoint.Status.AVAILABLE;
+                fp.FlashpointDescriberCastDef = castDef;
+                fp.CurStatus = Flashpoint.Status.AVAILABLE;
             });
             request.ProcessRequests();
 
-            return _fp;
+            return fp;
         }
     }
 
@@ -108,6 +120,7 @@ namespace WarTechIIC {
         public string at;
         public string onFailGoto;
         public bool blockOtherContracts = false;
+        public int expiresAfter = 0;
         public string postContractEvent;
 
         public void validate(string path, CampaignNodes nodes) {
@@ -121,6 +134,10 @@ namespace WarTechIIC {
 
             if (onFailGoto != "Exit" && !nodes.ContainsKey(onFailGoto)) {
                 throw new Exception($"VALIDATION: {path}.onFailGoto must point to another node or be \"Exit\"; \"{onFailGoto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
+            }
+
+            if (expiresAfter < 0) {
+                throw new Exception($"VALIDATION: {path}.expiresAfter is {expiresAfter}, and must be >= 0. THE CAMPAIGN WILL NOT WORK.");
             }
 
             if (postContractEvent != null && MetadataDatabase.Instance.GetEventDef(id) == null) {
@@ -146,7 +163,7 @@ namespace WarTechIIC {
         public string @goto;
         public CampaignEvent @event;
         public string video;
-        public string lootbox;
+        public string reward;
         public CampaignFakeFlashpoint fakeFlashpoint;
         public CampaignContract contract;
         public CampaignConversation conversation;
@@ -156,13 +173,13 @@ namespace WarTechIIC {
             count += @goto == null ? 0 : 1;
             count += @event == null ? 0 : 1;
             count += video == null ? 0 : 1;
-            count += lootbox == null ? 0 : 1;
+            count += reward == null ? 0 : 1;
             count += fakeFlashpoint == null ? 0 : 1;
             count += contract == null ? 0 : 1;
             count += conversation == null ? 0 : 1;
 
             if (count != 1) {
-                throw new Exception($"VALIDATION: {path} must have exactly one of [goto, event, video, lootbox, fakeFlashpoint, contract]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have exactly one of [goto, event, video, reward, fakeFlashpoint, contract]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
             }
             if (@goto != null && @goto != "Exit" && !nodes.ContainsKey(@goto)) {
                 throw new Exception($"VALIDATION: {path}.goto must point to another node or be \"Exit\"; \"{@goto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");

@@ -7,7 +7,7 @@ using Localize;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SGNavigationScreen), "OnTravelCourseAccepted")]
-    public static class SGNavigationScreen_OnTravelCourseAcceptedPatch {
+    public static class SGNavigationScreen_OnTravelCourseAccepted_patch {
         private static bool Prefix(SGNavigationScreen __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
@@ -57,6 +57,23 @@ namespace WarTechIIC {
             } catch (Exception e) {
                 WIIC.l.LogException(e);
                 return true;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(SGNavigationScreen), "ShowFlashpointSystems")]
+    public static class SGNavigationScreen_ShowFlashpointSystems_patch {
+        private static void Poostfix(SGNavigationScreen __instance) {
+            try {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Values) {
+                    Flashpoint fp = ac.currentFakeFlashpoint;
+                    if (fp != null) {
+                        WIIC.l.Log("Adding fakeFlashpoint {fp.Def.Description.Name} for {ac.campaign} to {fp.CurrSystem.ID}");
+                        __instance.GetSystemFlashpoint(fp);
+                    }
+                }
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
             }
         }
     }

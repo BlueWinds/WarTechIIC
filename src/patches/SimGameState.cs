@@ -10,6 +10,7 @@ using BattleTech.Framework;
 using BattleTech.Save;
 using BattleTech.Save.Test;
 using Localize;
+using HBS;
 using HBS.Collections;
 
 namespace WarTechIIC {
@@ -68,22 +69,54 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "_OnAttachUXComplete")]
     public static class SimGameState_OnAttachUXComplete_Patch {
+        public static string lastCompletedContract;
+
         public static void Postfix(SimGameState __instance) {
+            string lastContract = lastCompletedContract;
+            lastCompletedContract = null;
+
             try {
-                ExtendedContract current = Utilities.currentExtendedContract();
-                if (current == null || String.IsNullOrEmpty(current.currentContractName)) {
-                    WIIC.l.Log($"_OnAttachUXComplete: No current contract, or current contract not mid-drop. current={current}");
+                StarSystem system = WIIC.sim.CurSystem;
+                ExtendedContract ec = Utilities.currentExtendedContract();
+
+                ActiveCampaign ac;
+                WIIC.activeCampaigns.TryGetValue(system.ID, out ac);
+                WIIC.l.Log($"_OnAttachUXComplete: Loaded SimGame. system={system.ID} ac={ac?.campaign} ec.type={ec?.type} lastContract={lastContract}");
+
+                if (!String.IsNullOrEmpty(ec?.currentContractName)) {
+                    Contract contract = system.SystemContracts.Find(c => c.Name == ec.currentContractName);
+
+                    if (contract == null) {
+                        WIIC.l.LogError($"    EC currentContract {ec.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.ID}. Something is wrong.");
+                        return;
+                    }
+
+                    WIIC.l.Log($"    Launching EC currentContract {ec.currentContractName}.");
+                    ec.launchContract(ec.currentEntry, contract);
                     return;
                 }
 
-                StarSystem system = WIIC.sim.CurSystem;
-                Contract contract = system.SystemContracts.Find(c => c.Name == current.currentContractName);
-                if (contract == null) {
-                    WIIC.l.LogError($"_OnAttachUXComplete: currentContract {current.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.Name}");
-                }
+                if (ac.currentContract != null) {
+                    if (lastContract == ac.currentContract) {
+                        WIIC.l.LogError($"    ActiveCampaign contract complete; running entryComplete().");
+                        ac.entryComplete();
+                        return;
+                    }
 
-                WIIC.l.Log($"_OnAttachUXComplete: Loaded game, launching currentContract {current.currentContractName}.");
-                current.launchContract(current.currentEntry, contract);
+                    Contract contract = system.SystemContracts.Find(c => c.Name == ac.currentContract);
+                    if (contract == null) {
+                        WIIC.l.LogError($"    AC currentContract {ac.currentContract} was not found among {system.SystemContracts.Count} contracts in {system.ID}. Something is wrong. Rerunning runEntry() to try and fix things; but PLEASE REPORT THIS BUG.");
+                        ac.runEntry();
+                        return;
+                    }
+
+                    if (ac.entryCountdown == 0) {
+                        WIIC.l.LogError($"    ActiveCampaign has currentContract={ac.currentContract}. Forcing player to take contract.");
+                        WIIC.sim.ForceTakeContract(contract, false);
+                    } else {
+                        WIIC.l.LogError($"    ActiveCampaign has currentContract={ac.currentContract}. entryCountdown={ac.entryCountdown}");
+                    }
+                }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
@@ -305,6 +338,7 @@ namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "SetActiveFlashpoint")]
     public static class SimGameState_SetActiveFlashpoint_Patch {
         public static bool Prefix(Flashpoint fp, SimGameState __instance) {
+            WIIC.l.Log($"SimGameState_SetActiveFlashpoint_Patch. fp.GUID={fp.GUID}, CurSystem.ID={__instance.CurSystem.ID}");
             if (fp.GUID != "CampaignFakeFlashpoint") {
                 return true;
             }
@@ -321,5 +355,74 @@ namespace WarTechIIC {
         }
     }
 
-    // TODO: Block SetActiveFlashpoint, accept / progress campaign
+    [HarmonyPatch(typeof(SimGameState), "OnEventDismissed")]
+    public static class SimGameState_OnEventDismissed_Patch {
+        public static void Postfix(SimGameInterruptManager.EventPopupEntry entry) {
+            try {
+                SimGameEventDef eventDef = entry.parameters[0] as SimGameEventDef;
+                string id = eventDef?.Description?.Id;
+                WIIC.l.Log($"SimGameState_OnEventDismissed_Patch: {id} dismissed.");
+
+                if (postContractEvent()) { return; }
+                if (campaignEntryEvent(id)) { return; }
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+        }
+
+        public static bool postContractEvent() {
+            Contract contract = AAR_ContractObjectivesWidget_Init.contract;
+            if (contract == null) {
+                WIIC.l.Log($"    Not a postContractEvent.");
+                return false;
+            }
+
+            WIIC.l.Log($"    postContractEvent {contract.Name} dismissed, proceeding with AAR.");
+
+            // Clear out the module we created, so that it doesn't confuse things when the simgame starts up again
+            SGEventPanel eventPopup = LazySingletonBehavior<UIManager>.Instance.GetOrCreatePopupModule<SGEventPanel>();
+            eventPopup.gameObject.transform.SetParent(AAR_ContractObjectivesWidget_Init.oldParent);
+            eventPopup.gameObject.SetActive(false);
+
+            AAR_ContractResults_Screen screen = AAR_ContractObjectivesWidget_Init.centerPanel.transform.parent.parent.gameObject.GetComponent<AAR_ContractResults_Screen>();
+
+            AAR_ContractObjectivesWidget_Init.centerPanel = null;
+            AAR_ContractObjectivesWidget_Init.contract = null;
+            AAR_ContractObjectivesWidget_Init.oldParent = null;
+
+            screen.missionResultParent.AdvanceAARState();
+            return true;
+        }
+
+        public static bool campaignEntryEvent(string eventId) {
+            ActiveCampaign ac = WIIC.activeCampaigns[WIIC.sim.CurSystem.ID];
+
+            if (ac?.currentEntry?.@event.id != eventId) {
+                WIIC.l.Log($"    Not a campaign event. node={ac?.node} nodeIndex={ac?.nodeIndex} @event={ac?.currentEntry?.@event}");
+                return false;
+            }
+
+            ac.entryComplete();
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(SimGameState), "PlayVideoComplete")]
+    public static class SimGameState_PlayVideoComplete_Patch {
+        public static void Postfix(string videoName) {
+            try {
+                ActiveCampaign ac = WIIC.activeCampaigns[WIIC.sim.CurSystem.ID];
+                WIIC.l.Log($"SimGameState_PlayVideoComplete_Patch: {videoName}. node={ac?.node} nodeIndex={ac?.nodeIndex}");
+
+                if (ac?.currentEntry?.video != videoName) {
+                    WIIC.l.Log($"    Not a campaign video. ac.entry.video={ac?.currentEntry?.video}");
+                    return;
+                }
+
+                ac.entryComplete();
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+        }
+    }
 }

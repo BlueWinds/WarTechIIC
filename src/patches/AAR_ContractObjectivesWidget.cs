@@ -14,8 +14,10 @@ namespace WarTechIIC {
         private static string GUID = "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0";
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 Contract contract = __instance.theContract;
+                SimGameState_OnAttachUXComplete_Patch.lastCompletedContract = contract.Name;
+                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+
                 // Player not working here
                 if (extendedContract == null || extendedContract.currentContractName != contract.Name) {
                     return;
@@ -23,7 +25,6 @@ namespace WarTechIIC {
 
                 Attack attack = extendedContract as Attack;
                 if (attack == null) {
-                    extendedContract.currentContractName = null;
                     return;
                 }
 
@@ -56,7 +57,6 @@ namespace WarTechIIC {
                 }
                 attack.playerDrops += 1;
                 attack.currentContractForceLoss = null;
-                attack.currentContractName = null;
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
@@ -119,38 +119,6 @@ namespace WarTechIIC {
                 eventPopup.gameObject.transform.SetParent(representation.transform);
                 eventPopup.SetEvent(eventDef, eventDef.Scope, eventTracker, entry);
                 eventPopup.gameObject.SetActive(true);
-            } catch (Exception e) {
-                WIIC.l.LogException(e);
-            }
-        }
-    }
-
-
-    [HarmonyPatch(typeof(SimGameState), "OnEventDismissed")]
-    public static class SimGameState_OnEventDismissed_Patch {
-        public static void Postfix(SimGameInterruptManager.EventPopupEntry entry) {
-            try {
-                Contract contract = AAR_ContractObjectivesWidget_Init.contract;
-
-                if (contract == null) {
-                    WIIC.l.Log($"SimGameState_OnEventDismissed_Patch: entry dismissed, is not a postContractEvent. Doing nothing.");
-                    return;
-                }
-
-                WIIC.l.Log($"SimGameState_OnEventDismissed_Patch: entry {contract.Name} dismissed, proceeding with AAR.");
-
-                // Clear out the module we created, so that it doesn't confuse things when the simgame starts up again
-                SGEventPanel eventPopup = LazySingletonBehavior<UIManager>.Instance.GetOrCreatePopupModule<SGEventPanel>();
-                eventPopup.gameObject.transform.SetParent(AAR_ContractObjectivesWidget_Init.oldParent);
-                eventPopup.gameObject.SetActive(false);
-
-                AAR_ContractResults_Screen screen = AAR_ContractObjectivesWidget_Init.centerPanel.transform.parent.parent.gameObject.GetComponent<AAR_ContractResults_Screen>();
-
-                AAR_ContractObjectivesWidget_Init.centerPanel = null;
-                AAR_ContractObjectivesWidget_Init.contract = null;
-                AAR_ContractObjectivesWidget_Init.oldParent = null;
-
-                screen.missionResultParent.AdvanceAARState();
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }

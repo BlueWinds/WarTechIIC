@@ -3,7 +3,7 @@ While the Milestone and Flashpoint systems in the base game are extremely flexib
 
 WIIC provides an alternative format for creating custom campaigns. Campaigns do not map exactly onto any one concept in the base game; they hook into many different places. They:
 - Can trigger events, sim game conversations and play cutscenes
-- Offer rewards (lootboxes) and contracts
+- Offer rewards (rewardes) and contracts
 - Ask the player to fly to different star systems to continue the story
 - Have their own simple language for flow control and conditions
 
@@ -79,7 +79,7 @@ Example:
     - goto: Exit
 ```
 
-`id` is, straightforwardly, and event id.
+`id` is, straightforwardly, an event id. Its requirements are ignored; use an `if` condition instead. Only events with `Company` or `Commander` scope are supported at the moment. If you really want another event scope, ask BlueWinds.
 
 ### `video`
 Play a video cutscene. The next Entry triggers once the video is done playing (or the player skips it).
@@ -91,12 +91,12 @@ Example:
 
 The value is the name of file. You can either use Videos from the base game (`Battletech_Data/Videos/*.bk2`) or a [custom video loaded with ModTek](https://github.com/BattletechModders/ModTek/tree/master?tab=readme-ov-file#custom-types).
 
-### `lootbox`
-Give the player an itemcollection. This pops up a lootbox dialogue. The next Entry triggers once the lootbox is dismissed.
+### `reward`
+Give the player an itemcollection. This pops up a reward dialogue. The next Entry triggers once the reward is dismissed.
 
 Example:
 ```
-  - lootbox: BTA_FP_ThreeRogueItemsA
+  - reward: BTA_FP_ThreeRogueItemsA
 ```
 
 ### `fakeFlashpoint`
@@ -118,7 +118,9 @@ All fields are required, and displayed to the player. `employer` and `target` ne
 `at` can be the current system; this is a fine way to offer the player breakpoints in the action that they can return to later.
 
 ### `contract`
-Offer a contract in the command center. The campaign will be on hold until they complete the drop. If successful, it moves onto the next Entry. If the player fails the mission, we instead `onFailGoto` (exactly as `goto`, explained above).
+Offer a contract in the command center. Its requirements are ignored; use an `if` condition instead. The campaign will be on hold until they complete the drop. If successful, it moves onto the next Entry. If the player fails the mission, or the mission expires, we instead `onFailGoto` (exactly as `goto`, explained above).
+
+While a contract Entry is active, the player cannot leave the star system. Travel is completely blocked.
 
 Example:
 ```
@@ -130,9 +132,12 @@ Example:
 
       blockOtherContracts: true
       postContractEvent: forcedevent_FP_StoryTime3_A
+      expiresAfter: 1
 ```
 
 `id`, `employer`, `target` and `onFailGoto` are required, all others are optional. `blockOtherContracts` defaults to false.
+
+`expiresAfter` is a ticking countdown of days; when it reaches zero (or immediately if it's set to 0), the player is forced into the drop, without a chance to opt out or further delay.
 
 `postContractEvent` deserves some special explanation. If the player succeeds at the mission, the given event *replaces the objectives screen* in the after action report. The event must be `Company` or `StarSystem` scoped; no other scopes are supported.
 
