@@ -1,8 +1,8 @@
 {
   "ID": "wiic_garrison_duty",
   "contractName": "Garrison Duty",
-  "difficulty": 5,
-  "finalDifficulty": 5,
+  "difficulty": 1000,
+  "finalDifficulty": 1000,
   "shortDescription": "We have a contract from {TEAM_EMP.FactionDef.Name} - they would like to hire us to help defend {TGT_SYSTEM.name} over the coming month, to supplement their local forces. They're being tight-lipped about why they need to bring in mercs, but rumors are that {TEAM_TAR.FactionDef.Demonym} forces have been making trouble in the area recently.\n\nThis is an extended contract, will last 12 days, and will prevent us from taking other contracts for the duration.",
   "longDescription": "If we accept this contract we'll be in for the duration, Commander. They're not expecting a hot deployment, but you know how garrison duty can be: long periods of boredom punctuated by bouts of hectic activity.",
   "salvagePotential": 0,

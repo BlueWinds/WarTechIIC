@@ -32,15 +32,16 @@
 		"FieldTesting": {
 			"contractChance": 1,
 			"workOrder": "Testing, Testing",
-			"contract": [ "SimpleBattle_TestDriveEC" ],
+			"contract": [ "ThreeWayBattle_TestDrive_Wildcard_5_NEW", "ThreeWayBattle_TestDrive_Wildcard_8_NEW" ],
 			"declinePenalty": "BreakContract",
 			"ignoreContractRequirements": true,
-			"contractPayoutMultiplier": 1.15,
-			"contractBonusSalvage": -60,
+			"contractPayoutMultiplier": 1.1,
+			"contractBonusSalvage": -15,
 			"contractMessage": "Our employer has lined up another scenario for us to run through. Time to put their new machine to the test."
 		},
 		"PaymentDelivered": {
-			"workOrder": "Thanks For The Testing!",
+			"popupTitle": "Package for Commander {COMMANDER.LastName}",
+			"popupMessage": "Looks like {TEAM_EMP.FactionDef.ShortName} has delivered our payment, Commander {COMMANDER.LastName}. Yang's busily unpacking the supply crates, you'll have a full report shortly.",
 			"rewardByDifficulty": {
 				"2": "BTA_standard_Minor_Loot_EC",
 				"5": "BTA_standard_Major_Loot_EC",

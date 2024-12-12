@@ -260,13 +260,11 @@ namespace WarTechIIC {
         }
 
         public virtual void spawnParticipationContracts() {
-            int diff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-
             if (WIIC.settings.wontHirePlayer.Contains(employer.Name)) {
                 WIIC.l.Log($"Skipping hireContract for {type} at {location.Name} because employer {employer.Name} wontHirePlayer");
             } else {
                 WIIC.l.Log($"Spawning travel hireContract {extendedType.hireContract} at {location.Name} for {type}");
-                ContractManager.addTravelContract(extendedType.hireContract, location, employer, target, diff);
+                ContractManager.addTravelContract(extendedType.hireContract, location, employer, target);
             }
 
             if (extendedType.targetHireContract != null) {
@@ -274,7 +272,7 @@ namespace WarTechIIC {
                     WIIC.l.Log($"Skipping targetHireContract for {type} at {location.Name} because target {target.Name} wontHirePlayer");
                 } else {
                     WIIC.l.Log($"    Also adding {extendedType.targetHireContract} from targetHireContract");
-                    ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer, diff);
+                    ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer);
                 }
             }
         }

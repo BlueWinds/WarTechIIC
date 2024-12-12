@@ -108,8 +108,8 @@ namespace WarTechIIC {
             return contract;
         }
 
-        public static Contract addTravelContract(string contractName, StarSystem location, FactionValue employer, FactionValue target, int difficulty) {
-            WIIC.l.Log($"Adding travel contract {contractName} to {location.ID}. employer: {employer.Name}, target: {target.Name}, difficulty: {difficulty}");
+        public static Contract addTravelContract(string contractName, StarSystem location, FactionValue employer, FactionValue target) {
+            WIIC.l.Log($"Adding travel contract {contractName} to {location.ID}. employer: {employer.Name}, target: {target.Name}");
 
             FactionValue inv = FactionEnumeration.GetInvalidUnsetFactionValue();
 
@@ -122,7 +122,12 @@ namespace WarTechIIC {
             Contract contract = new Contract(null, null, null, contractOverride.ContractTypeValue, WIIC.sim.BattleTechGame, contractOverride, gameContext, fromSim: true, 0);
             WIIC.sim.PrepContract(contract, employer, employer, target, target, inv, inv, Biome.BIOMESKIN.generic, contractOverride.travelSeed, location);
             WIIC.sim.GlobalContracts.Add(contract);
-            contract.SetFinalDifficulty(difficulty);
+
+            if (contract.Difficulty == 1000 || contract.Override?.finalDifficulty == 1000) {
+                int difficulty = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                WIIC.l.Log($"    Contract difficulty was magic value 1000, overriding it with system difficulty {difficulty}");
+                contract.SetFinalDifficulty(difficulty);
+            }
 
             return contract;
         }

@@ -11,25 +11,36 @@
 	"blockOtherContracts": false,
 	"schedule": [
 		"",
-		"PirateRaidTime",
+		"PirateRaidTimeRequired",
 		"",
 		"PirateRaidTime",
 		"",
-		"PirateRaidTime",
+		"PirateRaidTimeRequired",
 		"",
 		"PirateRaidTime",
 		"TrainingReward"
 	],
 	"entries": {
+		"PirateRaidTimeRequired": {
+			"workOrder": "Raiding Time!",
+			"contractChance": 1,
+			"declinePenalty": "BreakContract",
+			"randomContract": ["Rescue_Pirate_Jailbreak", "Rescue_Pirate_Jailbreak_Hard", "Rescue_LostContact", "Rescue_BlackSite"],
+			"contractPayoutMultiplier": 0.75,
+			"contractBonusSalvage": 10,
+			"contractMessage": "Buckle up, Commander, it's time to go raiding again!"
+		},
 		"PirateRaidTime": {
 			"workOrder": "Raiding Time!",
 			"contractChance": 1,
 			"randomContract": ["Rescue_Pirate_Jailbreak", "Rescue_Pirate_Jailbreak_Hard", "Rescue_LostContact", "Rescue_BlackSite"],
-			"contractPayoutMultiplier": 0.9,
+			"contractPayoutMultiplier": 0.75,
+			"contractBonusSalvage": 10,
 			"contractMessage": "Buckle up, Commander, it's time to go raiding again!"
 		},
 		"TrainingReward": {
-			"workOrder": "Time To Get Our Cut!",
+			"popupTitle": "Our Share Of The Loot Has Arrived",
+			"popupMessage": "The pirates have sent over our \"payment\". Yang's already tearing through it looking for useful components. Oh, and the local pirate lord sends their thanks, saying we're welcome to work for him any time we happen back by this way.",
 			"rewardByDifficulty": {
 				"2": "BTA_standard_Minor_Loot_EC",
 				"5": "BTA_standard_Major_Loot_EC",

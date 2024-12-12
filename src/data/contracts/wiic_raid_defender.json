@@ -1,8 +1,8 @@
 {
   "ID": "wiic_raid_defender",
   "contractName": "Flareup: Defend Planet",
-  "difficulty": 2,
-  "finalDifficulty": 2,
+  "difficulty": 1000,
+  "finalDifficulty": 1000,
   "shortDescription": "{TEAM_EMP.FactionDef.CapitalizedName} has heard rumors that over the coming weeks, one of their foes plans to launch a raid against {TGT_SYSTEM.name}, aiming to catch the {TEAM_EMP.FactionDef.Demonym} defenders off guard before they can properly mobilize. They've put out a call for mercenary commands like ours to supplement their forces.",
   "longDescription": "If we accept this contract we'll be in for the duration of the campaign, Commander.  We'll be offered a series of contracts by {TEAM_EMP.FactionDef.Name} to support their forces as they defend, and we'll take a hit to our reputation if we leave before the raid is resolved.",
   "salvagePotential": 0,

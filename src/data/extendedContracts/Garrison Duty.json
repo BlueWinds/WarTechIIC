@@ -54,7 +54,8 @@
 			"contractMessage": "Commander, it looks like {TEAM_EMP.FactionDef.ShortName} finally found the source of these repeated attacks and we're being ordered to take them out. Let's put an end to these raids at last."
 		},
 		"PaymentDelivered": {
-			"workOrder": "Time to Get Paid",
+			"popupTitle": "The Local Garrison Sends Their Thanks",
+			"popupMessage": "Our payment was just delivered, Commander. The local garrison sends their thanks, saying they're grateful we were here to help cover their defenses. Oh, and they sent a couple bottles of the local flavor for us to enjoy, I'm sure it's \"wonderful\".",
 			"rewardByDifficulty": {
 				"2": "BTA_standard_Minor_Loot_EC",
 				"5": "BTA_standard_Major_Loot_EC",

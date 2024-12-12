@@ -3,8 +3,12 @@
   "requirementList": [],
   "weight": 0,
   "spawnLocation": "NearbyEnemy",
-  "employer": ["Any"],
-  "target": ["SystemOwner"],
+  "employer": [
+    "Any"
+  ],
+  "target": [
+    "SystemOwner"
+  ],
   "hireContract": "wiic_raid_attacker",
   "targetHireContract": "wiic_raid_defender",
   "travelContracts": false,
@@ -21,7 +25,10 @@
       "Colour": "#1904B1"
     }
   },
-  "availableFor": [30, 45],
+  "availableFor": [
+    30,
+    45
+  ],
   "schedule": [
     "",
     "",
@@ -32,7 +39,7 @@
       "contractChance": 1,
       "declinePenalty": "None",
       "contractMessage": "We have a mission from {TEAM_EMP.FactionDef.ShortName}, Commander: {RES_OBJ.Name}. Details will be provided en-route about the {RES_OBJ.ContractTypeValue.FriendlyName}.",
-      "invokeMethod": "flareupForceLoss",
+      "invokeMethod": "flareupForceLoss"
     }
   }
 }
