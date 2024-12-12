@@ -1,8 +1,8 @@
 {
   "ID": "wiic_help_attacker",
   "contractName": "Flareup: Attack Planet",
-  "difficulty": 2,
-  "finalDifficulty": 2,
+  "difficulty": 1000,
+  "finalDifficulty": 1000,
   "shortDescription": "Over the coming weeks, {TEAM_EMP.FactionDef.ShortName} plans to launch a devastating offensive against {TGT_SYSTEM.name}, catching the defenders off guard and taking the planet before they can properly mobilize. They've put out a discreet call for mercenary commands like ours to supplement their forces.",
   "longDescription": "If we accept this contract we'll be in for the duration of the campaign, Commander. We'll be offered a series of contracts by {TEAM_EMP.FactionDef.Name} to support their forces as they invade, and we'll take a hit to our reputation if we leave before the invasion concludes.",
   "salvagePotential": 0,

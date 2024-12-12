@@ -219,7 +219,7 @@ namespace WarTechIIC {
                             var diffRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
                             int difficulty = WIIC.sim.NetworkRandom.Int(diffRange.MinDifficulty, diffRange.MaxDifficulty + 1);
 
-                            ContractManager.addTravelContract(contractName, system, employer, target, difficulty);
+                            ContractManager.addTravelContract(contractName, system, employer, target);
 
                             result.AddedTags.Remove(addedTag);
                             WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.FactionDef.Name}]] offer{anS(employer)} a contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
