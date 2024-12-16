@@ -4,21 +4,21 @@ using System.Text.RegularExpressions;
 using BattleTech;
 using Newtonsoft.Json;
 using ColourfulFlashPoints.Data;
+using isogame;
 
 namespace WarTechIIC {
+    [JsonObject(MemberSerialization.OptIn)]
     public class ActiveCampaign {
         [JsonProperty]
         public string campaign;
+
         public Campaign c;
 
         [JsonProperty]
-        public int? availableFor;
+        public string node = "Start";
 
         [JsonProperty]
-        public string node;
-
-        [JsonProperty]
-        public int? nodeIndex;
+        public int nodeIndex = 0;
 
         [JsonProperty]
         public int? entryCountdown;
@@ -26,18 +26,14 @@ namespace WarTechIIC {
         [JsonProperty]
         public string location;
 
-        public CampaignEntry currentEntry {
-            get {
-                if (node == null || nodeIndex == null) {
-                    return null;
-                }
-                return c.nodes[node][nodeIndex ?? 0];
-            }
-        }
+        // Used during deserialization, don't actually call this.
+        public ActiveCampaign() {}
 
+        // Use this one instead.
         public ActiveCampaign(Campaign c) {
             this.c = c;
             this.campaign = c.name;
+            this.location = c.beginsAt;
         }
 
         public static bool isSerializedCampaign(string tag) {
@@ -65,10 +61,16 @@ namespace WarTechIIC {
             ColourfulFlashPoints.Main.addMapMarker(mapMarker);
         }
 
+        public CampaignEntry currentEntry {
+            get {
+                return c.nodes[node][nodeIndex];
+            }
+        }
+
         private Flashpoint _fp;
         public Flashpoint currentFakeFlashpoint {
             get {
-                CampaignFakeFlashpoint fakeFp = availableFor != null ? c.entrypoint : currentEntry?.fakeFlashpoint;
+                CampaignFakeFlashpoint fakeFp = currentEntry.fakeFlashpoint;
 
                 // If fakeFp is null, this will null out _fp as well.
                 if (_fp?.Def.Description.Name != fakeFp?.name) {
@@ -76,27 +78,6 @@ namespace WarTechIIC {
                 }
 
                 return _fp;
-            }
-        }
-
-        public void fakeFlashpointComplete() {
-            if (currentFakeFlashpoint == null) {
-                throw new Exception("fakeFlashpointComplete on {campaign} but not currently expecting one?");
-            }
-
-            // The player has accepted the entrypoint fakeFlashpoint, beginning the campaign.
-            if (availableFor != null) {
-                availableFor = null;
-                node = "Start";
-                nodeIndex = -1;
-            }
-
-            entryComplete();
-        }
-
-        public string currentContract {
-            get {
-                return currentEntry?.contract?.id;
             }
         }
 
@@ -142,7 +123,7 @@ namespace WarTechIIC {
             }
 
             if (e.video != null) {
-                // entryComplete will be triggered from SimGameState_PlayVideoComplete_Patch
+                // entryComplete will be triggered from SimGameState_OnVideoComplete_Patch
                 WIIC.l.Log($"    video {e.video}.");
                 WIIC.sim.PlayVideo(e.video);
                 return;
@@ -159,34 +140,87 @@ namespace WarTechIIC {
                 // entryComplete will be triggered from SimGameState_SetActiveFlashpoint_Patch
                 WIIC.l.Log($"    fakeFlashpoint {e.fakeFlashpoint.name}.");
 
+                WIIC.activeCampaigns.Remove(location);
+                location = e.fakeFlashpoint.at;
+
+                WIIC.activeCampaigns[location] = this;
+
                 // No action to take; the flashpoint is added to the starmap via SGNavigationScreen_ShowFlashpointSystems_patch
                 // and when the system is clicked via SimGameState_GetFlashpointInSystem_Patch
                 return;
             }
 
             if (e.contract != null) {
-                entryCountdown = e.contract.expiresAfter;
-
                 FactionValue employer = FactionEnumeration.GetFactionByName(e.contract.employer);
                 FactionValue target = FactionEnumeration.GetFactionByName(e.contract.target);
-                Contract contract = ContractManager.getContractByName(e.contract.id, WIIC.sim.CurSystem, employer, target);
-                if (entryCountdown == 0) {
-                    WIIC.sim.ForceTakeContract(contract, false);
-                } else {
+
+                if (e.contract.forced != null) {
+                    Contract contract = ContractManager.getContractByName(e.contract.id, WIIC.sim.CurSystem, employer, target);
+
+                    entryCountdown = e.contract.forced?.maxDays;
+                    contract.SetExpiration(entryCountdown ?? 0);
+                    WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
                     WIIC.sim.CurSystem.SystemContracts.Add(contract);
+                    WIIC.sim.activeBreadcrumb = contract;
+
+                    if (entryCountdown == 0) {
+                        WIIC.sim.ForceTakeContract(contract, false);
+                    }
+                }
+
+                if (e.contract.travel != null) {
+                    StarSystem at = WIIC.sim.GetSystemById(e.contract.travel.at);
+                    ContractManager.addTravelContract(e.contract.id, at, employer, target);
+
+                    WIIC.activeCampaigns.Remove(location);
+                    location = e.contract.travel.at;
+                    WIIC.activeCampaigns[location] = this;
                 }
 
                 // entryComplete will be triggered from SimGameState_OnAttachUXComplete_Patch
                 return;
             }
 
+            if (e.conversation != null) {
+                CampaignConversation conv = e.conversation;
+
+                Conversation conversation = WIIC.sim.DataManager.SimGameConversations.Get(conv.id);
+                WIIC.sim.interruptQueue.QueueConversation(conversation, conv.header, conv.subheader);
+
+                // entryComplete will be triggered from SimGameConversationManager_EndConversation_Patch
+                return;
+            }
+
+            if (e.wiicEvents != null) {
+                foreach (string tag in e.wiicEvents) {
+                    if (!SimGameState_ApplySimGameEventResult_Patch.applyWIICEvent(tag)) {
+                        WIIC.l.LogWarning($"    wiicEvent {tag} at nodes.{node}.{nodeIndex} was not a valid WIIC event. NOTHING HAPPENED.");
+                    }
+                }
+
+                entryComplete();
+                return;
+            }
+
             // TODO:
-            //  - Block travel while waiting on contract
-            //  - Add workorder item when contract is pending
-            //  - Block other contracts when contract is pending?
-            //  - Countdown / trigger contract on day pass
-            // public CampaignConversation conversation;
-            // Add popup support?
+            // - Add popup support?
+        }
+
+        protected WorkOrderEntry_Notification _workOrder;
+        public virtual WorkOrderEntry_Notification workOrder {
+            get {
+                if (entryCountdown == null) {
+                    return null;
+                }
+
+                if (_workOrder == null) {
+                    string title = WIIC.sim.activeBreadcrumb.Name;
+                    _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", title);
+                }
+
+                _workOrder.SetCost(entryCountdown ?? 0);
+                return _workOrder;
+            }
         }
     }
 }

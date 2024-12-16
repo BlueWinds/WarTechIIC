@@ -127,6 +127,10 @@ namespace WarTechIIC {
             foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
                 extendedContract.addToMap();
             }
+
+            foreach (ActiveCampaign ac in WIIC.activeCampaigns.Values) {
+                ac.addToMap();
+            }
         }
 
         public static void cleanupSystem(StarSystem system) {
@@ -150,7 +154,7 @@ namespace WarTechIIC {
         }
 
         public static void slowDownFloaties() {
-            var floatyStack = WIIC.sim.RoomManager.ShipRoom.TimePlayPause.eventFloatyToasts;
+            SGTimeFloatyStack floatyStack = WIIC.sim.RoomManager.ShipRoom.TimePlayPause.eventFloatyToasts;
             floatyStack.timeBetweenFloaties = 0.6f;
         }
 

@@ -30,6 +30,9 @@
     <Reference Include="Assembly-CSharp" Publicize="true">
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="ShadowrunDTO" Publicize="true">
+      <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/ShadowrunDTO.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp-firstpass" Publicize="true">
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>

@@ -16,14 +16,14 @@ namespace WarTechIIC {
             try {
                 Contract contract = __instance.theContract;
                 SimGameState_OnAttachUXComplete_Patch.lastCompletedContract = contract.Name;
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                ExtendedContract ec = Utilities.currentExtendedContract();
 
                 // Player not working here
-                if (extendedContract == null || extendedContract.currentContractName != contract.Name) {
+                if (ec == null || ec.currentContractName != contract.Name) {
                     return;
                 }
 
-                Attack attack = extendedContract as Attack;
+                Attack attack = ec as Attack;
                 if (attack == null) {
                     return;
                 }
@@ -71,27 +71,28 @@ namespace WarTechIIC {
 
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                ExtendedContract ec = Utilities.currentExtendedContract();
+                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
+                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: contract: {__instance.theContract.Name}, ec={ec}, ac={ac}");
 
-                if (extendedContract == null) {
-                    WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: No current extended contract. Doing nothing.");
-                    return;
+                string eventId = null;
+
+                if (ec.currentContractName == __instance.theContract.Name) {
+                    eventId = ec.currentEntry.postContractEvent;
+                    WIIC.l.Log($"    ec eventId={eventId}");
                 }
 
-                if (extendedContract.currentContractName != __instance.theContract.Name || extendedContract.currentEntry == null) {
-                    WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: {__instance.theContract.Name} not from current extended contract. Doing nothing.");
-                    return;
+                if (ac?.currentEntry?.contract?.postContractEvent != null) {
+                    eventId = ac?.currentEntry?.contract?.postContractEvent;
+                    WIIC.l.Log($"    ac eventId={eventId}");
                 }
 
-                string eventId = extendedContract.currentEntry.postContractEvent;
-
-                if (String.IsNullOrEmpty(eventId)) {
-                    WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: {__instance.theContract.Name} is from current Extended contract, but entry {extendedContract.currentEntry} has no postContractEvent. Doing nothing.");
+                if (eventId == null) {
                     return;
                 }
 
                 contract = __instance.theContract;
-                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: {contract.Name} is from current Extended contract. Displaying {eventId} instead of normal contract results.");
+                WIIC.l.Log($"    Displaying {eventId} instead of normal contract results.");
 
                 centerPanel = __instance.gameObject.transform.parent.gameObject;
                 GameObject representation = centerPanel.transform.parent.gameObject;
@@ -104,7 +105,7 @@ namespace WarTechIIC {
 
                 __instance.simState.DataManager.SimGameEventDefs.TryGet(eventId, out SimGameEventDef eventDef);
                 if (eventDef.Scope != EventScope.Company && eventDef.Scope != EventScope.StarSystem) {
-                    WIIC.l.LogError($"AAR_ContractObjectivesWidget_Init: event {eventId} is not Company or StarSystem scope; other scopes are not supported.");
+                    WIIC.l.LogError($"AAR_ContractObjectivesWidget_Init: event {eventId} is not Company or StarSystem scope; Scope {eventDef.Scope} is not supported.");
                     return;
                 }
 

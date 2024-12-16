@@ -1,19 +1,20 @@
 {
   "Name": "WarTechIIC",
   "Enabled": true,
-  "Version": "0.2.0",
+  "Version": "0.3.0",
   "Author": "BlueWinds",
   "DLL": "WarTechIIC.dll",
   "DependsOn": [],
   "CustomResourceTypes": [
     "ExtendedContractType",
     "ExtendedConversation",
+    "Campaign"
   ],
   "Manifest": [
     { "Type": "ContractOverride", "Path": "contracts" },
     { "Type": "BaseDescriptionDef", "Path": "descriptions" },
     { "Type": "ExtendedContractType", "Path": "extendedContracts" },
-    { "Type": "Campaign", "Path": "compaigns" }
+    { "Type": "Campaign", "Path": "campaigns" }
   ],
   "Logs": {
     "WartechIIC.log": {

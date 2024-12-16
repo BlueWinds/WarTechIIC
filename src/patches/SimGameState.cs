@@ -12,6 +12,7 @@ using BattleTech.Save.Test;
 using Localize;
 using HBS;
 using HBS.Collections;
+using UnityEngine.Events;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "Init")]
@@ -19,8 +20,9 @@ namespace WarTechIIC {
         public static void Postfix(SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
-                WIIC.l.Log("Clearing Extended Contracts for new SimGameState");
+                WIIC.l.Log("Clearing Campaings and Extended Contracts for new SimGameState");
                 WIIC.extendedContracts.Clear();
+                WIIC.activeCampaigns.Clear();
                 WIIC.systemControl.Clear();
             } catch (Exception e) {
                 WIIC.l.LogException(e);
@@ -33,33 +35,41 @@ namespace WarTechIIC {
         public static void Postfix(GameInstanceSave gameInstanceSave, SimGameState __instance) {
             try {
                 WIIC.sim = __instance;
-                WIIC.l.Log($"Player currently at {__instance.CurSystem.ID}. Loading Extended Contracts.");
+                WIIC.l.Log($"Player currently at {__instance.CurSystem.ID}. Loading Campaigns and Extended Contracts.");
 
                 WIIC.extendedContracts.Clear();
+                WIIC.activeCampaigns.Clear();
                 __instance.CompanyTags.Add("WIIC_enabled");
 
                 foreach (StarSystem system in __instance.StarSystems) {
                     // If one tag fails to load we don't want to break all those that come afterwards.
                     try {
-                        string tag = system.Tags.ToList().Find(ExtendedContract.isSerializedExtendedContract);
-                        if (tag != null) {
-                            system.Tags.Remove(tag);
+                        foreach (string tag in system.Tags.ToList()) {
+                            if (!tag.StartsWith("WIIC")) {
+                                continue;
+                            }
                             WIIC.l.Log($"    {tag}");
-                            ExtendedContract extendedContract = ExtendedContract.Deserialize(tag);
-                            WIIC.extendedContracts[system.ID] = extendedContract;
-                        }
-
-                        tag = system.Tags.ToList().Find(Utilities.isControlTag);
-                        if (tag != null) {
                             system.Tags.Remove(tag);
-                            WIIC.systemControl[system.ID] = tag;
+
+                            if (ExtendedContract.isSerializedExtendedContract(tag)) {
+                                ExtendedContract extendedContract = ExtendedContract.Deserialize(tag);
+                                WIIC.extendedContracts[system.ID] = extendedContract;
+                            } else if (ActiveCampaign.isSerializedCampaign(tag)) {
+                                ActiveCampaign ac = ActiveCampaign.Deserialize(tag);
+                                WIIC.activeCampaigns[system.ID] = ac;
+                            } else if (Utilities.isControlTag(tag)) {
+                                WIIC.systemControl[system.ID] = tag;
+                            // Ages ago, we chose WIICDoNotAttack as a tag; make sure it doesn't get munged.
+                            } else if (!WIIC.settings.systemAggressionByTag.ContainsKey(tag)) {
+                                WIIC.l.LogError($"    WIIC tag of unknown providence? Removing so it doesn't clutter the starmap, but confused.");
+                            }
                         }
                     } catch (Exception e) {
                         WIIC.l.LogException(e);
                     }
                 }
 
-                WIIC.l.Log($"Loaded {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
+                WIIC.l.Log($"Loaded {WIIC.extendedContracts.Keys.Count} extended contracts, {WIIC.activeCampaigns.Keys.Count} campaigns and {WIIC.systemControl.Keys.Count} system control tags");
                 Utilities.redrawMap();
             } catch (Exception e) {
                 WIIC.l.LogException(e);
@@ -96,25 +106,26 @@ namespace WarTechIIC {
                     return;
                 }
 
-                if (ac.currentContract != null) {
-                    if (lastContract == ac.currentContract) {
+                string acContract = ac?.currentEntry.contract?.id;
+                if (acContract != null) {
+                    if (lastContract == acContract) {
                         WIIC.l.LogError($"    ActiveCampaign contract complete; running entryComplete().");
                         ac.entryComplete();
                         return;
                     }
 
-                    Contract contract = system.SystemContracts.Find(c => c.Name == ac.currentContract);
+                    Contract contract = system.SystemContracts.Find(c => c.Name == acContract);
                     if (contract == null) {
-                        WIIC.l.LogError($"    AC currentContract {ac.currentContract} was not found among {system.SystemContracts.Count} contracts in {system.ID}. Something is wrong. Rerunning runEntry() to try and fix things; but PLEASE REPORT THIS BUG.");
+                        WIIC.l.LogError($"    AC currentContract {acContract} was not found among {system.SystemContracts.Count} contracts in {system.ID}. Something is wrong. Rerunning runEntry() to try and fix things; but PLEASE REPORT THIS BUG.");
                         ac.runEntry();
                         return;
                     }
 
                     if (ac.entryCountdown == 0) {
-                        WIIC.l.LogError($"    ActiveCampaign has currentContract={ac.currentContract}. Forcing player to take contract.");
+                        WIIC.l.LogError($"    ActiveCampaign has current {acContract}. Forcing player to take contract.");
                         WIIC.sim.ForceTakeContract(contract, false);
                     } else {
-                        WIIC.l.LogError($"    ActiveCampaign has currentContract={ac.currentContract}. entryCountdown={ac.entryCountdown}");
+                        WIIC.l.LogError($"    ActiveCampaign has current {acContract}. entryCountdown={ac.entryCountdown}");
                     }
                 }
             } catch (Exception e) {
@@ -127,7 +138,7 @@ namespace WarTechIIC {
     public static class SimGameStateOnDayPassedPatch {
         private static void Postfix() {
             try {
-                var activeItems = WIIC.sim.RoomManager.timelineWidget.ActiveItems;
+                Dictionary<WorkOrderEntry, TaskManagementElement> activeItems = WIIC.sim.RoomManager.timelineWidget.ActiveItems;
 
                 Utilities.slowDownFloaties();
                 ColourfulFlashPoints.Main.clearMapMarkers();
@@ -142,14 +153,21 @@ namespace WarTechIIC {
                 }
 
                 ExtendedContract current = Utilities.currentExtendedContract();
+                TaskManagementElement taskManagementElement;
                 if (current != null) {
-                    if (activeItems.TryGetValue(current.workOrder, out var taskManagementElement)) {
+                    if (activeItems.TryGetValue(current.workOrder, out taskManagementElement)) {
                         taskManagementElement.UpdateItem(0);
                     }
                     if (current.extraWorkOrder != null && activeItems.TryGetValue(current.extraWorkOrder, out taskManagementElement)) {
                         taskManagementElement.UpdateItem(0);
                         taskManagementElement.UpdateTaskInfo();
                     }
+                }
+
+                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
+                if (ac?.workOrder != null && activeItems.TryGetValue(ac?.workOrder, out taskManagementElement)) {
+                    taskManagementElement.UpdateItem(0);
+                    taskManagementElement.UpdateTaskInfo();
                 }
 
                 Attack newFlareup = WhoAndWhere.checkForNewFlareup();
@@ -167,6 +185,16 @@ namespace WarTechIIC {
                 Utilities.redrawMap();
 
                 WIIC.sim.RoomManager.RefreshTimeline(false);
+
+                // If the active campaign is currently counting down towards a contract,
+                // pause time passing when the counter reaches 0.
+                if (ac?.entryCountdown != null) {
+                    ac.entryCountdown--;
+
+                    if (ac.entryCountdown == 0) {
+                        WIIC.sim.SetTimeMoving(false);
+                    }
+                }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
@@ -322,10 +350,12 @@ namespace WarTechIIC {
     public static class SimGameState_GetFlashpointInSystem_Patch {
         public static bool Prefix(ref Flashpoint __result, StarSystem theSystem) {
             try {
-                ActiveCampaign ac;
-                if (WIIC.activeCampaigns.TryGetValue(theSystem.ID, out ac)) {
+                WIIC.activeCampaigns.TryGetValue(theSystem.ID, out ActiveCampaign ac);
+                WIIC.l.Log($"SimGameState_GetFlashpointInSystem_Patch. theSystem.ID={theSystem.ID} ac={ac} currentFakeFlashpoint={ac?.currentFakeFlashpoint}");
+
+                if (ac?.currentFakeFlashpoint != null) {
                     __result = ac.currentFakeFlashpoint;
-                    return __result == null;
+                    return false;
                 }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
@@ -335,18 +365,37 @@ namespace WarTechIIC {
         }
     }
 
+    [HarmonyPatch(typeof(SGFlashpointEmployerInfoPanel), "RefreshWidget")]
+    public static class SG_SGFlashpointEmployerInfoPanel_RefreshWidget_Patch {
+        public static void Prefix(SGFlashpointEmployerInfoPanel __instance) {
+            try {
+                WIIC.l.Log($"SG_SGFlashpointEmployerInfoPanel_RefreshWidget_Patch - EmployerFaction={__instance.EmployerFaction}");
+                WIIC.l.Log($"    DoesGainReputation={__instance.EmployerFaction?.DoesGainReputation}");
+                WIIC.l.Log($"    EmployerFactionDef={__instance.EmployerFactionDef}");
+                WIIC.l.Log($"    Name={__instance.EmployerFactionDef?.Name}");
+                WIIC.l.Log($"    HasFactionDef={__instance.HasFactionDef}");
+                WIIC.l.Log($"    theFlashpoint={__instance.theFlashpoint}");
+                WIIC.l.Log($"    theFlashpoint.EmployerValue={__instance.theFlashpoint?.EmployerValue}");
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(SimGameState), "SetActiveFlashpoint")]
     public static class SimGameState_SetActiveFlashpoint_Patch {
         public static bool Prefix(Flashpoint fp, SimGameState __instance) {
             WIIC.l.Log($"SimGameState_SetActiveFlashpoint_Patch. fp.GUID={fp.GUID}, CurSystem.ID={__instance.CurSystem.ID}");
+
             if (fp.GUID != "CampaignFakeFlashpoint") {
                 return true;
             }
 
             try {
+                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
+                WIIC.l.Log($"    ac={ac}");
                 __instance.ClearActiveFlashpoint();
-                ActiveCampaign ac = WIIC.activeCampaigns[__instance.CurSystem.ID];
-                ac.fakeFlashpointComplete();
+                ac.entryComplete();
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
@@ -395,7 +444,7 @@ namespace WarTechIIC {
         }
 
         public static bool campaignEntryEvent(string eventId) {
-            ActiveCampaign ac = WIIC.activeCampaigns[WIIC.sim.CurSystem.ID];
+            WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
 
             if (ac?.currentEntry?.@event.id != eventId) {
                 WIIC.l.Log($"    Not a campaign event. node={ac?.node} nodeIndex={ac?.nodeIndex} @event={ac?.currentEntry?.@event}");
@@ -407,19 +456,19 @@ namespace WarTechIIC {
         }
     }
 
-    [HarmonyPatch(typeof(SimGameState), "PlayVideoComplete")]
-    public static class SimGameState_PlayVideoComplete_Patch {
+    [HarmonyPatch(typeof(SimGameState), "OnVideoComplete")]
+    public static class SimGameState_OnVideoComplete_Patch {
         public static void Postfix(string videoName) {
             try {
-                ActiveCampaign ac = WIIC.activeCampaigns[WIIC.sim.CurSystem.ID];
-                WIIC.l.Log($"SimGameState_PlayVideoComplete_Patch: {videoName}. node={ac?.node} nodeIndex={ac?.nodeIndex}");
+                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
+                WIIC.l.Log($"SimGameState_OnVideoComplete_Patch: video={videoName}. node={ac?.node} nodeIndex={ac?.nodeIndex}");
 
-                if (ac?.currentEntry?.video != videoName) {
-                    WIIC.l.Log($"    Not a campaign video. ac.entry.video={ac?.currentEntry?.video}");
+                if ($"Video/{ac?.currentEntry?.video}" == videoName) {
+                    ac.entryComplete();
                     return;
                 }
 
-                ac.entryComplete();
+                WIIC.l.Log($"    Not a campaign video. ac.entry.video={ac?.currentEntry?.video}");
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }

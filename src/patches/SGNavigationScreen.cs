@@ -4,6 +4,7 @@ using Harmony;
 using BattleTech;
 using BattleTech.UI;
 using Localize;
+using UnityEngine;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(SGNavigationScreen), "OnTravelCourseAccepted")]
@@ -11,14 +12,25 @@ namespace WarTechIIC {
         private static bool Prefix(SGNavigationScreen __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"OnTravelCourseAccepted. extendedContract: {extendedContract}, ActiveTravelContract: {WIIC.sim.ActiveTravelContract}");
-                if (extendedContract == null) {
-                    return true;
-                }
+                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
+                WIIC.l.Log($"OnTravelCourseAccepted. extendedContract: {extendedContract}, ActiveTravelContract: {WIIC.sim.ActiveTravelContract}, ac: {ac}");
 
                 void cleanup() {
                     __instance.uiManager.ResetFader(UIManagerRootType.PopupRoot);
                     WIIC.sim.Starmap.Screen.AllowInput(true);
+                }
+
+                Sprite sumire = WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire);
+
+                if (ac?.currentEntry.contract != null) {
+                    string cTitle = Strings.T("Navigation not allowed");
+                    string cMessage = Strings.T("We can't leave {0} right now, Commander, not while we have such an important contract pending.");
+                    PauseNotification.Show(cTitle, cMessage, sumire, "", true, cleanup);
+                    return false;
+                }
+
+                if (extendedContract == null) {
+                    return true;
                 }
 
                 string title = Strings.T("Navigation Change");
@@ -26,7 +38,7 @@ namespace WarTechIIC {
                 string cancel = Strings.T("Cancel");
                 string message = Strings.T("Leaving {0} will break our current contract. Our reputation with {1} and the MRB will suffer, Commander.", extendedContract.location.Name, extendedContract.employer.FactionDef.ShortName);
                 WIIC.l.Log(message);
-                PauseNotification.Show(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
+                PauseNotification.Show(title, message, sumire, "", true, delegate {
                     try {
                         WIIC.l.Log("Breaking {extendedContract.type.Name} contract");
 
@@ -65,6 +77,7 @@ namespace WarTechIIC {
     public static class SGNavigationScreen_ShowFlashpointSystems_patch {
         private static void Poostfix(SGNavigationScreen __instance) {
             try {
+                WIIC.l.Log("SGNavigationScreen_ShowFlashpointSystems_patch acs={WIIC.activeCampaigns.Values.Count}");
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns.Values) {
                     Flashpoint fp = ac.currentFakeFlashpoint;
                     if (fp != null) {

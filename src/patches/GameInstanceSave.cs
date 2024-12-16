@@ -14,11 +14,15 @@ namespace WarTechIIC {
                 return;
             }
 
-            WIIC.l.Log($"Saving {WIIC.extendedContracts.Keys.Count} extended contracts and {WIIC.systemControl.Keys.Count} system control tags");
+            WIIC.l.Log($"Saving {WIIC.activeCampaigns.Keys.Count} campaigns, {WIIC.extendedContracts.Keys.Count} extended contracts, and {WIIC.systemControl.Keys.Count} system control tags");
 
             string saves = "";
 
             try {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Values) {
+                    saves += "\n    " + ac.Serialize();
+                    WIIC.sim.GetSystemById(ac.location).Tags.Add(ac.Serialize());
+                }
                 foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
                     saves += "\n    " + extendedContract.Serialize();
                     extendedContract.location.Tags.Add(extendedContract.Serialize());

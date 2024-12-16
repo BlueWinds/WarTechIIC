@@ -49,7 +49,7 @@ namespace WarTechIIC {
                 l.LogException(e);
             }
 
-            var harmony = HarmonyInstance.Create("blue.winds.WarTechIIC");
+            HarmonyInstance harmony = HarmonyInstance.Create("blue.winds.WarTechIIC");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
@@ -74,6 +74,7 @@ namespace WarTechIIC {
             IDeserializer deserializer = new DeserializerBuilder().Build();
 
             if (customResources != null && customResources.ContainsKey("Campaign")) {
+                HashSet<string> involvedSystems = new HashSet<string>();
                 foreach (VersionManifestEntry entry in customResources["Campaign"].Values) {
                     WIIC.l.Log($"Loading Campaign from {entry.FilePath}.");
                     try {
@@ -83,7 +84,10 @@ namespace WarTechIIC {
                         }
 
                         Campaign campaign = deserializer.Deserialize<Campaign>(yaml);
-                        campaign.validate();
+
+                        HashSet<string> campaignSystems = campaign.validate(involvedSystems);
+                        involvedSystems.UnionWith(campaignSystems);
+
                         campaigns[campaign.name] = campaign;
                     } catch (Exception e) {
                         WIIC.l.LogException(e);

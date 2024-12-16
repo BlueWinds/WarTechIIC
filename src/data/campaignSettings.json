@@ -1,3 +1,5 @@
 {
-  "mapMarker": {}
+  "mapMarker": {
+    "useHmAnimation": true
+  }
 }

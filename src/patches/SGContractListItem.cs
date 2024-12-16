@@ -9,15 +9,11 @@ namespace WarTechIIC {
     public static class SGContractsListItem_setMode_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"SGContractsListItem_setMode_Patch extendedContract={extendedContract}");
-
-                if (extendedContract != null && extendedContract.extendedType.blockOtherContracts) {
-                    WIIC.l.Log($"Blocking contract because blockOtherContracts=true");
-
+                if (shouldBlock(__instance.Contract.Name)) {
+                    WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
+                    string reason = ac?.currentEntry.contract?.forced == null ? "Extended" : "Campaign";
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
-                    __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj));
-
+                    __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj, reason));
                     __instance.button.SetState(ButtonState.Unavailable, true);
 
                     return false;
@@ -29,12 +25,28 @@ namespace WarTechIIC {
             return true;
         }
 
-        public static void tweakTooltip(GameObject obj) {
+        public static void tweakTooltip(GameObject obj, string reason) {
             obj.SetActive(true);
             HBSTooltip tooltip = obj.GetComponent<HBSTooltip>();
             if (tooltip != null) {
-                tooltip.defaultStateData.stringValue = "DM.BaseDescriptionDefs[ContractBlockedBecauseExtended]";
+                tooltip.defaultStateData.stringValue = $"DM.BaseDescriptionDefs[ContractBlockedBecause{reason}]";
             }
+        }
+
+        public static bool shouldBlock(string name) {
+            ExtendedContract extendedContract = Utilities.currentExtendedContract();
+            if (extendedContract?.extendedType.blockOtherContracts == true) {
+                return true;
+            }
+
+            WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
+            string blockExcept = ac?.currentEntry.contract?.forced == null ? null : ac.currentEntry.contract.id;
+
+            if (blockExcept != null && blockExcept != name) {
+                return true;
+            }
+
+            return false;
         }
     }
 
@@ -42,12 +54,7 @@ namespace WarTechIIC {
     public static class SGContractsListItem_OnClicked_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"SGContractsListItem_OnClicked_Patch extendedContract={extendedContract}");
-
-                if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
-                    return false;
-                }
+                return !SGContractsListItem_setMode_Patch.shouldBlock(__instance.Contract.Name);
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }

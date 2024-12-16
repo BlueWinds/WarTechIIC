@@ -91,12 +91,16 @@ namespace WarTechIIC {
         public Flashpoint toFlashpoint() {
             Flashpoint fp = new Flashpoint();
             fp.GUID = "CampaignFakeFlashpoint";
-            fp.employerID = employer;
+            fp.EmployerValue = FactionEnumeration.GetFactionByName(employer);
+
             fp.CurStatus = Flashpoint.Status.WAITING_FOR_DATA;
             fp.CurSystem = WIIC.sim.GetSystemById(at);
             fp.Def = new FlashpointDef();
-            fp.Def.Description = new BaseDescriptionDef(name, name, description, "uixTxrSpot_campaignOutcomeVictory");
+
+            // Use the HM prefix to style it in green, differentiating from normal campaign flashpoints
+            fp.Def.Description = new BaseDescriptionDef("fp_HM_" + name, name, description, "uixTxrSpot_campaignOutcomeVictory");
             fp.Def.Difficulty = difficulty;
+            fp.Def.TargetFaction = target;
             fp.Def.FlashpointDescriberCastDefId = employerPortrait;
             fp.Def.FlashpointLength = FlashpointDef.EngagementLength.CAMPAIGN;
             fp.Def.FlashpointShortDescription = description;
@@ -117,11 +121,11 @@ namespace WarTechIIC {
         public string id;
         public string employer;
         public string target;
-        public string at;
         public string onFailGoto;
-        public bool blockOtherContracts = false;
-        public int expiresAfter = 0;
         public string postContractEvent;
+
+        public CampaignContractForced forced;
+        public CampaignContractTravel travel;
 
         public void validate(string path, CampaignNodes nodes) {
             if (String.IsNullOrEmpty(id) || String.IsNullOrEmpty(employer) || String.IsNullOrEmpty(target) || String.IsNullOrEmpty(onFailGoto)) {
@@ -136,12 +140,35 @@ namespace WarTechIIC {
                 throw new Exception($"VALIDATION: {path}.onFailGoto must point to another node or be \"Exit\"; \"{onFailGoto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
             }
 
-            if (expiresAfter < 0) {
-                throw new Exception($"VALIDATION: {path}.expiresAfter is {expiresAfter}, and must be >= 0. THE CAMPAIGN WILL NOT WORK.");
+            if (postContractEvent != null && MetadataDatabase.Instance.GetEventDef(postContractEvent) == null) {
+                throw new Exception($"VALIDATION: {path}.postContractEvent \"{postContractEvent}\" does not seem to exist. THE CAMPAIGN WILL NOT WORK.");
             }
 
-            if (postContractEvent != null && MetadataDatabase.Instance.GetEventDef(id) == null) {
-                throw new Exception($"VALIDATION: {path}.postContractEvent \"{postContractEvent}\" does not seem to exist. THE CAMPAIGN WILL NOT WORK.");
+            if ((forced != null && travel != null) || forced == null && travel == null) {
+                throw new Exception($"VALIDATION: {path} must have exactly one of [forced, travel]. THE CAMPAIGN WILL NOT WORK.");
+            }
+
+            forced?.validate($"{path}.forced");
+            travel?.validate($"{travel}.forced");
+        }
+    }
+
+    public class CampaignContractForced {
+        public int? maxDays = 0;
+
+        public void validate(string path) {
+            if (maxDays == null || maxDays < 0) {
+                throw new Exception($"VALIDATION: {path}.maxDays is required and must be >= 0. THE CAMPAIGN WILL NOT WORK.");
+            }
+        }
+    }
+
+    public class CampaignContractTravel {
+        public string at;
+
+        public void validate(string path) {
+            if (String.IsNullOrEmpty(at)) {
+                throw new Exception($"VALIDATION: {path} must have \"at\". THE CAMPAIGN WILL NOT WORK.");
             }
         }
     }
@@ -158,6 +185,10 @@ namespace WarTechIIC {
         }
     }
 
+    public class CampaignTags {
+
+    }
+
     public class CampaignEntry {
         public CampaignIf @if;
         public string @goto;
@@ -167,6 +198,7 @@ namespace WarTechIIC {
         public CampaignFakeFlashpoint fakeFlashpoint;
         public CampaignContract contract;
         public CampaignConversation conversation;
+        public List<string> wiicEvents;
 
         public void validate(string path, CampaignNodes nodes, bool isLastEntry) {
             int count = 0;
@@ -177,19 +209,20 @@ namespace WarTechIIC {
             count += fakeFlashpoint == null ? 0 : 1;
             count += contract == null ? 0 : 1;
             count += conversation == null ? 0 : 1;
+            count += wiicEvents == null ? 0 : 1;
 
             if (count != 1) {
-                throw new Exception($"VALIDATION: {path} must have exactly one of [goto, event, video, reward, fakeFlashpoint, contract]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have exactly one of [goto, event, video, reward, fakeFlashpoint, contract, conversation, wiicEvents]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
             }
             if (@goto != null && @goto != "Exit" && !nodes.ContainsKey(@goto)) {
                 throw new Exception($"VALIDATION: {path}.goto must point to another node or be \"Exit\"; \"{@goto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
             }
 
-            if (@if != null) { @if.validate($"{path}.if"); }
-            if (@event != null) { @event.validate($"{path}.event"); }
-            if (fakeFlashpoint != null) { fakeFlashpoint.validate($"{path}.fakeFlashpoint"); }
-            if (contract != null) { contract.validate($"{path}.contract", nodes); }
-            if (conversation != null) { conversation.validate($"{path}.conversation"); }
+            @if?.validate($"{path}.if");
+            @event?.validate($"{path}.event");
+            fakeFlashpoint?.validate($"{path}.fakeFlashpoint");
+            contract?.validate($"{path}.contract", nodes);
+            conversation?.validate($"{path}.conversation");
 
             if (isLastEntry) {
                 if (@goto == null) {
@@ -205,23 +238,24 @@ namespace WarTechIIC {
 
     public class Campaign {
         public string name;
-        public CampaignFakeFlashpoint entrypoint;
+        public string beginsAt;
         public CampaignNodes nodes = new CampaignNodes();
 
-        public void validate() {
-            if (String.IsNullOrEmpty(name) || entrypoint == null) {
-                throw new Exception($"VALIDATION: Campaign is missing a \"name\" or \"entrypoint\". THE CAMPAIGN WILL NOT WORK.");
+        public HashSet<string> validate(HashSet<string> otherCampaignSystems) {
+            if (String.IsNullOrEmpty(name) || String.IsNullOrEmpty(beginsAt)) {
+                throw new Exception($"VALIDATION: Campaign is missing a \"name\" or \"beginsAt\". THE CAMPAIGN WILL NOT WORK.");
             }
-
-            entrypoint.validate("\"entrypoint\"");
 
             if (!nodes.ContainsKey("Start")) {
                 throw new Exception($"VALIDATION: nodes[\"Start\"] is required; campaign needs a starting point. THE CAMPAIGN WILL NOT WORK.");
             }
 
-            if (!nodes.ContainsKey("Exit")) {
+            if (nodes.ContainsKey("Exit")) {
                 throw new Exception($"VALIDATION: nodes[\"Exit\"] is not allowed; it is a reserved name. THE CAMPAIGN WILL NOT WORK.");
             }
+
+            HashSet<string> involvedSystems = new HashSet<string>();
+            involvedSystems.Add(beginsAt);
 
             foreach (string nodeKey in nodes.Keys) {
                 List<CampaignEntry> node = nodes[nodeKey];
@@ -231,8 +265,22 @@ namespace WarTechIIC {
 
                 for (int i = 0; i < node.Count; i++) {
                     node[i].validate($"nodes[\"{nodeKey}\"][{i}]", nodes, i == node.Count - 1);
+
+                    if (node[i].fakeFlashpoint != null) {
+                        involvedSystems.Add(node[i].fakeFlashpoint.at);
+                    }
+
+                    if (node[i].contract?.travel?.at != null) {
+                        involvedSystems.Add(node[i].contract.travel.at);
+                    }
                 }
             }
+
+            if (involvedSystems.Overlaps(otherCampaignSystems)) {
+                throw new Exception($"VALIDATION: Campaign \"{name}\" shares star systems with another campaign. The set of systems (beginsAt / fakeFlashpoint.at / contract.travel.at) involved in each campaign MUST BE UNIQUE. THE CAMPAIGN WILL NOT WORK.");
+            }
+
+            return involvedSystems;
         }
     }
 }

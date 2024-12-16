@@ -10,9 +10,11 @@ WIIC provides an alternative format for creating custom campaigns. Campaigns do 
 The overall goal is to make creating campaigns a pleasant and simple experience. They are written in YAML, which is very human-readible and less prone to mistakes than JSON.
 
 ## How they work
+Campaigns begin by adding a company tag: `WIIC_begin_campaign_{name}` (eg: `WIIC_begin_campaign_Sword of Restoration`). They will never spawn on their own; you'll need to write an event (or some other result) that gives the player a company tag.
+
 Campaigns have only a few top-level fields:
  - `name` - The name of the campaign. This should match the filename, and will be displayed to the player.
- - `entrypoint` - A "fakeFlashpoint", which will appear on the map. When accepted, the player begins the campaign, moving to the `Start` node. See below for details on all the fakeFlashpoint fields.
+ - `beginsAt` - A star system where the campaign begins.
  - `nodes` - A dictionary of named flow-control points. A campaign always begins with a node named `Start`.
 
 Each node is a sequential list of Entries, representing something presented to the player, some action they must take, or a flow-control statement (`goto`) telling the campaign what happens next.
@@ -22,13 +24,7 @@ The final Entry in a node must *always* be `goto` without an `if` block. Flow co
 Example:
 ```
 name: Sword of Restoration
-entrypoint:
-  name: Arano Restoration
-  employer: faction_AuriganRestoration
-  employerPortrait: castDef_DariusDefault
-  target: faction_AuriganDirectorate
-  at: starsystemdef_Coromodir
-  description: ...text for the player...
+beginsAt: starsystemdef_Coromodir
 nodes:
   Start:
     - event:
@@ -106,9 +102,9 @@ Example:
 ```
   - fakeFlashpoint:
       name: Arano Restoration - Coronation
-      employer: faction_AuriganRestoration
+      employer: AuriganRestoration
       employerPortrait: castDef_DariusDefault
-      target: faction_Unknown
+      target: Unknown
       at: starsystemdef_Coromodir
       description: Your old mentor, Raju, has invited you to be one of [[DM.BaseDescriptionDefs[LoreKameaArano],Lady Kamea Arano's]] honor guards on the day of her coronation. Travel to [[DM.BaseDescriptionDefs[LoreCoromodir],Coromodir]] to meet with him. The [[DM.BaseDescriptionDefs[LoreAuriganCoalition],Aurigan Coalition]] will supply you with a mech for use in her procession, a venerable Shadowhawk that has been with the Aurigan Royal Guard for decades.
 ```
@@ -126,20 +122,32 @@ Example:
 ```
   - contract:
       id: StoryTime_3_Axylus_Default
-      employer: faction_AuriganRestoration
-      target: faction_AuriganPirates
+      employer: AuriganRestoration
+      target: AuriganPirates
       onFailGoto: CaptureTheScheria
 
-      blockOtherContracts: true
       postContractEvent: forcedevent_FP_StoryTime3_A
-      expiresAfter: 1
+      forced:
+        maxDays: 0
 ```
 
 `id`, `employer`, `target` and `onFailGoto` are required, all others are optional. `blockOtherContracts` defaults to false.
 
-`expiresAfter` is a ticking countdown of days; when it reaches zero (or immediately if it's set to 0), the player is forced into the drop, without a chance to opt out or further delay.
-
 `postContractEvent` deserves some special explanation. If the player succeeds at the mission, the given event *replaces the objectives screen* in the after action report. The event must be `Company` or `StarSystem` scoped; no other scopes are supported.
+
+A contract is either `forced` or `travel`:
+
+```
+forced:
+  maxDays: 10
+  
+travel:
+  at: starsystemdef_Coromodir
+```
+
+When a forced contract is available, it blocks all other contracts, and adds the contract in the current system, and prevents travel. `maxDays` is a ticking countdown of days; when it reaches zero (or immediately if it's set to 0), the player is forced into the drop, without a chance to opt out or further delay.
+
+A travel contract is spawned `at` the given system, without a time limit; the player can take other contracts, travel around, do whatever; the contract will wait for them. It is common to spawn a `travel` contract `at` the current system; this is 100% valid.
 
 ### `conversation`
 Trigger a SimGameConversation.  Conversations are more immersive, but significantly more challenging to create, than Events. They also serve as an excellent place to offer the player choices. The next Entry triggers once the conversation is over.
@@ -156,3 +164,16 @@ Example:
 ```
 
 All fields (`id`, `header`, `subheader`) are required. Create conversations using [ConverseTek](https://github.com/CWolfs/ConverseTek/).
+
+### `wiicEvents`
+Apply some WartechIIC events, such as transfering system control, spawning contracts, or triggering attacks or raids on the galaxy maps.
+
+Example:
+```
+  - wiicEvents:
+    - WIIC_give_starsystemdef_Coromodir_to_AuriganDirectorate
+    - WIIC_give_starsystemdef_Enkra_to_AuriganDirectorate
+    - WIIC_give_starsystemdef_Fjaldr_to_AuriganDirectorate
+```
+
+"Events" here follow the format described under [Company Tags in README.md](README.md#Company-tags).

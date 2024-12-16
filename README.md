@@ -14,7 +14,6 @@ WIIC reads and sets a variety of tags and statistics on companies and star syste
 ### Company Tags
 When naming star systems, remember to use the ID and not the name. You want `starsystemdef_St.Ives`, not `St. Ives`. For factions, refer to them by factionID. You want `ClanCloudCobra`, not `Clan Cloud Cobra` or `faction_ClanCloudCobra`. This is slightly inconsistent, yes, but I work with what HBS gives me.
 
-  * `WIIC_helping_attacker` and `WIIC_helping_defender` - If present, the company is in the middle of a flareup, helping the attacker/defender take the current system. You can remove this from events, and nothing will break. Adding it from events will force player participation if there's already a flareup in their current system, otherwise it won't do anything.
   * `WIIC_give_{system}_to_{newOwner}` (eg: `WIIC_give_starsystemdef_Terra_to_ClanWolf`) - Setting this will pass control of the named star system to the new owner. The tag won't actually added to the company - WIIC 'eats' it.
   * `WIIC_{faction}_attacks_{system}` (eg: `WIIC_Clan Jade Falcon_attacks_starsystemdef_Terra`) - Setting this will cause a new Attack to start in the given system, with the faction as the attacker, if one doesn't already exist. The tag won't actually added to the company - WIIC 'eats' it.
     * `WIIC_{faction}_attacks_SOMEWHERE` (eg: `WIIC_Clan Jade Falcon_attacks_SOMEWHERE`) - Special case of the above; the target system is chosen using the usual logic, rather than specified by the tag.
@@ -25,6 +24,8 @@ When naming star systems, remember to use the ID and not the name. You want `sta
   * `WIIC_add_{tag}_to_{system} | WIIC_remove_{tag}_from_{system}` (eg: `WIIC_add_planet_other_pirate_to_starsystemdef_Terra` or `WIIC_remove_planet_other_pirate_from_starsystemdef_Terra`) - Setting this will add or remove the given tag from the given system. The tag won't actually added to the company - WIIC 'eats' it.
   * `WIIC_{employer}_offers_{contractID}_at_{system}_against_{target}` (eg: `WIIC_ClanJadeFalcon_offers_StoryTime_3_Axylus_Default_at_systemdef_Sol_against_ClanWolf`) - Setting this will cause the employer to offer a travel contract of the given type to the player at the given system.
   * `WIIC_{employer}_offers_extended_{contractID}_at_{system}_against_{target}` (eg: `WIIC_ClanJadeFalcon_offers_Garrison Duty_at_systemdef_Sol_against_ClanWolf`) - Setting this will cause WIIC to spawn the given extended contract at the given system with this employer and target. Note that this *ignores `employer`, `target` and `spawn_location`*, and just does the thing.
+  
+  * `WIIC_begin_campaign {campaignName}` (eg: `WIIC_begin_campaign Sword of Restoration`) - Begin the given campaign. See Campaigns.md for more details about custom campaigns. If it's already active, nothing will happen. Note the space, not the underscore, between `WIIC_begin_campaign` and the name.
 
 ### Company Stats
 For all company stats, `-1` is a magic value - "ignore this". If present, we'll read the value from settings.json rather than the stat.

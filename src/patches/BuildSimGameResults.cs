@@ -14,10 +14,8 @@ namespace WarTechIIC {
     })]
     public static class SimGameState_BuildSimGameResult_Patch {
         public static void Postfix(ref List<ResultDescriptionEntry> __result, ref SimGameEventResult[] resultsList, GameContext context) {
-            var results = combineResults();
-
             try {
-                foreach (string resultText in results) {
+                foreach (string resultText in combineResults()) {
                     __result.Add(new ResultDescriptionEntry(new Text("{1} {2}{0}", Environment.NewLine, "•", resultText), context));
                 }
 
