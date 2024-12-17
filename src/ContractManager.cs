@@ -73,7 +73,6 @@ namespace WarTechIIC {
                 MapEncounterContractData = WIIC.sim.FillMapEncounterContractData(system, difficultyRange, potentialContracts, validParticipants, level);
             }
 
-
             if (MapEncounterContractData == null || MapEncounterContractData.Contracts.Count == 0) {
                 if (WIIC.sim.mapDiscardPile.Count > 0) {
                     WIIC.sim.mapDiscardPile.Clear();

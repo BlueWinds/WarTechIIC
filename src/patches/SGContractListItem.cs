@@ -10,7 +10,12 @@ namespace WarTechIIC {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"SGContractsListItem_setMode_Patch extendedContract={extendedContract}");
+                string employer = Utilities.getEmployer(__instance.Contract).factionID;
+                WIIC.l.Log($"SGContractsListItem_setMode_Patch extendedContract={extendedContract} employer={employer}");
+
+                if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
+                    return true;
+                }
 
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts) {
                     WIIC.l.Log($"Blocking contract because blockOtherContracts=true");
@@ -43,7 +48,12 @@ namespace WarTechIIC {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"SGContractsListItem_OnClicked_Patch extendedContract={extendedContract}");
+                string employer = Utilities.getEmployer(__instance.Contract).factionID;
+                WIIC.l.Log($"SGContractsListItem_OnClicked_Patch extendedContract={extendedContract} employer={employer}");
+
+                if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
+                    return true;
+                }
 
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
                     return false;
