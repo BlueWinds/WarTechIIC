@@ -292,9 +292,16 @@ namespace WarTechIIC {
     public static class SimGameState_ContractUserMeetsReputation_Patch {
         public static void Postfix(ref bool __result, Contract c) {
             try {
+                string employer = Utilities.getEmployer(c).factionID;
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                WIIC.l.Log($"SimGameState_ContractUserMeetsReputation_Patch extendedContract={extendedContract} employer={employer}");
+
+                if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && c.TargetSystem == WIIC.sim.CurSystem.ID) {
+                    return;
+                }
+
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && c.Name != extendedContract.currentContractName) {
-                    WIIC.l.Log($"Marking as insufficent reputation because blockOtherContracts");
+                    WIIC.l.Log($"    Marking as insufficent reputation because blockOtherContracts");
                     __result = false;
                 }
             } catch (Exception e) {

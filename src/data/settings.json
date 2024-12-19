@@ -176,6 +176,9 @@
     "SanctuaryAlliance",
     "AuriganDirectorate"
   ],
+  "neverBlockContractsOfferedBy": [
+    "SelfEmployed"
+  ],
   "combatForceLossMin": 2,
   "combatForceLossMax": 5,
   "attackBonusPerHalfSkull": 30000,

@@ -9,7 +9,7 @@ namespace WarTechIIC {
     public static class SGContractsListItem_setMode_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                if (shouldBlock(__instance.Contract.Name)) {
+                if (Utilities.shouldBlockContract(__instance.Contract)) {
                     WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
                     string reason = ac?.currentEntry.contract?.forced == null ? "Extended" : "Campaign";
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
@@ -32,29 +32,13 @@ namespace WarTechIIC {
                 tooltip.defaultStateData.stringValue = $"DM.BaseDescriptionDefs[ContractBlockedBecause{reason}]";
             }
         }
-
-        public static bool shouldBlock(string name) {
-            ExtendedContract extendedContract = Utilities.currentExtendedContract();
-            if (extendedContract?.extendedType.blockOtherContracts == true) {
-                return true;
-            }
-
-            WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-            string blockExcept = ac?.currentEntry.contract?.forced == null ? null : ac.currentEntry.contract.id;
-
-            if (blockExcept != null && blockExcept != name) {
-                return true;
-            }
-
-            return false;
-        }
     }
 
     [HarmonyPatch(typeof(SGContractsListItem), "OnClicked")]
     public static class SGContractsListItem_OnClicked_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                return !SGContractsListItem_setMode_Patch.shouldBlock(__instance.Contract.Name);
+                return !Utilities.shouldBlockContract(__instance.Contract);
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
