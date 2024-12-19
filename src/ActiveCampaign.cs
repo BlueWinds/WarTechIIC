@@ -191,14 +191,10 @@ namespace WarTechIIC {
                 return;
             }
 
-            if (e.wiicEvents != null) {
-                foreach (string tag in e.wiicEvents) {
-                    if (!SimGameState_ApplySimGameEventResult_Patch.applyWIICEvent(tag)) {
-                        WIIC.l.LogWarning($"    wiicEvent {tag} at nodes.{node}.{nodeIndex} was not a valid WIIC event. NOTHING HAPPENED.");
-                    }
-                }
+            if (e.wait != null) {
+                entryCountdown = e.wait.days;
 
-                entryComplete();
+                // entryComplete will be triggered from SimGameState_OnDayPassed_Patch
                 return;
             }
 
@@ -214,8 +210,12 @@ namespace WarTechIIC {
                 }
 
                 if (_workOrder == null) {
-                    string title = WIIC.sim.activeBreadcrumb.Name;
-                    _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", title);
+                    if (currentEntry.contract != null) {
+                        string title = WIIC.sim.activeBreadcrumb.Name;
+                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", title);
+                    } else if (currentEntry.wait?.workOrder != null) {
+                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignWait", currentEntry.wait.workOrder);
+                    }
                 }
 
                 _workOrder.SetCost(entryCountdown ?? 0);

@@ -150,7 +150,7 @@ When a forced contract is available, it blocks all other contracts, and adds the
 A travel contract is spawned `at` the given system, without a time limit; the player can take other contracts, travel around, do whatever; the contract will wait for them. It is common to spawn a `travel` contract `at` the current system; this is 100% valid.
 
 ### `conversation`
-Trigger a SimGameConversation.  Conversations are more immersive, but significantly more challenging to create, than Events. They also serve as an excellent place to offer the player choices. The next Entry triggers once the conversation is over.
+Trigger a SimGameConversation. Conversations are more immersive, but significantly more challenging to create, than Events. They also serve as an excellent place to offer the player choices. The next Entry triggers once the conversation is over.
 
 Example:
 ```
@@ -165,15 +165,18 @@ Example:
 
 All fields (`id`, `header`, `subheader`) are required. Create conversations using [ConverseTek](https://github.com/CWolfs/ConverseTek/).
 
-### `wiicEvents`
-Apply some WartechIIC events, such as transfering system control, spawning contracts, or triggering attacks or raids on the galaxy maps.
+### `wait`
+Wait for some number of days to pass, optionally with a work order.
 
 Example:
 ```
-  - wiicEvents:
-    - WIIC_give_starsystemdef_Coromodir_to_AuriganDirectorate
-    - WIIC_give_starsystemdef_Enkra_to_AuriganDirectorate
-    - WIIC_give_starsystemdef_Fjaldr_to_AuriganDirectorate
+  - wait:
+      days: 10
+      
+  - wait:
+      days: 14
+      workOrder: Wait for further details
+      sprite: uixTxrLogo_SelfEmployed
 ```
 
-"Events" here follow the format described under [Company Tags in README.md](README.md#Company-tags).
+`workOrder` and `sprite` are optional; the latter does nothing without the former. If there's no `workOrder`, the player will have no feedback that the campaiign is ongoing while the counter ticks down; use this sparingly.

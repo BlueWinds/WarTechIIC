@@ -185,8 +185,20 @@ namespace WarTechIIC {
         }
     }
 
-    public class CampaignTags {
+    public class CampaignWait {
+        public int days;
+        public string workOrder;
+        public string sprite;
 
+        public void validate(string path) {
+            if (days < 1) {
+                throw new Exception($"VALIDATION: {path} must be > 0  (currently {days}). THE CAMPAIGN WILL NOT WORK.");
+            }
+
+            if (workOrder == null && sprite != null) {
+                throw new Exception($"VALIDATION: {path}.sprite does not make sense without \"workOrder\" also set. THE CAMPAIGN WILL NOT WORK.");
+            }
+        }
     }
 
     public class CampaignEntry {
@@ -198,7 +210,7 @@ namespace WarTechIIC {
         public CampaignFakeFlashpoint fakeFlashpoint;
         public CampaignContract contract;
         public CampaignConversation conversation;
-        public List<string> wiicEvents;
+        public CampaignWait wait;
 
         public void validate(string path, CampaignNodes nodes, bool isLastEntry) {
             int count = 0;
@@ -209,10 +221,10 @@ namespace WarTechIIC {
             count += fakeFlashpoint == null ? 0 : 1;
             count += contract == null ? 0 : 1;
             count += conversation == null ? 0 : 1;
-            count += wiicEvents == null ? 0 : 1;
+            count += wait == null ? 0 : 1;
 
             if (count != 1) {
-                throw new Exception($"VALIDATION: {path} must have exactly one of [goto, event, video, reward, fakeFlashpoint, contract, conversation, wiicEvents]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
+                throw new Exception($"VALIDATION: {path} must have exactly one of [goto, event, video, reward, fakeFlashpoint, contract, conversation, waitDays]. It has {count} of them. THE CAMPAIGN WILL NOT WORK.");
             }
             if (@goto != null && @goto != "Exit" && !nodes.ContainsKey(@goto)) {
                 throw new Exception($"VALIDATION: {path}.goto must point to another node or be \"Exit\"; \"{@goto}\" is unknown. THE CAMPAIGN WILL NOT WORK.");
@@ -223,6 +235,7 @@ namespace WarTechIIC {
             fakeFlashpoint?.validate($"{path}.fakeFlashpoint");
             contract?.validate($"{path}.contract", nodes);
             conversation?.validate($"{path}.conversation");
+            wait?.validate($"{path}.waiit");
 
             if (isLastEntry) {
                 if (@goto == null) {

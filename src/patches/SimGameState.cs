@@ -135,7 +135,7 @@ namespace WarTechIIC {
     }
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
-    public static class SimGameStateOnDayPassedPatch {
+    public static class SimGameState_OnDayPassed_Patch {
         private static void Postfix() {
             try {
                 Dictionary<WorkOrderEntry, TaskManagementElement> activeItems = WIIC.sim.RoomManager.timelineWidget.ActiveItems;
@@ -193,6 +193,9 @@ namespace WarTechIIC {
 
                     if (ac.entryCountdown == 0) {
                         WIIC.sim.SetTimeMoving(false);
+                        if (ac.currentEntry.wait != null) {
+                            ac.entryComplete();
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -292,16 +295,8 @@ namespace WarTechIIC {
     public static class SimGameState_ContractUserMeetsReputation_Patch {
         public static void Postfix(ref bool __result, Contract c) {
             try {
-                string employer = Utilities.getEmployer(c).factionID;
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"SimGameState_ContractUserMeetsReputation_Patch extendedContract={extendedContract} employer={employer}");
-
-                if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && c.TargetSystem == WIIC.sim.CurSystem.ID) {
-                    return;
-                }
-
-                if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && c.Name != extendedContract.currentContractName) {
-                    WIIC.l.Log($"    Marking as insufficent reputation because blockOtherContracts");
+                if (Utilities.shouldBlockContract(c)) {
+                    WIIC.l.Log($"    Marking {c.Name} as insufficent reputation because shouldBlockContract");
                     __result = false;
                 }
             } catch (Exception e) {
