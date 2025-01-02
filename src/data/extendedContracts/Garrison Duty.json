@@ -1,6 +1,16 @@
 {
 	"name": "Garrison Duty",
-	"requirementList": [],
+	"requirementList": [
+        {
+            "Scope": "StarSystem",
+			"RequirementComparisons": [],
+			"RequirementTags": {},
+            "ExclusionTags": {
+                "items": [ "planet_other_empty" ],
+                "tagSetSourceFile": ""
+            }
+        }
+    ],
 	"weight": 1,
 	"spawnLocation": "OwnSystem",
 	"employer": [ "Any" ],

@@ -1,8 +1,8 @@
 {
   "ID": "wiic_field_testing",
   "contractName": "Field Testing",
-  "difficulty": 5,
-  "finalDifficulty": 5,
+  "difficulty": 6,
+  "finalDifficulty": 6,
   "shortDescription": "We have a contract from {TEAM_EMP.FactionDef.Name} - travel to {TGT_SYSTEM.name} where they've captured several 'Mechs from {TEAM_TAR.FactionDef.Demonym} forces. They want us to engage in field testing of these 'Mechs and gather as much data as possible on their performance.\n\nThis is an extended contract, will last 17 days, and will prevent us from taking other contracts for the duration.",
   "longDescription": "If we accept this contract we'll be in for the duration, Commander. It'll be relatively brief and they'll be providing the testing 'Mechs but we have to ensure we keep the testing 'Mechs alive and gather as much good data as we can.",
   "salvagePotential": 0,

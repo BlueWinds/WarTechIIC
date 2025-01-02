@@ -2,7 +2,7 @@
 	"ID": "SoloDuel_GunslingerProgram",
 	"contractName": "Gunslinger Program",
 	"contractDisplayStyle": "BaseCampaignNormal",
-	"difficulty": 5,
+	"difficulty": 6,
 	"difficultyUIModifier": 0,
 	"weight": 0,
 	"scope": "STANDARD",

@@ -1,6 +1,16 @@
 {
 	"name": "VIP Protection",
-	"requirementList": [],
+	"requirementList": [
+        {
+            "Scope": "StarSystem",
+			"RequirementComparisons": [],
+			"RequirementTags": {},
+            "ExclusionTags": {
+                "items": [ "planet_other_empty" ],
+                "tagSetSourceFile": ""
+            }
+        }
+    ],
 	"weight": 1,
 	"spawnLocation": "Any",
 	"employer": ["OwnSystem"],

@@ -1,6 +1,16 @@
 {
 	"name": "Training Duty",
-	"requirementList": [],
+	"requirementList": [
+        {
+            "Scope": "StarSystem",
+			"RequirementComparisons": [],
+			"RequirementTags": {},
+            "ExclusionTags": {
+                "items": [ "planet_other_empty" ],
+                "tagSetSourceFile": ""
+            }
+        }
+    ],
 	"weight": 1,
 	"spawnLocation": "OwnSystem",
 	"employer": ["Any"],
@@ -54,7 +64,8 @@
 			"contractMessage": "Time for another mock battle, Commander. Let's show these trainees how its done!"
 		},
 		"TrainingReward": {
-			"workOrder": "Training Concluded, Time to Get Paid",
+			"popupTitle": "Package From the Recruits",
+			"popupMessage": "Those recruits we trained up got together and sent us a thank-you card (they misspelled your name). Oh, and {TEAM_EMP.FactionDef.ShortName} sent our actual payment, so that's good at least.",
 			"rewardByDifficulty": {
 				"2": "BTA_standard_Minor_Loot_EC",
 				"5": "BTA_standard_Major_Loot_EC",
