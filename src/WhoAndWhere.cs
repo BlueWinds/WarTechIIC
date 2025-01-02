@@ -99,17 +99,16 @@ namespace WarTechIIC {
 
             Dictionary<string, double> weightedTypes = new Dictionary<string, double>();
             foreach (ExtendedContractType possibleType in WIIC.extendedContractTypes.Values) {
-                if (possibleType.weight > 0 && possibleType.requirementList.Where(r => r.Scope != EventScope.StarSystem).All(r => WIIC.sim.MeetsRequirements(r))) {
+                if (possibleType.weight > 0 && possibleType.hbsRequirements.Where(r => r.Scope != EventScope.StarSystem).All(r => WIIC.sim.MeetsRequirements(r))) {
                     weightedTypes[possibleType.name] = (double)possibleType.weight;
                 }
             }
 
             if (weightedTypes.Count == 0) { return false; }
 
-
             for (int i = 0; i < 3; i++) {
                 ExtendedContractType type = WIIC.extendedContractTypes[Utilities.WeightedChoice(weightedTypes)];
-                RequirementDef[] systemReqs = type.requirementList.Where(r => r.Scope == EventScope.StarSystem).ToArray();
+                RequirementDef[] systemReqs = type.hbsRequirements.Where(r => r.Scope == EventScope.StarSystem).ToArray();
 
                 StarSystem system;
                 FactionValue employer;
@@ -280,7 +279,7 @@ namespace WarTechIIC {
             return Utilities.WeightedChoice(weightedLocations);
         }
 
-        public static (StarSystem, FactionValue) getExtendedEmployerAndLocation(string[] potentialEmployers, SpawnLocation spawnLocation, RequirementDef[] requirementList) {
+        public static (StarSystem, FactionValue) getExtendedEmployerAndLocation(string[] potentialEmployers, SpawnLocation spawnLocation, RequirementDef[] hbsRequirements) {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
 
@@ -296,7 +295,7 @@ namespace WarTechIIC {
                     continue;
                 }
 
-                if (!requirementList.All(r => SimGameState.MeetsRequirements(r, system.Tags, system.Stats))) {
+                if (!hbsRequirements.All(r => SimGameState.MeetsRequirements(r, system.Tags, system.Stats))) {
                     continue;
                 }
 

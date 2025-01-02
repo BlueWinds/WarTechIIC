@@ -305,6 +305,20 @@ namespace WarTechIIC {
         }
     }
 
+    [HarmonyPatch(typeof(SimGameState), "PrepContract")]
+    public static class SimGameState_PrepContract_Patch {
+        public static void Postfix(FactionValue employer, FactionValue target, ref FactionValue HostileToAll) {
+            try {
+                if (HostileToAll.IsInvalidUnset) {
+                    List<FactionValue> hostile = FactionEnumeration.PossibleHostileToAllList.Where(f => !employer.Equals(f) && !target.Equals(f)).ToList();
+                    HostileToAll = Utilities.Choice(hostile);
+                }
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(SGContractsWidget), "OnContractAccepted")]
     [HarmonyPatch(new Type[] { typeof(bool) })]
     public static class SGContractsWidget_OnContractAccepted_Patch {

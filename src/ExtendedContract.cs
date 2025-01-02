@@ -324,6 +324,7 @@ namespace WarTechIIC {
             WIIC.l.Log($"salvagePotential: {contract.Override.salvagePotential}, contractBonusSalvage: {entry.contractBonusSalvage}");
             contract.SalvagePotential += entry.contractBonusSalvage;
             contract.SalvagePotential = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, contract.SalvagePotential));
+            contract.Override.salvagePotential = contract.SalvagePotential;
 
             // Make contract values available under RES_OBJ
             // eg: "Contract name: {RES_OBJ.Name} is a {RES_OBJ.ContractTypeValue.FriendlyName} contract"

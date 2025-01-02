@@ -98,7 +98,8 @@ namespace WarTechIIC {
                 ContractName = contractName,
                 Employer = employer.Name,
                 Target = target.Name,
-                TargetSystem = location.ID
+                TargetSystem = location.ID,
+                IsGlobal =  location.ID != WIIC.sim.CurSystem.ID,
             };
 
             location.SetCurrentContractFactions(employer, target);

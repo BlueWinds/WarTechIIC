@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using Newtonsoft.Json;
 using Localize;
+using HBS.Collections;
 using BattleTech;
 using BattleTech.Data;
 using BattleTech.UI;
@@ -65,9 +66,32 @@ namespace WarTechIIC {
         }
     }
 
+    public class ECFakeTagset {
+        public string[] items;
+    }
+
+    public class ECRequirementDef {
+        public ECFakeTagset ExclusionTags;
+        public ECFakeTagset RequirementTags;
+        public EventScope Scope;
+        public List<ComparisonDef> RequirementComparisons = new List<ComparisonDef>();
+
+        public ECRequirementDef() {}
+
+        public static RequirementDef toRequirementDef(ECRequirementDef old) {
+            RequirementDef def = new RequirementDef();
+            def.ExclusionTags = new TagSet(old.ExclusionTags.items ?? new string[] { });
+            def.RequirementTags = new TagSet(old.RequirementTags.items ?? new string[] { });
+            def.RequirementComparisons = old.RequirementComparisons;
+
+            return def;
+        }
+    }
+
     public class ExtendedContractType {
         public string name;
-        public RequirementDef[] requirementList;
+        public List<ECRequirementDef> requirementList;
+        public RequirementDef[] hbsRequirements;
         public int weight = 1;
         public SpawnLocation spawnLocation;
         public string[] employer;
@@ -138,6 +162,9 @@ namespace WarTechIIC {
             if (mapMarker == null && !travelContracts) {
                 throw new Exception($"VALIDATION: No map marker found for ExtendedContractType {name}, nor does it generate travelContracts. Users won't be able to find it - set `\"travelContracts\": true`.");
             }
+
+            var converter = new Converter<ECRequirementDef, RequirementDef>(ECRequirementDef.toRequirementDef);
+            hbsRequirements = Array.ConvertAll(requirementList.ToArray(), converter);
         }
     }
 }
