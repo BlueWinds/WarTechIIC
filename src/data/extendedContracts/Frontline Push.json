@@ -1,6 +1,16 @@
 {
 	"name": "Frontline Push",
-	"requirementList": [],
+	"requirementList": [
+        {
+            "Scope": "StarSystem",
+			"RequirementComparisons": [],
+			"RequirementTags": {},
+            "ExclusionTags": {
+                "items": [ "planet_other_empty" ],
+                "tagSetSourceFile": ""
+            }
+        }
+    ],
 	"weight": 1,
 	"spawnLocation": "NearbyEnemy",
 	"employer": ["Any"],
@@ -56,7 +66,8 @@
 			"contractMessage": "We've identified the source of the recent counter-attack that you held off. Time to break their assault once and for all. Destroy that base, Commander."
 		},
 		"PaymentDelivered": {
-			"workOrder": "Payment For a Job Well Done",
+			"popupTitle": "Payment for Our Work on {TGT_SYSTEM.Name}",
+			"popupMessage": "Looks like {TEAM_EMP.FactionDef.ShortName} has delivered our payment, Commander {COMMANDER.LastName}. Looks pretty comphrensive, Darius is already compiling a report for you.",
 			"rewardByDifficulty": {
 				"2": "BTA_standard_Minor_Loot_EC",
 				"5": "BTA_standard_Major_Loot_EC",

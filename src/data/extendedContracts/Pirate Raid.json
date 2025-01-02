@@ -1,6 +1,16 @@
 {
 	"name": "Pirate Raid",
-	"requirementList": [],
+	"requirementList": [
+        {
+            "Scope": "StarSystem",
+			"RequirementComparisons": [],
+			"RequirementTags": {},
+            "ExclusionTags": {
+                "items": [ "planet_other_empty" ],
+                "tagSetSourceFile": ""
+            }
+        }
+    ],
 	"weight": 1,
 	"spawnLocation": "NearbyEnemy",
 	"employer": ["AuriganPirates"],
@@ -27,15 +37,16 @@
 			"declinePenalty": "BreakContract",
 			"randomContract": ["Rescue_Pirate_Jailbreak", "Rescue_Pirate_Jailbreak_Hard", "Rescue_LostContact", "Rescue_BlackSite"],
 			"contractPayoutMultiplier": 0.75,
-			"contractBonusSalvage": 10,
+			"contractBonusSalvage": 5,
 			"contractMessage": "Buckle up, Commander, it's time to go raiding again!"
 		},
 		"PirateRaidTime": {
 			"workOrder": "Raiding Time!",
 			"contractChance": 1,
+			"declinePenalty": "BadFaith",
 			"randomContract": ["Rescue_Pirate_Jailbreak", "Rescue_Pirate_Jailbreak_Hard", "Rescue_LostContact", "Rescue_BlackSite"],
 			"contractPayoutMultiplier": 0.75,
-			"contractBonusSalvage": 10,
+			"contractBonusSalvage": 5,
 			"contractMessage": "Buckle up, Commander, it's time to go raiding again!"
 		},
 		"TrainingReward": {

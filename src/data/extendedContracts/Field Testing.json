@@ -1,69 +1,60 @@
 {
-  "name": "Field Testing",
-  "requirementList": [{
-      "Scope": "StarSystem",
-      "RequirementTags": {},
-      "ExclusionTags": {
-        "items": ["planet_other_empty"]
-      }
-    }
-  ],
-  "weight": 1,
-  "spawnLocation": "OwnSystem",
-  "employer": [
-    "Allied"
-  ],
-  "target": [
-    "NearbyEnemy"
-  ],
-  "hireContract": "wiic_field_testing",
-  "availableFor": [
-    20,
-    35
-  ],
-  "travelContracts": true,
-  "blockOtherContracts": true,
-  "schedule": [
-    "",
-    "",
-    "",
-    "FieldTesting",
-    "",
-    "",
-    "",
-    "FieldTesting",
-    "",
-    "",
-    "",
-    "FieldTesting",
-    "",
-    "",
-    "",
-    "FieldTesting",
-    "PaymentDelivered"
-  ],
-  "entries": {
-    "FieldTesting": {
-      "contractChance": 1,
-      "workOrder": "Testing, Testing",
-      "contract": [
-        "ThreeWayBattle_TestDrive_Wildcard_5_NEW",
-        "ThreeWayBattle_TestDrive_Wildcard_8_NEW"
-      ],
-      "declinePenalty": "BreakContract",
-      "ignoreContractRequirements": true,
-      "contractPayoutMultiplier": 1.1,
-      "contractBonusSalvage": -15,
-      "contractMessage": "Our employer has lined up another scenario for us to run through. Time to put their new machine to the test."
-    },
-    "PaymentDelivered": {
-      "popupTitle": "Package for Commander {COMMANDER.LastName}",
-      "popupMessage": "Looks like {TEAM_EMP.FactionDef.ShortName} has delivered our payment, Commander {COMMANDER.LastName}. Yang's busily unpacking the supply crates, you'll have a full report shortly.",
-      "rewardByDifficulty": {
-        "2": "BTA_standard_Minor_Loot_EC",
-        "5": "BTA_standard_Major_Loot_EC",
-        "8": "BTA_standard_Superior_Loot_EC"
-      }
-    }
+	"name": "Field Testing",
+	"requirementList": [
+        {
+            "Scope": "StarSystem",
+			"RequirementComparisons": [],
+			"RequirementTags": {},
+            "ExclusionTags": {
+                "items": [ "planet_other_empty" ],
+                "tagSetSourceFile": ""
+            }
+        }
+    ],
+	"weight": 1,
+	"spawnLocation": "OwnSystem",
+	"employer": ["Allied"],
+	"target": ["NearbyEnemy"],
+	"hireContract": "wiic_field_testing",
+	"availableFor": [20, 35],
+	"travelContracts": true,
+	"blockOtherContracts": true,
+	"schedule": [
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"",
+		"",
+		"",
+		"FieldTesting",
+		"PaymentDelivered"
+	],
+	"entries": {
+		"FieldTesting": {
+			"contractChance": 1,
+			"workOrder": "Testing, Testing",
+			"contract": [ "ThreeWayBattle_TestDrive_Wildcard_5_NEW", "ThreeWayBattle_TestDrive_Wildcard_8_NEW" ],
+			"declinePenalty": "BreakContract",
+			"ignoreContractRequirements": true,
+			"contractMessage": "Our employer has lined up another scenario for us to run through. Time to put their new machine to the test."
+		},
+		"PaymentDelivered": {
+			"popupTitle": "Package for Commander {COMMANDER.LastName}",
+			"popupMessage": "Looks like {TEAM_EMP.FactionDef.ShortName} has delivered our payment, Commander {COMMANDER.LastName}. Yang's busily unpacking the supply crates, you'll have a full report shortly.",
+			"rewardByDifficulty": {
+				"2": "BTA_standard_Minor_Loot_EC",
+				"5": "BTA_standard_Major_Loot_EC",
+				"8": "BTA_standard_Superior_Loot_EC"
+			}
+		}
   }
 }

@@ -307,11 +307,16 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "PrepContract")]
     public static class SimGameState_PrepContract_Patch {
-        public static void Postfix(FactionValue employer, FactionValue target, ref FactionValue HostileToAll) {
+        public static void Postfix(Contract contract, FactionValue employer, FactionValue target, ref FactionValue HostileToAll) {
             try {
+                WIIC.l.Log($"SimGameState_PrepContract_Patch - {HostileToAll} {HostileToAll.IsInvalidUnset}");
+
                 if (HostileToAll.IsInvalidUnset) {
                     List<FactionValue> hostile = FactionEnumeration.PossibleHostileToAllList.Where(f => !employer.Equals(f) && !target.Equals(f)).ToList();
+                    WIIC.l.Log($"SimGameState_PrepContract_Patch - hostile = {hostile.Count}");
                     HostileToAll = Utilities.Choice(hostile);
+                    contract.Override.hostileToAllTeam.faction = HostileToAll.Name;
+                    WIIC.l.Log($"SimGameState_PrepContract_Patch - HostileToAll {HostileToAll} {HostileToAll.Name}");
                 }
             } catch (Exception e) {
                 WIIC.l.LogException(e);

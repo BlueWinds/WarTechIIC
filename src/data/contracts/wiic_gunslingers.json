@@ -1,8 +1,8 @@
 {
   "ID": "wiic_gunslingers",
   "contractName": "Gunslinger Program",
-  "difficulty": 5,
-  "finalDifficulty": 5,
+  "difficulty": 6,
+  "finalDifficulty": 6,
   "shortDescription": "ComStar is offering pay for any MechWarrior or mercenary command willing to serve as the OpFor for their Gunslinger Program. 'Mechs will be provided to all participants, only warm bodies are needed to participate in the program. The idea is to train up skilled MechWarriors to face the still-quite-real Clan threat in the one on one duel environment that the Clan favor.\n\nThis is an extended contract, will last 11 days, and will prevent us from taking other contracts for the duration.",
   "longDescription": "If we accept this contract we'll be in for the duration, Commander, but we won't be putting any of our own metal on the line, just pilots. ComStar's offering good pay, it sounds like a pretty good deal honestly.",
   "salvagePotential": 0,

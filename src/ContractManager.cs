@@ -123,11 +123,14 @@ namespace WarTechIIC {
             WIIC.sim.PrepContract(contract, employer, employer, target, target, inv, inv, Biome.BIOMESKIN.generic, contractOverride.travelSeed, location);
             WIIC.sim.GlobalContracts.Add(contract);
 
-            if (contract.Difficulty == 1000 || contract.Override?.finalDifficulty == 1000) {
-                int difficulty = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-                WIIC.l.Log($"    Contract difficulty was magic value 1000, overriding it with system difficulty {difficulty}");
-                contract.SetFinalDifficulty(difficulty);
+            int finalDiff = contract.Override?.finalDifficulty ?? contract.Override?.difficulty ?? contract.Difficulty;
+            if (finalDiff == 1000) {
+                finalDiff = location.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                WIIC.l.Log($"    Contract difficulty was magic value 1000, overriding it with system difficulty {finalDiff}");
+            } else {
+                WIIC.l.Log($"    Contract difficulty is {finalDiff}");
             }
+            contract.SetFinalDifficulty(finalDiff);
 
             return contract;
         }
