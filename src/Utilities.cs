@@ -158,12 +158,10 @@ namespace WarTechIIC {
             // The enum for "ALLIED" is the same as "HONORED". HBS_why.
             // Apparently the player is also allied to the locals? HBS_why_9000
             if (WIIC.sim.IsFactionAlly(faction) && faction.Name != "Locals") {
-                WIIC.l.Log($"Allied with {faction.Name}, reputationMultiplier is {WIIC.settings.reputationMultiplier["ALLIED"]}");
                 return WIIC.settings.reputationMultiplier["ALLIED"];
             }
 
             SimGameReputation reputation = WIIC.sim.GetReputation(faction);
-            WIIC.l.Log($"{faction.Name} is {reputation.ToString()}, reputationMultiplier is {WIIC.settings.reputationMultiplier[reputation.ToString()]}");
             return WIIC.settings.reputationMultiplier[reputation.ToString()];
         }
 

@@ -233,15 +233,26 @@ namespace WarTechIIC {
             try {
                 string employer = Utilities.getEmployer(c).factionID;
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"SimGameState_ContractUserMeetsReputation_Patch extendedContract={extendedContract} employer={employer}");
-
                 if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && c.TargetSystem == WIIC.sim.CurSystem.ID) {
                     return;
                 }
 
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && c.Name != extendedContract.currentContractName) {
-                    WIIC.l.Log($"    Marking as insufficent reputation because blockOtherContracts");
                     __result = false;
+                }
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(SimGameState), "PrepContract")]
+    public static class SimGameState_PrepContract_Patch {
+        public static void Postfix(FactionValue employer, FactionValue target, ref FactionValue HostileToAll) {
+            try {
+                if (HostileToAll.IsInvalidUnset) {
+                    List<FactionValue> hostile = FactionEnumeration.PossibleHostileToAllList.Where(f => !employer.Equals(f) && !target.Equals(f)).ToList();
+                    HostileToAll = Utilities.Choice(hostile);
                 }
             } catch (Exception e) {
                 WIIC.l.LogException(e);

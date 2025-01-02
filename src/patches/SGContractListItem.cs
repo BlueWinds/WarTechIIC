@@ -11,15 +11,12 @@ namespace WarTechIIC {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 string employer = Utilities.getEmployer(__instance.Contract).factionID;
-                WIIC.l.Log($"SGContractsListItem_setMode_Patch extendedContract={extendedContract} employer={employer}");
 
                 if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
                     return true;
                 }
 
                 if (extendedContract != null && extendedContract.extendedType.blockOtherContracts) {
-                    WIIC.l.Log($"Blocking contract because blockOtherContracts=true");
-
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
                     __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj));
 
