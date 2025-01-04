@@ -13,15 +13,16 @@ namespace WarTechIIC {
                     return;
                 }
 
-                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-                WIIC.l.Log($"SimGameInterruptManager_PopupClosed_Patch: ac={ac} node={ac?.node} nodeIndex={ac?.nodeIndex}");
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                    WIIC.l.Log($"SimGameInterruptManager_PopupClosed_Patch: node={ac.node} nodeIndex={ac.nodeIndex}");
 
-                if (ac?.currentEntry.reward == null) {
-                    WIIC.l.Log($"    Rewards popup, but not a campaign loootbox.");
-                    return;
+                    if (ac.currentEntry.reward == null) {
+                        WIIC.l.Log($"    Rewards popup, but not a campaign loootbox.");
+                        return;
+                    }
+
+                    ac.entryComplete();
                 }
-
-                ac.entryComplete();
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }

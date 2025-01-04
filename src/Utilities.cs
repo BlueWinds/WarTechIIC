@@ -128,7 +128,7 @@ namespace WarTechIIC {
                 extendedContract.addToMap();
             }
 
-            foreach (ActiveCampaign ac in WIIC.activeCampaigns.Values) {
+            foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
                 ac.addToMap();
             }
         }
@@ -155,7 +155,7 @@ namespace WarTechIIC {
 
         public static void slowDownFloaties() {
             SGTimeFloatyStack floatyStack = WIIC.sim.RoomManager.ShipRoom.TimePlayPause.eventFloatyToasts;
-            floatyStack.timeBetweenFloaties = 0.6f;
+            floatyStack.timeBetweenFloaties = 0.8f;
         }
 
         public static double getReputationMultiplier(FactionValue faction) {
@@ -201,7 +201,7 @@ namespace WarTechIIC {
         public static bool shouldBlockContract(Contract contract) {
             string employer = getEmployer(contract).factionID;
             if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && contract.TargetSystem == WIIC.sim.CurSystem.ID) {
-                return true;
+                return false;
             }
 
             ExtendedContract extendedContract = currentExtendedContract();
@@ -209,10 +209,8 @@ namespace WarTechIIC {
                 return true;
             }
 
-            WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-            string blockExcept = ac?.currentEntry.contract?.forced == null ? null : ac.currentEntry.contract.id;
-
-            if (blockExcept != null && blockExcept != contract.Name) {
+            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forced != null).ToList();
+            if (blockingCampaigns.Count > 0 && !blockingCampaigns.Exists(ac => ac.currentEntry.contract.id == contract.Override.ID)) {
                 return true;
             }
 

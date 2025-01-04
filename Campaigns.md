@@ -10,11 +10,11 @@ WIIC provides an alternative format for creating custom campaigns. Campaigns do 
 The overall goal is to make creating campaigns a pleasant and simple experience. They are written in YAML, which is very human-readible and less prone to mistakes than JSON.
 
 ## How they work
-Campaigns begin by adding a company tag: `WIIC_begin_campaign_{name}` (eg: `WIIC_begin_campaign_Sword of Restoration`). They will never spawn on their own; you'll need to write an event (or some other result) that gives the player a company tag.
+Campaigns begin by adding a company tag: `WIIC_begin_campaign {name}` (eg: `WIIC_begin_campaign Sword of Restoration`). They will never spawn on their own; you'll need to write an event (or some other result) that gives the player a company tag.
 
 Campaigns have only a few top-level fields:
  - `name` - The name of the campaign. This should match the filename, and will be displayed to the player.
- - `beginsAt` - A star system where the campaign begins.
+ - `beginsAt` - A star system where the campaign begins. This has no mechanical effect, but is displayed to the player iindicating where to go to get started.
  - `nodes` - A dictionary of named flow-control points. A campaign always begins with a node named `Start`.
 
 Each node is a sequential list of Entries, representing something presented to the player, some action they must take, or a flow-control statement (`goto`) telling the campaign what happens next.
@@ -25,10 +25,15 @@ Example:
 ```
 name: Sword of Restoration
 beginsAt: starsystemdef_Coromodir
+
 nodes:
+  # YAML files support comments; any lines beginning with "#" are ignored.
   Start:
     - event:
-        id: event_FP_Storytime0
+        id: sword_1_post_coronation
+    - goto: End
+  End:
+    - video: 1A-prologue.bk2
     - goto: Exit
 ```
 
@@ -39,6 +44,8 @@ All entries can have a condition applied, using `if`:
     - if:
         companyHasTag: <tagName>
         companyDoesNotHaveTag: <tagName>
+      event:
+        id: <some event>
 ```
 
 The entry will only happen if all the given conditions are true; if any are false, the entry is skipped. Usually you'll only use one condition in an `if` block.
@@ -59,7 +66,7 @@ Example:
     - <...etc...>
 ```
 
-The value of `goto` is either the name of another node, of the special value `Exit` - the campaign is over!
+The value of `goto` is either the name of another node, or `Exit` - the campaign is over!
 
 ### `event`
 Triggers an event. Events (or conversations) are usually how players make decisions; use the `Options` in an event to add company tags, then follow up the `event` entry with forking `goto` based on their choice. The next Entry triggers once the event is concluded.
@@ -70,15 +77,19 @@ Example:
     - event:
         id: event_FP_Storytime0
     - if:
-        companyHasTag: accepted_storytime_campaign
-      goto: Corronation
-    - goto: Exit
+        companyHasTag: decisionA
+      goto: BranchA
+    - goto: BranchB
+  BranchA:
+    - ...etc...
+  BranchB:
+    - ...etc...
 ```
 
-`id` is, straightforwardly, an event id. Its requirements are ignored; use an `if` condition instead. Only events with `Company` or `Commander` scope are supported at the moment. If you really want another event scope, ask BlueWinds.
+`id` is, straightforwardly, an event id. Its requirements are ignored; use an `if` condition instead. Only events with `Company` or `Commander` scope are supported at the moment. If you really want another event scope for some reason, ask BlueWinds.
 
 ### `video`
-Play a video cutscene. The next Entry triggers once the video is done playing (or the player skips it).
+Play a cutscene. The next Entry triggers once the video is done playing (or the player skips it).
 
 Example:
 ```
@@ -92,7 +103,7 @@ Give the player an itemcollection. This pops up a reward dialogue. The next Entr
 
 Example:
 ```
-  - reward: BTA_FP_ThreeRogueItemsA
+  - reward: Sword_Reward_Basic
 ```
 
 ### `fakeFlashpoint`
@@ -106,7 +117,12 @@ Example:
       employerPortrait: castDef_DariusDefault
       target: Unknown
       at: starsystemdef_Coromodir
-      description: Your old mentor, Raju, has invited you to be one of [[DM.BaseDescriptionDefs[LoreKameaArano],Lady Kamea Arano's]] honor guards on the day of her coronation. Travel to [[DM.BaseDescriptionDefs[LoreCoromodir],Coromodir]] to meet with him. The [[DM.BaseDescriptionDefs[LoreAuriganCoalition],Aurigan Coalition]] will supply you with a mech for use in her procession, a venerable Shadowhawk that has been with the Aurigan Royal Guard for decades.
+      
+      # You can use multi-line strings in yaml with "|". No "\r\n" like you use in JSON!
+      description: |
+        Your old mentor, Raju, has invited you to be one of [[DM.BaseDescriptionDefs[LoreKameaArano],Lady Kamea Arano's]] honor guards on the day of her coronation. Travel to [[DM.BaseDescriptionDefs[LoreCoromodir],Coromodir]] to meet with him.
+
+        The [[DM.BaseDescriptionDefs[LoreAuriganCoalition],Aurigan Coalition]] will supply you with a mech for use in her procession, a venerable Shadowhawk that has been with the Aurigan Royal Guard for decades.
 ```
 
 All fields are required, and displayed to the player. `employer` and `target` need not be who the player is actually going to fight for / against; they're display only.
@@ -116,19 +132,19 @@ All fields are required, and displayed to the player. `employer` and `target` ne
 ### `contract`
 Offer a contract in the command center. Its requirements are ignored; use an `if` condition instead. The campaign will be on hold until they complete the drop. If successful, it moves onto the next Entry. If the player fails the mission, or the mission expires, we instead `onFailGoto` (exactly as `goto`, explained above).
 
-While a contract Entry is active, the player cannot leave the star system. Travel is completely blocked.
-
 Example:
 ```
   - contract:
-      id: StoryTime_3_Axylus_Default
+      id: Sword_4_LiberationOfWeldry
       employer: AuriganRestoration
-      target: AuriganPirates
-      onFailGoto: CaptureTheScheria
+      target: AuriganDirectorate
+      onFailGoto: LiberationOfWeldry
 
-      postContractEvent: forcedevent_FP_StoryTime3_A
+      postContractEvent: sword_4_postcontract
+
       forced:
-        maxDays: 0
+        maxDays: 7
+
 ```
 
 `id`, `employer`, `target` and `onFailGoto` are required, all others are optional. `blockOtherContracts` defaults to false.
@@ -145,9 +161,11 @@ travel:
   at: starsystemdef_Coromodir
 ```
 
-When a forced contract is available, it blocks all other contracts, and adds the contract in the current system, and prevents travel. `maxDays` is a ticking countdown of days; when it reaches zero (or immediately if it's set to 0), the player is forced into the drop, without a chance to opt out or further delay.
+When a `forced` contract is available, it blocks all other contracts and prevents travel. `maxDays` is a ticking countdown of days; when it reaches zero (or immediately if it's set to 0), the player is forced into the drop. They can still access the barracks, system store, save, load, etc, even if the countdown is 0. They just can't leave the system or take any other contract.
 
-A travel contract is spawned `at` the given system, without a time limit; the player can take other contracts, travel around, do whatever; the contract will wait for them. It is common to spawn a `travel` contract `at` the current system; this is 100% valid.
+A `travel` contract is spawned `at` the given system, without a time limit; the player can take other contracts, travel around, do whatever; the contract will wait for them. It is common to spawn a `travel` contract `at` the current system; this is 100% valid.
+
+*DO NOT* set `"disableAfterAction": true` in contracts, WIIC-campaign related or not; skipping the AAR will soft-lock the game. This is a basegame issue, not caused by WIIC or any other mod - maybe someday I'll fix it, but hasn't happened yet.
 
 ### `conversation`
 Trigger a SimGameConversation. Conversations are more immersive, but significantly more challenging to create, than Events. They also serve as an excellent place to offer the player choices. The next Entry triggers once the conversation is over.
@@ -158,12 +176,27 @@ Example:
       id: StoryTime2-RentToOwn
       header: BETRAYAL AND DEBT
       subheader: In Orbit - Ur Cruinne
+      characters:
+        Kamea: true
+        Darius: false
   - if:
-      companyDoesNotHaveTag: refused_to_continue_storytime_campaign
+      companyHasTag: refused_to_continue_storytime_campaign
     goto: Exit
 ```
 
-All fields (`id`, `header`, `subheader`) are required. Create conversations using [ConverseTek](https://github.com/CWolfs/ConverseTek/).
+`id`, `header`, `subheader` are required, while `characters` is optional. Create conversations using [ConverseTek](https://github.com/CWolfs/ConverseTek/).
+
+`characters` controls who will be present / visible for the conversation. The default value is:
+```
+  Darius: true
+  Farah: true
+  Sumire: true
+  Yang: true
+  Kamea: false
+  Alexander: false
+```
+
+You only need to set values that you want to change. Visible characters will be reset to the default after each conversation.
 
 ### `wait`
 Wait for some number of days to pass, optionally with a work order.
@@ -179,4 +212,17 @@ Example:
       sprite: uixTxrLogo_SelfEmployed
 ```
 
-`workOrder` and `sprite` are optional; the latter does nothing without the former. If there's no `workOrder`, the player will have no feedback that the campaiign is ongoing while the counter ticks down; use this sparingly.
+`workOrder` and `sprite` are optional (but go together). If there's no `workOrder`, the player will have no feedback that the campaiign is ongoing while the counter ticks down; use this sparingly.
+
+### `popup`
+Show a pause popup notification. Use this sparingly, but it's another option to present information / short bits of flavor to the player.
+
+Example:
+```
+  - popup:
+      title: Axylus
+      sprite: guiTxrPort_Sumire_default_utr
+      message: Commander, I'm setting a course for Lady Centrella's JumpShip. It's strange, though... this moon it's taking us to, Axylus, doesn't appear on any of my maps. Which leads me to wonder: where, exactly, are we going, and how do they intend to get us there?
+```
+
+All fields (`title`, `sprite`, `message`) are required. The title and message can be mad-libbed; you can use `COMPANY`, `COMANDER` and `TGT_SYSTEM` (current star system) to fill in text.

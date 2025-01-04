@@ -24,8 +24,10 @@ namespace WarTechIIC {
         internal static JsonSerializerSettings serializerSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
 
         public static Dictionary<string, Campaign> campaigns = new Dictionary<string, Campaign>();
-        internal static CampaignSettings campaignSettings;
-        internal static Dictionary<string, ActiveCampaign> activeCampaigns = new Dictionary<string, ActiveCampaign>();
+        public static CampaignSettings campaignSettings;
+        public static List<ActiveCampaign> activeCampaigns = new List<ActiveCampaign>();
+
+        internal static List<string> validationErrors = new List<string>();
 
         public static void Init(string modDirectory, string settingsJSON) {
             modDir = modDirectory;
@@ -74,7 +76,6 @@ namespace WarTechIIC {
             IDeserializer deserializer = new DeserializerBuilder().Build();
 
             if (customResources != null && customResources.ContainsKey("Campaign")) {
-                HashSet<string> involvedSystems = new HashSet<string>();
                 foreach (VersionManifestEntry entry in customResources["Campaign"].Values) {
                     WIIC.l.Log($"Loading Campaign from {entry.FilePath}.");
                     try {
@@ -84,13 +85,11 @@ namespace WarTechIIC {
                         }
 
                         Campaign campaign = deserializer.Deserialize<Campaign>(yaml);
-
-                        HashSet<string> campaignSystems = campaign.validate(involvedSystems);
-                        involvedSystems.UnionWith(campaignSystems);
-
+                        campaign.validate(entry.FilePath);
                         campaigns[campaign.name] = campaign;
                     } catch (Exception e) {
                         WIIC.l.LogException(e);
+                        WIIC.validationErrors.Add($"{entry.FilePath} failed to load.");
                     }
                 }
             }

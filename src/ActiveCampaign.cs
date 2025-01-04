@@ -2,9 +2,12 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using BattleTech;
+using BattleTech.StringInterpolation;
 using Newtonsoft.Json;
 using ColourfulFlashPoints.Data;
 using isogame;
+using Localize;
+using UnityEngine;
 
 namespace WarTechIIC {
     [JsonObject(MemberSerialization.OptIn)]
@@ -23,9 +26,6 @@ namespace WarTechIIC {
         [JsonProperty]
         public int? entryCountdown;
 
-        [JsonProperty]
-        public string location;
-
         // Used during deserialization, don't actually call this.
         public ActiveCampaign() {}
 
@@ -33,7 +33,6 @@ namespace WarTechIIC {
         public ActiveCampaign(Campaign c) {
             this.c = c;
             this.campaign = c.name;
-            this.location = c.beginsAt;
         }
 
         public static bool isSerializedCampaign(string tag) {
@@ -57,8 +56,10 @@ namespace WarTechIIC {
         }
 
         public void addToMap() {
-            MapMarker mapMarker = new MapMarker(location, WIIC.campaignSettings.mapMarker);
-            ColourfulFlashPoints.Main.addMapMarker(mapMarker);
+            if (currentEntry.fakeFlashpoint != null) {
+                MapMarker mapMarker = new MapMarker(currentEntry.fakeFlashpoint.at, WIIC.campaignSettings.mapMarker);
+                ColourfulFlashPoints.Main.addMapMarker(mapMarker);
+            }
         }
 
         public CampaignEntry currentEntry {
@@ -88,6 +89,9 @@ namespace WarTechIIC {
         }
 
         public void runEntry() {
+            // If we've just moved away from a fakeFP, it might still be lingering on the map.
+            Utilities.redrawMap();
+
             CampaignEntry e = currentEntry;
             WIIC.l.Log($"{campaign}: Running nodes[{node}][{nodeIndex}].");
 
@@ -104,7 +108,7 @@ namespace WarTechIIC {
             if (e.@goto != null) {
                 if (e.@goto == "Exit") {
                     WIIC.l.Log($"    goto Exit. Campaign complete!");
-                    WIIC.activeCampaigns.Remove(location);
+                    WIIC.activeCampaigns.Remove(this);
                     return;
                 }
 
@@ -139,14 +143,10 @@ namespace WarTechIIC {
             if (e.fakeFlashpoint != null) {
                 // entryComplete will be triggered from SimGameState_SetActiveFlashpoint_Patch
                 WIIC.l.Log($"    fakeFlashpoint {e.fakeFlashpoint.name}.");
-
-                WIIC.activeCampaigns.Remove(location);
-                location = e.fakeFlashpoint.at;
-
-                WIIC.activeCampaigns[location] = this;
+                WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text($"{currentEntry.fakeFlashpoint.name} available at {currentFakeFlashpoint.CurSystem.Name}"));
 
                 // No action to take; the flashpoint is added to the starmap via SGNavigationScreen_ShowFlashpointSystems_patch
-                // and when the system is clicked via SimGameState_GetFlashpointInSystem_Patch
+                // and when the system is clicked via SimGameState_SetActiveFlashpoint_Patch
                 return;
             }
 
@@ -154,28 +154,22 @@ namespace WarTechIIC {
                 FactionValue employer = FactionEnumeration.GetFactionByName(e.contract.employer);
                 FactionValue target = FactionEnumeration.GetFactionByName(e.contract.target);
 
+                StarSystem at = e.contract.travel == null ? WIIC.sim.CurSystem : WIIC.sim.GetSystemById(e.contract.travel.at);
+                Contract contract = ContractManager.getContractByName(e.contract.id, WIIC.sim.CurSystem, employer, target);
+                WIIC.sim.GlobalContracts.Add(contract);
+
                 if (e.contract.forced != null) {
-                    Contract contract = ContractManager.getContractByName(e.contract.id, WIIC.sim.CurSystem, employer, target);
+                    entryCountdown = e.contract.forced.maxDays;
+                    contract.SetExpiration(e.contract.forced.maxDays ?? 0);
 
-                    entryCountdown = e.contract.forced?.maxDays;
-                    contract.SetExpiration(entryCountdown ?? 0);
-                    WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
-                    WIIC.sim.CurSystem.SystemContracts.Add(contract);
-                    WIIC.sim.activeBreadcrumb = contract;
-
-                    if (entryCountdown == 0) {
-                        WIIC.sim.ForceTakeContract(contract, false);
+                    if (e.contract.forced?.maxDays != 0) {
+                        entryCountdown = e.contract.forced?.maxDays;
+                        WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
                     }
                 }
 
-                if (e.contract.travel != null) {
-                    StarSystem at = WIIC.sim.GetSystemById(e.contract.travel.at);
-                    ContractManager.addTravelContract(e.contract.id, at, employer, target);
-
-                    WIIC.activeCampaigns.Remove(location);
-                    location = e.contract.travel.at;
-                    WIIC.activeCampaigns[location] = this;
-                }
+                WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
+                WIIC.sim.SetSimRoomState(DropshipLocation.CMD_CENTER);
 
                 // entryComplete will be triggered from SimGameState_OnAttachUXComplete_Patch
                 return;
@@ -183,7 +177,9 @@ namespace WarTechIIC {
 
             if (e.conversation != null) {
                 CampaignConversation conv = e.conversation;
+                WIIC.l.Log($"    conversation {conv.id}.");
 
+                conv.characters.apply();
                 Conversation conversation = WIIC.sim.DataManager.SimGameConversations.Get(conv.id);
                 WIIC.sim.interruptQueue.QueueConversation(conversation, conv.header, conv.subheader);
 
@@ -198,27 +194,42 @@ namespace WarTechIIC {
                 return;
             }
 
-            // TODO:
-            // - Add popup support?
+            if (e.popup != null) {
+                string title = Interpolator.Interpolate(e.popup.title, WIIC.sim.Context);
+                string message = Interpolator.Interpolate(e.popup.message, WIIC.sim.Context);
+                Sprite sprite = WIIC.sim.DataManager.SpriteCache.GetSprite(e.popup.sprite);
+
+                WIIC.sim.GetInterruptQueue().QueueTravelPauseNotification(title, message, sprite, "notification_travelcomplete", delegate {
+                    WIIC.l.Log($"Popup dismissed");
+                    entryComplete();
+                }, "Continue");
+
+                WIIC.sim.GetInterruptQueue().DisplayIfAvailable();
+
+                // entryComplete will be triggered from the deligate above
+                return;
+            }
         }
 
         protected WorkOrderEntry_Notification _workOrder;
+        protected string _workOrderIndex;
         public virtual WorkOrderEntry_Notification workOrder {
             get {
-                if (entryCountdown == null) {
-                    return null;
-                }
-
-                if (_workOrder == null) {
-                    if (currentEntry.contract != null) {
-                        string title = WIIC.sim.activeBreadcrumb.Name;
-                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", title);
+                string curIdx = $"{node}.{nodeIndex}";
+                if (_workOrderIndex != curIdx) {
+                    WIIC.l.Log($"Generating work order for {campaign} nodes.{curIdx}");
+                    if (currentEntry.contract?.forced != null) {
+                        Contract contract = WIIC.sim.GlobalContracts.Find(c => c.Override.ID == currentEntry.contract.id);
+                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", contract?.Name ?? campaign);
                     } else if (currentEntry.wait?.workOrder != null) {
                         _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignWait", currentEntry.wait.workOrder);
+                    } else {
+                        _workOrder = null;
                     }
+                    _workOrderIndex = curIdx;
                 }
 
-                _workOrder.SetCost(entryCountdown ?? 0);
+                _workOrder?.SetCost(entryCountdown ?? 0);
                 return _workOrder;
             }
         }

@@ -33,18 +33,32 @@
     <Reference Include="ShadowrunDTO" Publicize="true">
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/ShadowrunDTO.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-CSharp" Publicize="true">
+      <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/Assembly-CSharp.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp-firstpass" Publicize="true">
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-
+    <Reference Include="InControl">
+      <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/InControl.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" /><Reference Include="ColourfulFlashpoints">
       <HintPath>$(BattleTechGameDir)/Mods/ColourfulFlashpoints/ColourfulFlashPoints.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine" Publicize="true">
+      <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/UnityEngine.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule" Publicize="true">
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI" Publicize="true">
+      <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro" Publicize="true">
+      <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/Unity.TextMeshPro.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

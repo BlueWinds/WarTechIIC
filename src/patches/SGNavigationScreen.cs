@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Harmony;
 using BattleTech;
 using BattleTech.UI;
@@ -12,8 +13,7 @@ namespace WarTechIIC {
         private static bool Prefix(SGNavigationScreen __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-                WIIC.l.Log($"OnTravelCourseAccepted. extendedContract: {extendedContract}, ActiveTravelContract: {WIIC.sim.ActiveTravelContract}, ac: {ac}");
+                WIIC.l.Log($"OnTravelCourseAccepted. extendedContract: {extendedContract}, ActiveTravelContract: {WIIC.sim.ActiveTravelContract}");
 
                 void cleanup() {
                     __instance.uiManager.ResetFader(UIManagerRootType.PopupRoot);
@@ -22,9 +22,9 @@ namespace WarTechIIC {
 
                 Sprite sumire = WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire);
 
-                if (ac?.currentEntry.contract != null) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forced != null)) {
                     string cTitle = Strings.T("Navigation not allowed");
-                    string cMessage = Strings.T("We can't leave {0} right now, Commander, not while we have such an important contract pending.");
+                    string cMessage = Strings.T("We can't leave {0} while we have an important contract pending, Commander.", WIIC.sim.CurSystem.Name);
                     PauseNotification.Show(cTitle, cMessage, sumire, "", true, cleanup);
                     return false;
                 }
@@ -77,8 +77,8 @@ namespace WarTechIIC {
     public static class SGNavigationScreen_ShowFlashpointSystems_patch {
         private static void Poostfix(SGNavigationScreen __instance) {
             try {
-                WIIC.l.Log("SGNavigationScreen_ShowFlashpointSystems_patch acs={WIIC.activeCampaigns.Values.Count}");
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Values) {
+                WIIC.l.Log("SGNavigationScreen_ShowFlashpointSystems_patch acs={WIIC.activeCampaigns.Count}");
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
                     Flashpoint fp = ac.currentFakeFlashpoint;
                     if (fp != null) {
                         WIIC.l.Log("Adding fakeFlashpoint {fp.Def.Description.Name} for {ac.campaign} to {fp.CurrSystem.ID}");

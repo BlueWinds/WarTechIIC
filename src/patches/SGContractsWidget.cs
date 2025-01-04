@@ -10,8 +10,8 @@ namespace WarTechIIC {
         public static bool Prefix(SGContractsWidget __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (extendedContract != null && __instance.SelectedContract.Name == extendedContract.currentContractName) {
-                    WIIC.l.Log($"Blocking HandleEscapeKeypress. selected: {__instance.SelectedContract.Name}, selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
+                if (extendedContract != null && __instance.SelectedContract.Override.ID == extendedContract.currentContractName) {
+                    WIIC.l.Log($"Blocking HandleEscapeKeypress. selectedContract: {__instance.SelectedContract.Override.ID}, currentContractName: {extendedContract.currentContractName}");
                     return false;
                 }
             }
@@ -27,8 +27,8 @@ namespace WarTechIIC {
         public static void Postfix(SGContractsWidget __instance) {
             try {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (extendedContract != null && __instance.SelectedContract.Name == extendedContract.currentContractName) {
-                    WIIC.l.Log($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Name}, currentContractName: {extendedContract.currentContractName}");
+                if (extendedContract != null && __instance.SelectedContract.Override.ID == extendedContract.currentContractName) {
+                    WIIC.l.Log($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Override.ID}, currentContractName: {extendedContract.currentContractName}");
 
                     __instance.NegotiateTitleBackButton.SetState(ButtonState.Disabled);
                     WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(false);

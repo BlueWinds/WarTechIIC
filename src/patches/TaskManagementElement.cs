@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Harmony;
 using BattleTech;
 using BattleTech.UI;
@@ -11,17 +12,24 @@ namespace WarTechIIC {
         static void Postfix(TaskManagementElement __instance) {
             try {
                 WorkOrderEntry entry = __instance.entry;
-                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
                 Sprite sprite = null;
 
                 if (entry.ID == "extendedContractComplete" || entry.ID == "extendedContractExtra") {
                     ExtendedContract extended = Utilities.currentExtendedContract();
                     sprite = extended.employer.FactionDef.GetSprite();
                 } else if (entry.ID == "campaignContract") {
-                    string employer = ac?.currentEntry.contract.employer;
-                    sprite = WIIC.sim.GetFactionDef(employer).GetSprite();
-                } else if (entry.ID == "campaignWait" && ac.currentEntry.wait.sprite != null) {
-                    sprite = WIIC.sim.DataManager.SpriteCache.GetSprite(ac.currentEntry.wait.sprite);
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forced != null)) {
+                        string employer = ac.currentEntry.contract.employer;
+                        sprite = WIIC.sim.GetFactionDef(employer).GetSprite();
+                    }
+
+                    if (__instance.entry.IsCostPaid()) {
+                        __instance.daysText.SetText("0 Days");
+                    }
+                } else if (entry.ID == "campaignWait") {
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.wait?.sprite != null)) {
+                        sprite = WIIC.sim.DataManager.SpriteCache.GetSprite(ac.currentEntry.wait.sprite);
+                    }
                 }
 
                 if (sprite != null) {

@@ -7,18 +7,24 @@ namespace WarTechIIC {
     [HarmonyPatch(typeof(SGTimePlayPause), "ReceiveButtonPress")]
     public static class SGTimePlayPause_ReceiveButtonPress_Patch {
         [HarmonyPrefix]
-        static void Prefix(ref string button) {
+        static bool Prefix(ref string button) {
             try {
-                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-                WIIC.l.Log($"SGTimePlayPause_ReceiveButtonPress_Patch: ac={ac} entryCountdown={ac?.entryCountdown} button={button}");
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                    WIIC.l.Log($"SGTimePlayPause_ReceiveButtonPress_Patch: entryCountdown={ac.entryCountdown} button={button}");
 
-                if (ac?.entryCountdown == 0 && ac.currentEntry.contract != null && button == "ToggleTime") {
-                    WIIC.l.Log($"    Overriding original \"ToggleTime\" button with \"LaunchContract\".");
-                    button = "LaunchContract";
+                    if (ac.currentEntry.contract?.forced != null && (ac.entryCountdown == 0 || ac.entryCountdown == null)) {
+                        WIIC.l.Log($"    Overriding original \"{button}\" button and sending player to the command center.");
+
+                        WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
+                        WIIC.sim.SetSimRoomState(DropshipLocation.CMD_CENTER);
+                        return false;
+                    }
                 }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
+
+            return true;
         }
     }
 }

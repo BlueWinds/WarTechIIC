@@ -114,7 +114,15 @@ namespace WarTechIIC {
                 FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
 
                 Utilities.cleanupSystem(system);
-                Utilities.applyOwner(system, faction, true);
+
+                // Starmap is null in post-contract events; this means we can't check nearby systems, and
+                // we need to defer applying the new owner until the simgame UI is reattached.
+                if (WIIC.sim.Starmap == null) {
+                    WIIC.l.Log($"Deferring applyOwner() until Starmap.PopulateMap when we return to simgame");
+                    Starmap_PopulateMap_Patch.deferredOwnershipChanges.Add((system, faction));
+                } else {
+                    Utilities.applyOwner(system, faction, true);
+                }
 
                 WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                 return true;
@@ -284,18 +292,18 @@ namespace WarTechIIC {
                     throw new Exception($"Unable to find campaign '{name}'.");
                 }
 
-                foreach (ActiveCampaign existing in WIIC.activeCampaigns.Values) {
+                foreach (ActiveCampaign existing in WIIC.activeCampaigns) {
                     if (existing.c.name == name) {
-                        throw new Exception($"Campaign '{name}' already active at {existing.location}; each campaign can only be active once. Not doing anything.");
+                        throw new Exception($"Campaign '{name}' already active; each campaign can only be active once. Not doing anything.");
                     }
                 }
 
                 ActiveCampaign ac = new ActiveCampaign(campaign);
-                StarSystem system = WIIC.sim.GetSystemById(ac.location);
-                WIIC.activeCampaigns[system.ID] = ac;
-                Utilities.redrawMap();
+                WIIC.activeCampaigns.Add(ac);
+                ac.runEntry();
 
-                WIIC.eventResultsCache.Add(($"{name} campaign is now available at", $"[[DM.SystemDefs[{system.ID}],{system.Name}]]"));
+                StarSystem system = WIIC.sim.GetSystemById(ac.c.beginsAt);
+                WIIC.eventResultsCache.Add(($"{name} campaign begins at", $"[[DM.SystemDefs[{system.ID}],{system.Name}]]"));
                 return true;
             }
 

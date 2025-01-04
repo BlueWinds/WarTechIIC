@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Harmony;
 using BattleTech;
 using BattleTech.UI;
@@ -14,8 +15,7 @@ namespace WarTechIIC {
                     return false;
                 }
 
-                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-                if (ac?.workOrder == entry) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.workOrder == entry)) {
                     return false;
                 }
             } catch (Exception e) {
@@ -39,9 +39,8 @@ namespace WarTechIIC {
                     __instance.AddEntry(extendedContract.extraWorkOrder, false);
                 }
 
-                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-                if (ac?.workOrder != null) {
-                    __instance.AddEntry(ac?.workOrder, false);
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.workOrder != null)) {
+                    __instance.AddEntry(ac.workOrder, false);
                 }
 
                 __instance.RefreshEntries();
@@ -66,7 +65,6 @@ namespace WarTechIIC {
                 if (element.Entry.ID == "campaignContract") {
                     WIIC.l.Log($"Sent to command center from task timeline widget");
                     WIIC.sim.SetTimeMoving(false);
-                    WIIC.sim.SetSelectedContract(WIIC.sim.activeBreadcrumb);
                     WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
                     WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
                     return;

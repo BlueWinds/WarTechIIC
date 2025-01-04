@@ -348,14 +348,14 @@ namespace WarTechIIC {
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
-                    WIIC.l.Log($"Accepted {type} mission {contract.Name}.");
+                    WIIC.l.Log($"Accepted {type} mission {contract.Override.ID}.");
 
                     if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
                         // Add it to the command center, so that it gets persisted in the pre-drop save.
                         WIIC.sim.CurSystem.SystemContracts.Add(contract);
                     }
 
-                    currentContractName = contract.Name;
+                    currentContractName = contract.Override.ID;
                     WIIC.sim.RoomManager.ChangeRoom(DropshipLocation.CMD_CENTER);
                     WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
                     WIIC.sim.RoomManager.RefreshDisplay();

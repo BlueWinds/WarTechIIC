@@ -15,11 +15,10 @@ namespace WarTechIIC {
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
                 Contract contract = __instance.theContract;
-                SimGameState_OnAttachUXComplete_Patch.lastCompletedContract = contract.Name;
                 ExtendedContract ec = Utilities.currentExtendedContract();
 
                 // Player not working here
-                if (ec == null || ec.currentContractName != contract.Name) {
+                if (ec == null || ec.currentContractName != contract.Override.ID) {
                     return;
                 }
 
@@ -72,19 +71,20 @@ namespace WarTechIIC {
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
                 ExtendedContract ec = Utilities.currentExtendedContract();
-                WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: contract: {__instance.theContract.Name}, ec={ec}, ac={ac}");
+                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: contract: {__instance.theContract.Name}, ec={ec}");
 
                 string eventId = null;
 
-                if (ec.currentContractName == __instance.theContract.Name) {
+                if (ec?.currentContractName == __instance.theContract.Override.ID) {
                     eventId = ec.currentEntry.postContractEvent;
                     WIIC.l.Log($"    ec eventId={eventId}");
                 }
 
-                if (ac?.currentEntry?.contract?.postContractEvent != null) {
-                    eventId = ac?.currentEntry?.contract?.postContractEvent;
-                    WIIC.l.Log($"    ac eventId={eventId}");
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                    if (ac.currentEntry.contract?.postContractEvent != null) {
+                        eventId = ac.currentEntry.contract.postContractEvent;
+                        WIIC.l.Log($"    ac eventId={eventId}");
+                    }
                 }
 
                 if (eventId == null) {

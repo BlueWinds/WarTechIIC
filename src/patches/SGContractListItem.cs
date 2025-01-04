@@ -10,8 +10,10 @@ namespace WarTechIIC {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
                 if (Utilities.shouldBlockContract(__instance.Contract)) {
-                    WIIC.activeCampaigns.TryGetValue(WIIC.sim.CurSystem.ID, out ActiveCampaign ac);
-                    string reason = ac?.currentEntry.contract?.forced == null ? "Extended" : "Campaign";
+                    string reason = "Extended";
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                        if (ac.currentEntry.contract?.forced != null) { reason = "Campaign"; }
+                    }
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
                     __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj, reason));
                     __instance.button.SetState(ButtonState.Unavailable, true);
