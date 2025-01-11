@@ -260,8 +260,13 @@ namespace WarTechIIC {
         }
 
         public virtual void spawnParticipationContracts() {
+            SimGameReputation employerRep = WIIC.sim.GetReputation(employer);
+            SimGameReputation targetRep = WIIC.sim.GetReputation(target);
+
             if (WIIC.settings.wontHirePlayer.Contains(employer.Name)) {
                 WIIC.l.Log($"Skipping hireContract for {type} at {location.Name} because employer {employer.Name} wontHirePlayer");
+            } else if (employerRep < minRepToHelp()) {
+                WIIC.l.Log($"Skipping hireContract for {type} at {location.Name} because player has too low rep with {employer.Name} (has {employerRep}, needs {minRepToHelp()}).");
             } else {
                 WIIC.l.Log($"Spawning travel hireContract {extendedType.hireContract} at {location.Name} for {type}");
                 ContractManager.addTravelContract(extendedType.hireContract, location, employer, target);
@@ -270,11 +275,17 @@ namespace WarTechIIC {
             if (extendedType.targetHireContract != null) {
                 if (WIIC.settings.wontHirePlayer.Contains(target.Name)) {
                     WIIC.l.Log($"Skipping targetHireContract for {type} at {location.Name} because target {target.Name} wontHirePlayer");
+                } else if (employerRep < minRepToHelp()) {
+                    WIIC.l.Log($"Skipping targetHireContract for {type} at {location.Name} because player has too low rep with {employer.Name} (has {targetRep}, needs {minRepToHelp()}).");
                 } else {
                     WIIC.l.Log($"    Also adding {extendedType.targetHireContract} from targetHireContract");
                     ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer);
                 }
             }
+        }
+
+        public virtual SimGameReputation minRepToHelp() {
+            return SimGameReputation.DISLIKED;
         }
 
         public bool isParticipationContract(Contract c) {
@@ -403,7 +414,7 @@ namespace WarTechIIC {
         public virtual string getDescription() {
             StringBuilder description = new StringBuilder();
 
-            description.AppendLine(Strings.T("<b><color=#de0202>Hired by {0} for {1}</color></b>", employer.FactionDef.ShortName, type));
+            description.AppendLine(Strings.T("<b><color=#ee4242>Hired by {0} for {1}</color></b>", employer.FactionDef.ShortName, type));
             description.AppendLine(Strings.T("We've been on assignment {0} days. The contract will complete after {1}.", currentDay, extendedType.schedule.Length - 1));
 
             return description.ToString();

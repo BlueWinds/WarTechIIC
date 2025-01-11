@@ -62,7 +62,7 @@ So that's cool and all, but what do players do?
 
 Well, when they enter the star system where a flareup is occurring, each faction may generate a contract to hire the player ("Flareup: Attack Planet", "Flareup: Raid Planet", or one of the two variants of "Flareup: Defend Planet" for attacks/raids) if:
 1) They are not listed in `wontHirePlayer`.
-2) The players reputation with that faction is at least `minReputationToHelpAttack` / `minReputationToHelpRaid`.
+2) The players reputation with that faction is at least `minReputationToHelpAttack` (applying to both Attacks and Raids).
 
 If the player accepts the contract, the "countdown" is immediately set to 0, and the next mission is set to begin tomorrow. They get a task in the timeline telling them when the next mission will occur.
 

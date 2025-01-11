@@ -67,7 +67,7 @@ namespace WarTechIIC {
         }
 
         public override string basicMapDescription() {
-            return Strings.T("<b><color=#de0202>{0} is being raided by {1}</color></b>", location.Name, attacker.FactionDef.ShortName);
+            return Strings.T("<b><color=#ee4242>{0} is being raided by {1}</color></b>", location.Name, attacker.FactionDef.ShortName);
         }
     }
 }
