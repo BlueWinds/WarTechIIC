@@ -167,7 +167,6 @@
   },
   "raidStrengthMultiplier": 0.75,
   "minReputationToHelpAttack": "DISLIKED",
-  "minReputationToHelpRaid": "DISLIKED",
   "wontHirePlayer": [
     "ClanWolf",
     "ClanJadeFalcon",

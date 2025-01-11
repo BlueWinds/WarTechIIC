@@ -265,8 +265,13 @@ namespace WarTechIIC {
             return description.ToString();
         }
 
+        public override SimGameReputation minRepToHelp() {
+            Enum.TryParse(WIIC.settings.minReputationToHelpAttack, out SimGameReputation minRep);
+            return minRep;
+        }
+
         public virtual string basicMapDescription() {
-            return Strings.T("<b><color=#de0202>{0} is under attack by {1}</color></b>", location.Name, attacker.FactionDef.ShortName);
+            return Strings.T("<b><color=#ee4242>{0} is under attack by {1}</color></b>", location.Name, attacker.FactionDef.ShortName);
         }
 
         public override void launchContract(Entry entry, Contract contract) {

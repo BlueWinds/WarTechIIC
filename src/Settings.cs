@@ -37,7 +37,6 @@ namespace WarTechIIC {
         public double raidStrengthMultiplier = 1.0;
 
         public string minReputationToHelpAttack = "INDIFFERENT";
-        public string minReputationToHelpRaid = "INDIFFERENT";
         public List<string> wontHirePlayer = new List<string>();
         public List<string> neverBlockContractsOfferedBy = new List<string>();
         public int combatForceLossMin = 2;

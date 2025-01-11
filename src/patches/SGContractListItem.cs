@@ -12,14 +12,11 @@ namespace WarTechIIC {
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 string employer = Utilities.getEmployer(__instance.Contract).factionID;
 
-                if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
-                    return true;
-                }
+                if (Utilities.shouldBlockContract(__instance.Contract)) {
+                    string reason = "Extended";
 
-                if (extendedContract != null && extendedContract.extendedType.blockOtherContracts) {
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
-                    __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj));
-
+                    __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj, reason));
                     __instance.button.SetState(ButtonState.Unavailable, true);
 
                     return false;
@@ -31,11 +28,11 @@ namespace WarTechIIC {
             return true;
         }
 
-        public static void tweakTooltip(GameObject obj) {
+        public static void tweakTooltip(GameObject obj, string reason) {
             obj.SetActive(true);
             HBSTooltip tooltip = obj.GetComponent<HBSTooltip>();
             if (tooltip != null) {
-                tooltip.defaultStateData.stringValue = "DM.BaseDescriptionDefs[ContractBlockedBecauseExtended]";
+                tooltip.defaultStateData.stringValue = $"DM.BaseDescriptionDefs[ContractBlockedBecause{reason}]";
             }
         }
     }

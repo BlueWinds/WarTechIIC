@@ -193,5 +193,19 @@ namespace WarTechIIC {
         public static FactionDef getEmployer(Contract c) {
             return c.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").FactionDef;
         }
+
+        public static bool shouldBlockContract(Contract contract) {
+            string employer = getEmployer(contract).factionID;
+            if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && contract.TargetSystem == WIIC.sim.CurSystem.ID) {
+                return false;
+            }
+
+            ExtendedContract extendedContract = currentExtendedContract();
+            if (extendedContract?.extendedType.blockOtherContracts == true) {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

@@ -70,20 +70,22 @@ namespace WarTechIIC {
     public static class SimGameState_OnAttachUXComplete_Patch {
         public static void Postfix(SimGameState __instance) {
             try {
-                ExtendedContract current = Utilities.currentExtendedContract();
-                if (current == null || String.IsNullOrEmpty(current.currentContractName)) {
-                    WIIC.l.Log($"_OnAttachUXComplete: No current contract, or current contract not mid-drop. current={current}");
+                StarSystem system = WIIC.sim.CurSystem;
+                ExtendedContract ec = Utilities.currentExtendedContract();
+                WIIC.l.Log($"_OnAttachUXComplete: Loaded SimGame. system={system.ID} ec.type={ec?.type}");
+
+                if (!String.IsNullOrEmpty(ec?.currentContractName)) {
+                    Contract contract = system.SystemContracts.Find(c => c.Override.ID == ec.currentContractName);
+
+                    if (contract == null) {
+                        WIIC.l.LogError($"    EC currentContract {ec.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.ID}. Something is wrong.");
+                        return;
+                    }
+
+                    WIIC.l.Log($"    Launching EC currentContract {ec.currentContractName}.");
+                    ec.launchContract(ec.currentEntry, contract);
                     return;
                 }
-
-                StarSystem system = WIIC.sim.CurSystem;
-                Contract contract = system.SystemContracts.Find(c => c.Name == current.currentContractName);
-                if (contract == null) {
-                    WIIC.l.LogError($"_OnAttachUXComplete: currentContract {current.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.Name}");
-                }
-
-                WIIC.l.Log($"_OnAttachUXComplete: Loaded game, launching currentContract {current.currentContractName}.");
-                current.launchContract(current.currentEntry, contract);
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
@@ -231,13 +233,7 @@ namespace WarTechIIC {
     public static class SimGameState_ContractUserMeetsReputation_Patch {
         public static void Postfix(ref bool __result, Contract c) {
             try {
-                string employer = Utilities.getEmployer(c).factionID;
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && c.TargetSystem == WIIC.sim.CurSystem.ID) {
-                    return;
-                }
-
-                if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && c.Name != extendedContract.currentContractName) {
+                if (Utilities.shouldBlockContract(c)) {
                     __result = false;
                 }
             } catch (Exception e) {
