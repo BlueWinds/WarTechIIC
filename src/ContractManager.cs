@@ -94,10 +94,13 @@ namespace WarTechIIC {
         }
 
         public static Contract getContractByName(string contractName, StarSystem location, FactionValue employer, FactionValue target) {
+            FactionValue hostile = chooseHostileToAll(employer, target);
+
             SimGameState.AddContractData addContractData = new SimGameState.AddContractData {
                 ContractName = contractName,
                 Employer = employer.Name,
                 Target = target.Name,
+                HostileToAll = hostile.Name,
                 TargetSystem = location.ID,
                 IsGlobal =  location.ID != WIIC.sim.CurSystem.ID,
             };
@@ -133,6 +136,11 @@ namespace WarTechIIC {
             contract.SetFinalDifficulty(finalDiff);
 
             return contract;
+        }
+
+        public static FactionValue chooseHostileToAll(FactionValue employer, FactionValue target) {
+            List<FactionValue> hostile = FactionEnumeration.PossibleHostileToAllList.Where(f => !employer.Equals(f) && !target.Equals(f)).ToList();
+            return Utilities.Choice(hostile);
         }
     }
 }
