@@ -23,13 +23,13 @@ namespace WarTechIIC {
                 Settings s = WIIC.settings;
                 WIIC.l.Log($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}");
 
-                ExtendedContract current = Utilities.currentExtendedContract() as Attack;
+                ExtendedContract current = Utilities.currentExtendedContract();
                 if (current == null) {
                     return;
                 }
 
-                if (__instance.Name != current.currentContractName) {
-                    current.currentContractName = null;
+                current.currentContractName = null;
+                if (__instance.Name != current.currentContractName || current as Attack == null) {
                     return;
                 }
 

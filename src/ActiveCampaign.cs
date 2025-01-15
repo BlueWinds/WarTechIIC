@@ -83,14 +83,27 @@ namespace WarTechIIC {
         }
 
         public void entryComplete() {
+            WorkOrderEntry_Notification oldWorkOrder = workOrder;
+            Flashpoint oldFp = currentFakeFlashpoint;
+
             entryCountdown = null;
             nodeIndex++;
             runEntry();
+
+            if (oldFp != currentFakeFlashpoint) {
+                // If we've just moved away from a fakeFP, it might still be lingering on the map.
+                Utilities.redrawMap();
+            }
+
+            // We might need to remove a previous work order
+            if (workOrder == null) {
+                WIIC.sim.RoomManager.RefreshTimeline(false);
+            } else {
+                WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
+            }
         }
 
         public void runEntry() {
-            // If we've just moved away from a fakeFP, it might still be lingering on the map.
-            Utilities.redrawMap();
 
             CampaignEntry e = currentEntry;
             WIIC.l.Log($"{campaign}: Running nodes[{node}][{nodeIndex}].");
@@ -114,8 +127,8 @@ namespace WarTechIIC {
 
                 WIIC.l.Log($"    goto {e.@goto}. Starting new node.");
                 node = e.@goto;
-                nodeIndex = -1;
-                entryComplete();
+                nodeIndex = 0;
+                runEntry();
                 return;
             }
 
@@ -164,7 +177,6 @@ namespace WarTechIIC {
 
                     if (e.contract.forced?.maxDays != 0) {
                         entryCountdown = e.contract.forced?.maxDays;
-                        WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
                     }
                 }
 

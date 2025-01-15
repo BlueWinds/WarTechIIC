@@ -41,14 +41,14 @@ namespace WarTechIIC {
             }
 
             system.SetCurrentContractFactions(employer, target);
-            var potentialContracts = (Dictionary<int, List<ContractOverride>>) WIIC.sim.GetContractOverrides(difficultyRange, validTypes);
+            Dictionary<int, List<ContractOverride>> potentialContracts = WIIC.sim.GetContractOverrides(difficultyRange, validTypes);
 
             WeightedList<MapAndEncounters> playableMaps =
                 MetadataDatabase.Instance.GetReleasedMapsAndEncountersBySinglePlayerProceduralContractTypeAndTags(
                     system.Def.MapRequiredTags, system.Def.MapExcludedTags, system.Def.SupportedBiomes, true)
                     .ToWeightedList(WeightedListType.SimpleRandom);
 
-            var validParticipants = WIIC.sim.GetValidParticipants(system);
+            Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validParticipants = WIIC.sim.GetValidParticipants(system);
 
             if (!WIIC.sim.HasValidMaps(system, playableMaps)
                 || !WIIC.sim.HasValidContracts(difficultyRange, potentialContracts)
@@ -94,10 +94,13 @@ namespace WarTechIIC {
         }
 
         public static Contract getContractByName(string contractName, StarSystem location, FactionValue employer, FactionValue target) {
+            FactionValue hostile = chooseHostileToAll(employer, target);
+
             SimGameState.AddContractData addContractData = new SimGameState.AddContractData {
                 ContractName = contractName,
                 Employer = employer.Name,
                 Target = target.Name,
+                HostileToAll = hostile.Name,
                 TargetSystem = location.ID,
                 IsGlobal =  location.ID != WIIC.sim.CurSystem.ID,
             };
@@ -133,6 +136,11 @@ namespace WarTechIIC {
             contract.SetFinalDifficulty(finalDiff);
 
             return contract;
+        }
+
+        public static FactionValue chooseHostileToAll(FactionValue employer, FactionValue target) {
+            List<FactionValue> hostile = FactionEnumeration.PossibleHostileToAllList.Where(f => !employer.Equals(f) && !target.Equals(f)).ToList();
+            return Utilities.Choice(hostile);
         }
     }
 }
