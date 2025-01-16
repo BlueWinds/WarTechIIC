@@ -1,4 +1,3 @@
-
 # Extended Contracts
 In addition to existing Raids and Attacks, there are now "extended contracts", as defined by `ExtendedContractType` and `ContractOverride` definitions. These are loaded via modtek, like other things that modtek can load. Though similar in some ways to Flareups, extended contracts do not use / track combat forces, nor do they appear on the map or have lasting effects on the galactic stage.
 
@@ -55,7 +54,7 @@ Each entry is defined by an ID (the key, used in the extended contract type's `s
 The first entry occurs immediately upon accepting the extended contract - it's "Day 0".
 
   - `workOrder` is an optional string. While the extended contract is running, the first upcoming entry with a `workOrder` is shown to the user in the timeline; Use this to notify them of upcoming events / provide a greater sense of "actually doing something" to the player. It has no mechanical effect.
-  - `triggerEvent` is an array of event IDs. Starting at the beginning, WIIC finds the first event with matching conditions and triggers it. If an event triggers, then everything else that could happen on the day is ignored - no contract or lootbox will be generated. If none of the events' conditions match, other properties will be checked as normal.
+  - `triggerEvent` is an array of event IDs. Starting at the beginning, WIIC finds the first event with matching conditions and triggers it. If an event triggers, then everything else that could happen on the day is ignored - no contract or reward will be generated. If none of the events' conditions match, other properties will be checked as normal.
   - If no event occurred, here is a `contractChance` chance that a contract will be offered to the player on this day. 0.5 = 50% chance, 1 = 100% chance. This defaults to 0 - if you want a contract to spawn, set it! The rest of the options control what sort of contract will be generated.
     - Only define ONE OF `contract`, `randomContract`, `allowedContractTypes`. Multiple options will be ignored.
     - `contract`: A list of contracts to choose between **in order**, ignoring planetary difficulty but respecting each contract's `requirementList` (unless `ignoreContractRequirements` is set). If empty or not present, then a contract will be chosen by vanilla logic (respecting `allowedContractTypes` below).
@@ -89,7 +88,7 @@ The first entry occurs immediately upon accepting the extended contract - it's "
   - If no contract triggered, then any `popupMessage` will display. This is a "system alert", similar to the way ECs / flareups offer contracts (though there's only one button, "Continue", rather than accept / decline. The string will be mad-libbed; you can use `COMPANY`, `COMANDER`, `TGT_SYSTEM`, `TEAM_EMP` and `TEAM_TARGET` to fill in text.
     - `popupTitle` will be used if present, otherwise WIIC will use the name of the extended contract type for a title.
     - Sumire is always the one speaking. Sorry, being lazy right now and I like her.
-  - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a lootbox to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that.
+  - Finally, if no event and no contract triggered, `rewardByDifficulty` gives a reward to the player, based on the half-skull rating of the planet - they will receive the highest value they met or exceeded. For example, if on an 8 difficulty world, WIIC will look for 8, then 7, 6, etc. until that key exists and give them that.
   - `invokeMethod` is developer-only, and its usage requires writing C# code. An explanation is beyond the scope of this documentation; ask BlueWinds on the BTA discord or read the code.
 
 ## Generating Extended Contracts

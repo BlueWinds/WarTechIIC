@@ -16,7 +16,9 @@ namespace WarTechIIC {
             (int)ContractType.ThreeWayBattle
         };
 
-        public static Contract getNewProceduralContract(StarSystem system, FactionValue employer, FactionValue target, int[] validTypes) {
+        public static Contract getNewProceduralContract(FactionValue employer, FactionValue target, int[] validTypes) {
+            StarSystem system = WIIC.sim.CurSystem;
+
             // In order to force a given employer and target, we have to temoporarily munge the system we're in, such that
             // our employer/target are the only valid ones. We undo this at the end of getNewProceduralContract.
             var oldEmployers = system.Def.contractEmployerIDs;
@@ -41,14 +43,14 @@ namespace WarTechIIC {
             }
 
             system.SetCurrentContractFactions(employer, target);
-            var potentialContracts = (Dictionary<int, List<ContractOverride>>) WIIC.sim.GetContractOverrides(difficultyRange, validTypes);
+            Dictionary<int, List<ContractOverride>> potentialContracts = WIIC.sim.GetContractOverrides(difficultyRange, validTypes);
 
             WeightedList<MapAndEncounters> playableMaps =
                 MetadataDatabase.Instance.GetReleasedMapsAndEncountersBySinglePlayerProceduralContractTypeAndTags(
                     system.Def.MapRequiredTags, system.Def.MapExcludedTags, system.Def.SupportedBiomes, true)
                     .ToWeightedList(WeightedListType.SimpleRandom);
 
-            var validParticipants = WIIC.sim.GetValidParticipants(system);
+            Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validParticipants = WIIC.sim.GetValidParticipants(system);
 
             if (!WIIC.sim.HasValidMaps(system, playableMaps)
                 || !WIIC.sim.HasValidContracts(difficultyRange, potentialContracts)
@@ -93,7 +95,7 @@ namespace WarTechIIC {
             return contract;
         }
 
-        public static Contract getContractByName(string contractName, StarSystem location, FactionValue employer, FactionValue target) {
+        public static Contract getContractByName(string contractName, FactionValue employer, FactionValue target) {
             FactionValue hostile = chooseHostileToAll(employer, target);
 
             SimGameState.AddContractData addContractData = new SimGameState.AddContractData {
@@ -101,13 +103,13 @@ namespace WarTechIIC {
                 Employer = employer.Name,
                 Target = target.Name,
                 HostileToAll = hostile.Name,
-                TargetSystem = location.ID,
-                IsGlobal =  location.ID != WIIC.sim.CurSystem.ID,
+                TargetSystem = WIIC.sim.CurSystem.ID,
+                IsGlobal = false,
             };
 
-            location.SetCurrentContractFactions(employer, target);
+            WIIC.sim.CurSystem.SetCurrentContractFactions(employer, target);
             Contract contract = WIIC.sim.AddContract(addContractData);
-            location.SystemContracts.Remove(contract);
+            WIIC.sim.CurSystem.SystemContracts.Remove(contract);
             return contract;
         }
 

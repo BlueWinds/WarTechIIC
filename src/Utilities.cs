@@ -127,11 +127,16 @@ namespace WarTechIIC {
             foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values) {
                 extendedContract.addToMap();
             }
+
+            foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                ac.addToMap();
+            }
         }
 
         public static void cleanupSystem(StarSystem system) {
             if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                 WIIC.l.Log($"Removing ExtendedContract at {system.ID}");
+                WIIC.extendedContracts[system.ID].removeParticipationContracts();
                 WIIC.extendedContracts.Remove(system.ID);
             }
 
@@ -150,8 +155,8 @@ namespace WarTechIIC {
         }
 
         public static void slowDownFloaties() {
-            var floatyStack = WIIC.sim.RoomManager.ShipRoom.TimePlayPause.eventFloatyToasts;
-            floatyStack.timeBetweenFloaties = 0.6f;
+            SGTimeFloatyStack floatyStack = WIIC.sim.RoomManager.ShipRoom.TimePlayPause.eventFloatyToasts;
+            floatyStack.timeBetweenFloaties = 0.8f;
         }
 
         public static double getReputationMultiplier(FactionValue faction) {
@@ -205,7 +210,23 @@ namespace WarTechIIC {
                 return true;
             }
 
+            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forcedDays != null).ToList();
+            if (blockingCampaigns.Count > 0 && !blockingCampaigns.Exists(ac => ac.currentEntry.contract.id == contract.Override.ID)) {
+                return true;
+            }
+
             return false;
+        }
+
+        public static void sendToCommandCenter(bool disableRoomChange = false) {
+            WIIC.l.Log($"    sendToCommandCenter - disableRoomChange={disableRoomChange}");
+
+            WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
+            WIIC.sim.SetSimRoomState(DropshipLocation.CMD_CENTER);
+
+            if (disableRoomChange) {
+                WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(false);
+            }
         }
     }
 }

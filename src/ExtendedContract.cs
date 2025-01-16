@@ -122,7 +122,6 @@ namespace WarTechIIC {
             // Don't remove this extended contract if the player has accepted it and is flying there to participate.
             if (countdown <= 0) {
                 if (!isParticipationContract(WIIC.sim.ActiveTravelContract)) {
-                    removeParticipationContracts();
                     return true;
                 }
                 WIIC.l.Log($"    Leaving active because participation contract has been accepted.");
@@ -181,7 +180,7 @@ namespace WarTechIIC {
 
                 if (entry.contract.Length > 0) {
                     foreach (string contractName in entry.contract) {
-                        contract = ContractManager.getContractByName(contractName, location, employer, target);
+                        contract = ContractManager.getContractByName(contractName, employer, target);
                         if (entry.ignoreContractRequirements) {
                             WIIC.l.Log($"Considering {contractName} - Ignoring requirements");
                             break;
@@ -197,7 +196,7 @@ namespace WarTechIIC {
                 } else if (entry.randomContract.Length > 0) {
                     List<Contract> contracts = new List<Contract>();
                     foreach (string contractName in entry.randomContract) {
-                        contract = ContractManager.getContractByName(contractName, location, employer, target);
+                        contract = ContractManager.getContractByName(contractName, employer, target);
                         if (entry.ignoreContractRequirements) {
                             WIIC.l.Log($"Considering {contractName} - Ignoring requirements");
                             contracts.Add(contract);
@@ -212,7 +211,7 @@ namespace WarTechIIC {
                     contract = contracts.Count > 0 ? Utilities.Choice(contracts) : null;
                 } else {
                     WIIC.l.Log($"Generating procedural contract.");
-                    contract = ContractManager.getNewProceduralContract(location, employer, target, entry.allowedContractTypes);
+                    contract = ContractManager.getNewProceduralContract(employer, target, entry.allowedContractTypes);
                 }
 
                 if (contract != null) {
@@ -359,14 +358,14 @@ namespace WarTechIIC {
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
-                    WIIC.l.Log($"Accepted {type} mission {contract.Name}.");
+                    WIIC.l.Log($"Accepted {type} mission {contract.Override.ID}.");
 
                     if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
                         // Add it to the command center, so that it gets persisted in the pre-drop save.
                         WIIC.sim.CurSystem.SystemContracts.Add(contract);
                     }
 
-                    currentContractName = contract.Name;
+                    currentContractName = contract.Override.ID;
                     WIIC.sim.RoomManager.ChangeRoom(DropshipLocation.CMD_CENTER);
                     WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
                     WIIC.sim.RoomManager.RefreshDisplay();

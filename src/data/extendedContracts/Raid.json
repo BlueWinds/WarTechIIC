@@ -3,12 +3,8 @@
   "requirementList": [],
   "weight": 0,
   "spawnLocation": "NearbyEnemy",
-  "employer": [
-    "Any"
-  ],
-  "target": [
-    "SystemOwner"
-  ],
+  "employer": ["Any"],
+  "target": ["SystemOwner"],
   "hireContract": "wiic_raid_attacker",
   "targetHireContract": "wiic_raid_defender",
   "travelContracts": false,
@@ -17,18 +13,18 @@
     "useHmAnimation": true,
     "flashpointPrefix": "",
     "swapColour": true,
-    "keepAlpha": true,
-    "useOnlyInner": true,
+    "keepAlpha": false,
+    "useOnlyInner": false,
     "autoDetectContracts": false,
     "useContractColourOverride": false,
-    "innerCircle": {
-      "Colour": "#1904B1"
-    }
+    "innerCircle": { "Colour": "#0904B1" },
+    "dottedHmRing": { "Colour": "#0904B1" },
+    "innerHmPulsing": { "Colour": "#0904B1" },
+    "outerCircle": { "Alpha": 0 },
+    "outerPulsing": { "Alpha" : 0 },
+    "outerPulsingFill": { "Alpha" : 0 },
   },
-  "availableFor": [
-    30,
-    45
-  ],
+  "availableFor": [30, 45],
   "schedule": [
     "",
     "",

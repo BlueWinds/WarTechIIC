@@ -107,32 +107,6 @@
     "planet_factory": 2
   },
   "limitTargetsToFactionEnemies": true,
-  "attackMarker": {
-    "useHmAnimation": true,
-    "flashpointPrefix": "",
-    "swapColour": true,
-    "keepAlpha": true,
-    "useOnlyInner": true,
-    "autoDetectContracts": false,
-    "useContractColourOverride": false,
-    "innerCircle": {
-      "Colour": "#8904B1"
-    }
-  },
-  "raidMarker": {
-    "useHmAnimation": true,
-    "flashpointPrefix": "",
-    "swapColour": true,
-    "keepAlpha": true,
-    "useOnlyInner": true,
-    "autoDetectContracts": false,
-    "useContractColourOverride": false,
-    "innerCircle": {
-      "Colour": "#1904B1"
-    }
-  },
-  "minCountdown": 30,
-  "maxCountdown": 45,
   "defaultAttackStrength": 20,
   "defaultDefenseStrength": 15,
   "strengthVariation": 6,
@@ -184,7 +158,7 @@
   "attackBonusSalvage": 0,
   "raidBonusPerHalfSkull": 5000,
   "raidBonusSalvage": 1,
-  "raidResultDuration": 360,
+  "raidResultDuration": 720,
   "factionActivityTags": {
     "AuriganPirates": [
       "planet_other_pirate",

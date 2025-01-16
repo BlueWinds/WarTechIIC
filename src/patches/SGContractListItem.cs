@@ -9,12 +9,11 @@ namespace WarTechIIC {
     public static class SGContractsListItem_setMode_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                string employer = Utilities.getEmployer(__instance.Contract).factionID;
-
                 if (Utilities.shouldBlockContract(__instance.Contract)) {
                     string reason = "Extended";
-
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                        if (ac.currentEntry.contract?.forcedDays != null) { reason = "Campaign"; }
+                    }
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
                     __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj, reason));
                     __instance.button.SetState(ButtonState.Unavailable, true);
@@ -41,17 +40,7 @@ namespace WarTechIIC {
     public static class SGContractsListItem_OnClicked_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                string employer = Utilities.getEmployer(__instance.Contract).factionID;
-                WIIC.l.Log($"SGContractsListItem_OnClicked_Patch extendedContract={extendedContract} employer={employer}");
-
-                if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
-                    return true;
-                }
-
-                if (extendedContract != null && extendedContract.extendedType.blockOtherContracts && __instance.Contract.TargetSystem == WIIC.sim.CurSystem.ID) {
-                    return false;
-                }
+                return !Utilities.shouldBlockContract(__instance.Contract);
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }

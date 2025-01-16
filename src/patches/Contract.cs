@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Harmony;
 using BattleTech;
 using BattleTech.Framework;
@@ -22,13 +23,13 @@ namespace WarTechIIC {
                 Settings s = WIIC.settings;
                 WIIC.l.Log($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}");
 
-                ExtendedContract current = Utilities.currentExtendedContract() as Attack;
+                ExtendedContract current = Utilities.currentExtendedContract();
                 if (current == null) {
                     return;
                 }
 
-                if (__instance.Name != current.currentContractName) {
-                    current.currentContractName = null;
+                current.currentContractName = null;
+                if (__instance.Name != current.currentContractName || current as Attack == null) {
                     return;
                 }
 
@@ -42,6 +43,23 @@ namespace WarTechIIC {
                 WIIC.l.Log($"Adding salvage. FinalSalvageCount: {__instance.FinalSalvageCount}, bonus: {bonus}");
                 __instance.FinalSalvageCount += bonus;
 
+            }
+            catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Contract), "OnDayPassed")]
+    public static class Contract_OnDayPassed_Patch {
+        public static void Postfix(Contract __instance, ref bool __result) {
+            try {
+                if (__instance.UsingExpiration) {
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => __instance.Override.ID == ac.currentEntry.contract.id)) {
+                        WIIC.l.Log($"Contract_OnDayPassed_Patch - ensurring {__instance.Override.ID} is not removed because it belongs to {ac.campaign}");
+                        __result = false;
+                    }
+                }
             }
             catch (Exception e) {
                 WIIC.l.LogException(e);

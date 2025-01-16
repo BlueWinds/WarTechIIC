@@ -39,6 +39,9 @@ namespace WarTechIIC {
         // WIIC_ClanJadeFalcon_offers_Garrison Duto_at_starsystemdef_Terra_against_ClanWolf
         private static Regex OFFER_EXTENDED_CONTRACT_TAG = new Regex("^WIIC_(?<employer>.*?)_offers_extended_(?<extendedContractType>.*?)_at_(?<system>.*?)_against_(?<target>.*?)$", RegexOptions.Compiled);
 
+        // WIIC_offer_campaign_Sword of Restoration
+        private static Regex BEGIN_CAMPAIGN_TAG = new Regex("^WIIC_begin_campaign (?<name>.*?)$", RegexOptions.Compiled);
+
         public static string anS(FactionValue faction) {
             if (faction.FactionDef.Name.EndsWith("s")) { return ""; }
             return "s";
@@ -49,212 +52,13 @@ namespace WarTechIIC {
             WIIC.eventResultsCache.Clear();
 
             if (result.Scope == EventScope.Company && result.AddedTags != null) {
-                foreach (string addedTag in result.AddedTags.ToList()) {
+                foreach (string tag in result.AddedTags.ToList()) {
                     try {
-                        MatchCollection matches = GIVE_SYSTEM_ON_WIN.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string systemId = matches[0].Groups["system"].Value;
-                            string factionID = matches[0].Groups["faction"].Value;
-                            WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-
-                            if (WIIC.extendedContracts.ContainsKey(system.ID)) {
-                                if (WIIC.extendedContracts[system.ID] is Attack) {
-                                    Attack attack = (Attack)WIIC.extendedContracts[system.ID];
-                                    attack.giveOnWin = factionID;
-                                } else {
-                                    WIIC.l.LogError($"ApplySimGameEventResult: Flareup at {systemId} is '{WIIC.extendedContracts[system.ID].type}' rather than an Attack");
-                                }
-                            } else {
-                                WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
-                            }
-
-                            result.AddedTags.Remove(addedTag);
-                            continue;
-                        }
-
-                        matches = GIVE_SYSTEM.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string systemId = matches[0].Groups["system"].Value;
-                            string factionID = matches[0].Groups["faction"].Value;
-                            WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionID {factionID}");
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
-
-                            Utilities.cleanupSystem(system);
-                            Utilities.applyOwner(system, faction, true);
-
-                            result.AddedTags.Remove(addedTag);
-                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
-                            continue;
-                        }
-
-
-                        matches = ATTACK_SYSTEM.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string factionID = matches[0].Groups["faction"].Value;
-                            string systemId = matches[0].Groups["system"].Value;
-                            WIIC.l.Log($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
-
-                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
-                            StarSystem system;
-                            if (systemId == "SOMEWHERE") {
-                                (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Attack"], faction);
-                            } else {
-                                system = WIIC.sim.GetSystemById(systemId);
-                            }
-
-                            if (system.OwnerValue.Name == faction.Name) {
-                                WIIC.l.Log($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
-                                continue;
-                            }
-
-                            Utilities.cleanupSystem(system);
-                            WIIC.extendedContracts[system.ID] = new Attack(system, faction, WIIC.extendedContractTypes["Attack"]);
-                            Utilities.redrawMap();
-
-                            result.AddedTags.Remove(addedTag);
-                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] invade{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
-                            continue;
-                        }
-
-                        matches = RAID_SYSTEM.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string factionID = matches[0].Groups["faction"].Value;
-                            string systemId = matches[0].Groups["system"].Value;
-                            WIIC.l.Log($"ApplySimGameEventResult RAID_SYSTEM: factionID {factionID}, systemId {systemId}");
-
-                            FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
-                            StarSystem system;
-                            if (systemId == "SOMEWHERE") {
-                                (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Raid"], faction);
-                            } else {
-                                system = WIIC.sim.GetSystemById(systemId);
-                            }
-
-                            Utilities.cleanupSystem(system);
-                            WIIC.extendedContracts[system.ID] = new Raid(system, faction, WIIC.extendedContractTypes["Raid"]);
-                            Utilities.redrawMap();
-
-                            result.AddedTags.Remove(addedTag);
-                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] raid{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
-                            continue;
-                        }
-
-                        matches = ATTACKER_FORCES.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string systemId = matches[0].Groups["system"].Value;
-                            int strength = int.Parse(matches[0].Groups["strength"].Value);
-                            WIIC.l.Log($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-
-                            if (WIIC.extendedContracts.ContainsKey(system.ID)) {
-                                (WIIC.extendedContracts[system.ID] as Attack).attackerStrength = strength;
-                            } else {
-                                WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
-                            }
-
-                            result.AddedTags.Remove(addedTag);
-                            continue;
-                        }
-
-                        matches = DEFENDER_FORCES.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string systemId = matches[0].Groups["system"].Value;
-                            int strength = int.Parse(matches[0].Groups["strength"].Value);
-                            WIIC.l.Log($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-
-                            if (WIIC.extendedContracts.ContainsKey(system.ID)) {
-                                (WIIC.extendedContracts[system.ID] as Attack).defenderStrength = strength;
-                            } else {
-                                WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
-                            }
-
-                            result.AddedTags.Remove(addedTag);
-                            continue;
-                        }
-
-                        matches = ADD_SYSTEM_TAG.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string tag = matches[0].Groups["tag"].Value;
-                            string systemId = matches[0].Groups["system"].Value;
-                            WIIC.l.Log($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag {tag}, systemId {systemId}");
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            system.Tags.Add(tag);
-
-                            result.AddedTags.Remove(addedTag);
-                            continue;
-                        }
-
-                        matches = REMOVE_SYSTEM_TAG.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string tag = matches[0].Groups["tag"].Value;
-                            string systemId = matches[0].Groups["system"].Value;
-                            WIIC.l.Log($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {tag}, systemId {systemId}");
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            system.Tags.Remove(tag);
-
-                            result.AddedTags.Remove(addedTag);
-                            continue;
-                        }
-
-                        matches = OFFER_CONTRACT_TAG.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string employerID = matches[0].Groups["employer"].Value;
-                            string contractName = matches[0].Groups["contractName"].Value;
-                            string systemId = matches[0].Groups["system"].Value;
-                            string targetID = matches[0].Groups["target"].Value;
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
-                            FactionValue target = Utilities.getFactionValueByFactionID(targetID);
-
-                            var diffRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
-                            int difficulty = WIIC.sim.NetworkRandom.Int(diffRange.MinDifficulty, diffRange.MaxDifficulty + 1);
-
-                            ContractManager.addTravelContract(contractName, system, employer, target);
-
-                            result.AddedTags.Remove(addedTag);
-                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.FactionDef.Name}]] offer{anS(employer)} a contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
-                            continue;
-                        }
-
-                        matches = OFFER_EXTENDED_CONTRACT_TAG.Matches(addedTag);
-                        if (matches.Count > 0) {
-                            string employerID = matches[0].Groups["employer"].Value;
-                            string extendedContractType = matches[0].Groups["extendedContractType"].Value;
-                            string systemId = matches[0].Groups["system"].Value;
-                            string targetID = matches[0].Groups["target"].Value;
-
-                            if (!WIIC.extendedContractTypes.ContainsKey(extendedContractType)) {
-                                throw new Exception($"Unable to find extended contract type '{extendedContractType}'.");
-                            }
-                            if (extendedContractType == "Attack" || extendedContractType == "Raid") {
-                                throw new Exception($"Use WIIC_(faction)_attacks_(system) or WIIC_(faction)_raids_(system) instead of {addedTag}. Doing nothing.");
-                            }
-
-                            StarSystem system = WIIC.sim.GetSystemById(systemId);
-                            FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
-                            FactionValue target = Utilities.getFactionValueByFactionID(targetID);
-                            ExtendedContractType type = WIIC.extendedContractTypes[extendedContractType];
-
-                            Utilities.cleanupSystem(system);
-                            WIIC.extendedContracts[system.ID] = new ExtendedContract(system, employer, target, type);
-                            Utilities.redrawMap();
-
-                            result.AddedTags.Remove(addedTag);
-                            WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.FactionDef.Name}]] offer{anS(employer)} an extended contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
-                            continue;
+                        if (applyWIICEvent(tag)) {
+                            result.AddedTags.Remove(tag);
                         }
                     } catch (Exception e) {
-                        WIIC.l.LogError($"Error while processing tag '{addedTag}'");
+                        WIIC.l.LogError($"Error while processing tag '{tag}'");
                         WIIC.l.LogException(e);
                     }
                 }
@@ -276,6 +80,234 @@ namespace WarTechIIC {
                 WIIC.l.LogError($"result.ToString(): {result.ToString()}");
                 WIIC.l.LogException(e);
             }
+        }
+
+        public static bool applyWIICEvent(string tag) {
+            MatchCollection matches = GIVE_SYSTEM_ON_WIN.Matches(tag);
+            if (matches.Count > 0) {
+                string systemId = matches[0].Groups["system"].Value;
+                string factionID = matches[0].Groups["faction"].Value;
+                WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+
+                if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                    if (WIIC.extendedContracts[system.ID] is Attack) {
+                        Attack attack = (Attack)WIIC.extendedContracts[system.ID];
+                        attack.giveOnWin = factionID;
+                    } else {
+                        WIIC.l.LogError($"ApplySimGameEventResult: Flareup at {systemId} is '{WIIC.extendedContracts[system.ID].type}' rather than an Attack");
+                    }
+                } else {
+                    WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
+                }
+                return true;
+            }
+
+            matches = GIVE_SYSTEM.Matches(tag);
+            if (matches.Count > 0) {
+                string systemId = matches[0].Groups["system"].Value;
+                string factionID = matches[0].Groups["faction"].Value;
+                WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionID {factionID}");
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+
+                Utilities.cleanupSystem(system);
+
+                // Starmap is null in post-contract events; this means we can't check nearby systems, and
+                // we need to defer applying the new owner until the simgame UI is reattached.
+                if (WIIC.sim.Starmap == null) {
+                    WIIC.l.Log($"Deferring applyOwner() until Starmap.PopulateMap when we return to simgame");
+                    Starmap_PopulateMap_Patch.deferredOwnershipChanges.Add((system, faction));
+                } else {
+                    Utilities.applyOwner(system, faction, true);
+                }
+
+                WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                return true;
+            }
+
+
+            matches = ATTACK_SYSTEM.Matches(tag);
+            if (matches.Count > 0) {
+                string factionID = matches[0].Groups["faction"].Value;
+                string systemId = matches[0].Groups["system"].Value;
+                WIIC.l.Log($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
+
+                FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+                StarSystem system;
+                if (systemId == "SOMEWHERE") {
+                    (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Attack"], faction);
+                } else {
+                    system = WIIC.sim.GetSystemById(systemId);
+                }
+
+                if (system.OwnerValue.Name == faction.Name) {
+                    WIIC.l.Log($"Tagged system {system.Name} already owned by attacker {faction.Name}, ignoring");
+                    return true;
+                }
+
+                Utilities.cleanupSystem(system);
+                WIIC.extendedContracts[system.ID] = new Attack(system, faction, WIIC.extendedContractTypes["Attack"]);
+                Utilities.redrawMap();
+
+                WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] invade{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                return true;
+            }
+
+            matches = RAID_SYSTEM.Matches(tag);
+            if (matches.Count > 0) {
+                string factionID = matches[0].Groups["faction"].Value;
+                string systemId = matches[0].Groups["system"].Value;
+                WIIC.l.Log($"ApplySimGameEventResult RAID_SYSTEM: factionID {factionID}, systemId {systemId}");
+
+                FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+                StarSystem system;
+                if (systemId == "SOMEWHERE") {
+                    (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Raid"], faction);
+                } else {
+                    system = WIIC.sim.GetSystemById(systemId);
+                }
+
+                Utilities.cleanupSystem(system);
+                WIIC.extendedContracts[system.ID] = new Raid(system, faction, WIIC.extendedContractTypes["Raid"]);
+                Utilities.redrawMap();
+
+                WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] raid{anS(faction)}", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                return true;
+            }
+
+            matches = ATTACKER_FORCES.Matches(tag);
+            if (matches.Count > 0) {
+                string systemId = matches[0].Groups["system"].Value;
+                int strength = int.Parse(matches[0].Groups["strength"].Value);
+                WIIC.l.Log($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+
+                if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                    (WIIC.extendedContracts[system.ID] as Attack).attackerStrength = strength;
+                } else {
+                    WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
+                }
+
+                return true;
+            }
+
+            matches = DEFENDER_FORCES.Matches(tag);
+            if (matches.Count > 0) {
+                string systemId = matches[0].Groups["system"].Value;
+                int strength = int.Parse(matches[0].Groups["strength"].Value);
+                WIIC.l.Log($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+
+                if (WIIC.extendedContracts.ContainsKey(system.ID)) {
+                    (WIIC.extendedContracts[system.ID] as Attack).defenderStrength = strength;
+                } else {
+                    WIIC.l.LogError($"ApplySimGameEventResult: No flareup found at {systemId}");
+                }
+
+                return true;
+            }
+
+            matches = ADD_SYSTEM_TAG.Matches(tag);
+            if (matches.Count > 0) {
+                string addTag = matches[0].Groups["tag"].Value;
+                string systemId = matches[0].Groups["system"].Value;
+                WIIC.l.Log($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag {addTag}, systemId {systemId}");
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                system.Tags.Add(addTag);
+
+                return true;
+            }
+
+            matches = REMOVE_SYSTEM_TAG.Matches(tag);
+            if (matches.Count > 0) {
+                string removeTag = matches[0].Groups["tag"].Value;
+                string systemId = matches[0].Groups["system"].Value;
+                WIIC.l.Log($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {removeTag}, systemId {systemId}");
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                system.Tags.Remove(removeTag);
+
+                return true;
+            }
+
+            matches = OFFER_CONTRACT_TAG.Matches(tag);
+            if (matches.Count > 0) {
+                string employerID = matches[0].Groups["employer"].Value;
+                string contractName = matches[0].Groups["contractName"].Value;
+                string systemId = matches[0].Groups["system"].Value;
+                string targetID = matches[0].Groups["target"].Value;
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
+                FactionValue target = Utilities.getFactionValueByFactionID(targetID);
+
+                SimGameState.ContractDifficultyRange diffRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
+                int difficulty = WIIC.sim.NetworkRandom.Int(diffRange.MinDifficulty, diffRange.MaxDifficulty + 1);
+
+                ContractManager.addTravelContract(contractName, system, employer, target);
+
+                WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.FactionDef.Name}]] offer{anS(employer)} a contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                return true;
+            }
+
+            matches = OFFER_EXTENDED_CONTRACT_TAG.Matches(tag);
+            if (matches.Count > 0) {
+                string employerID = matches[0].Groups["employer"].Value;
+                string extendedContractType = matches[0].Groups["extendedContractType"].Value;
+                string systemId = matches[0].Groups["system"].Value;
+                string targetID = matches[0].Groups["target"].Value;
+
+                if (!WIIC.extendedContractTypes.ContainsKey(extendedContractType)) {
+                    throw new Exception($"Unable to find extended contract type '{extendedContractType}'.");
+                }
+                if (extendedContractType == "Attack" || extendedContractType == "Raid") {
+                    throw new Exception($"Use WIIC_(faction)_attacks_(system) or WIIC_(faction)_raids_(system) instead of {tag}. Doing nothing.");
+                }
+
+                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
+                FactionValue target = Utilities.getFactionValueByFactionID(targetID);
+                ExtendedContractType type = WIIC.extendedContractTypes[extendedContractType];
+
+                Utilities.cleanupSystem(system);
+                WIIC.extendedContracts[system.ID] = new ExtendedContract(system, employer, target, type);
+                Utilities.redrawMap();
+
+                WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{employerID}],{employer.FactionDef.Name}]] offer{anS(employer)} an extended contract at", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
+                return true;
+            }
+
+            matches = BEGIN_CAMPAIGN_TAG.Matches(tag);
+            if (matches.Count > 0) {
+                string name = matches[0].Groups["name"].Value;
+                WIIC.campaigns.TryGetValue(name, out Campaign campaign);
+
+                if (campaign == null) {
+                    throw new Exception($"Unable to find campaign '{name}'.");
+                }
+
+                foreach (ActiveCampaign existing in WIIC.activeCampaigns) {
+                    if (existing.c.name == name) {
+                        throw new Exception($"Campaign '{name}' already active; each campaign can only be active once. Not doing anything.");
+                    }
+                }
+
+                ActiveCampaign ac = new ActiveCampaign(campaign);
+                WIIC.activeCampaigns.Add(ac);
+                ac.runEntry();
+
+                StarSystem system = WIIC.sim.GetSystemById(ac.c.beginsAt);
+                WIIC.eventResultsCache.Add(($"{name} campaign begins at", $"[[DM.SystemDefs[{system.ID}],{system.Name}]]"));
+                return true;
+            }
+
+            return false;
         }
     }
 }

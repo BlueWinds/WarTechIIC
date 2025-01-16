@@ -14,16 +14,16 @@ namespace WarTechIIC {
         private static string GUID = "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0";
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
                 Contract contract = __instance.theContract;
+                ExtendedContract ec = Utilities.currentExtendedContract();
+
                 // Player not working here
-                if (extendedContract == null || extendedContract.currentContractName != contract.Name) {
+                if (ec == null || ec.currentContractName != contract.Override.ID) {
                     return;
                 }
 
-                Attack attack = extendedContract as Attack;
+                Attack attack = ec as Attack;
                 if (attack == null) {
-                    extendedContract.currentContractName = null;
                     return;
                 }
 
@@ -54,9 +54,11 @@ namespace WarTechIIC {
                 if (attack.playerDrops == null) {
                     attack.playerDrops = 0;
                 }
-                attack.playerDrops += 1;
+
+                if (won) {
+                    attack.playerDrops += 2;
+                }
                 attack.currentContractForceLoss = null;
-                attack.currentContractName = null;
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
@@ -71,27 +73,29 @@ namespace WarTechIIC {
 
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
+                ExtendedContract ec = Utilities.currentExtendedContract();
+                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: contract: {__instance.theContract.Name}, ec={ec}");
 
-                if (extendedContract == null) {
-                    WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: No current extended contract. Doing nothing.");
-                    return;
+                string eventId = null;
+
+                if (ec?.currentContractName == __instance.theContract.Override.ID) {
+                    eventId = ec.currentEntry.postContractEvent;
+                    WIIC.l.Log($"    ec eventId={eventId}");
                 }
 
-                if (extendedContract.currentContractName != __instance.theContract.Name || extendedContract.currentEntry == null) {
-                    WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: {__instance.theContract.Name} not from current extended contract. Doing nothing.");
-                    return;
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                    if (ac.currentEntry.contract?.postContractEvent != null) {
+                        eventId = ac.currentEntry.contract.postContractEvent;
+                        WIIC.l.Log($"    ac eventId={eventId}");
+                    }
                 }
 
-                string eventId = extendedContract.currentEntry.postContractEvent;
-
-                if (String.IsNullOrEmpty(eventId)) {
-                    WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: {__instance.theContract.Name} is from current Extended contract, but entry {extendedContract.currentEntry} has no postContractEvent. Doing nothing.");
+                if (eventId == null) {
                     return;
                 }
 
                 contract = __instance.theContract;
-                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: {contract.Name} is from current Extended contract. Displaying {eventId} instead of normal contract results.");
+                WIIC.l.Log($"    Displaying {eventId} instead of normal contract results.");
 
                 centerPanel = __instance.gameObject.transform.parent.gameObject;
                 GameObject representation = centerPanel.transform.parent.gameObject;
@@ -104,7 +108,7 @@ namespace WarTechIIC {
 
                 __instance.simState.DataManager.SimGameEventDefs.TryGet(eventId, out SimGameEventDef eventDef);
                 if (eventDef.Scope != EventScope.Company && eventDef.Scope != EventScope.StarSystem) {
-                    WIIC.l.LogError($"AAR_ContractObjectivesWidget_Init: event {eventId} is not Company or StarSystem scope; other scopes are not supported.");
+                    WIIC.l.LogError($"AAR_ContractObjectivesWidget_Init: event {eventId} is not Company or StarSystem scope; Scope {eventDef.Scope} is not supported.");
                     return;
                 }
 
@@ -119,38 +123,6 @@ namespace WarTechIIC {
                 eventPopup.gameObject.transform.SetParent(representation.transform);
                 eventPopup.SetEvent(eventDef, eventDef.Scope, eventTracker, entry);
                 eventPopup.gameObject.SetActive(true);
-            } catch (Exception e) {
-                WIIC.l.LogException(e);
-            }
-        }
-    }
-
-
-    [HarmonyPatch(typeof(SimGameState), "OnEventDismissed")]
-    public static class SimGameState_OnEventDismissed_Patch {
-        public static void Postfix(SimGameInterruptManager.EventPopupEntry entry) {
-            try {
-                Contract contract = AAR_ContractObjectivesWidget_Init.contract;
-
-                if (contract == null) {
-                    WIIC.l.Log($"SimGameState_OnEventDismissed_Patch: entry dismissed, is not a postContractEvent. Doing nothing.");
-                    return;
-                }
-
-                WIIC.l.Log($"SimGameState_OnEventDismissed_Patch: entry {contract.Name} dismissed, proceeding with AAR.");
-
-                // Clear out the module we created, so that it doesn't confuse things when the simgame starts up again
-                SGEventPanel eventPopup = LazySingletonBehavior<UIManager>.Instance.GetOrCreatePopupModule<SGEventPanel>();
-                eventPopup.gameObject.transform.SetParent(AAR_ContractObjectivesWidget_Init.oldParent);
-                eventPopup.gameObject.SetActive(false);
-
-                AAR_ContractResults_Screen screen = AAR_ContractObjectivesWidget_Init.centerPanel.transform.parent.parent.gameObject.GetComponent<AAR_ContractResults_Screen>();
-
-                AAR_ContractObjectivesWidget_Init.centerPanel = null;
-                AAR_ContractObjectivesWidget_Init.contract = null;
-                AAR_ContractObjectivesWidget_Init.oldParent = null;
-
-                screen.missionResultParent.AdvanceAARState();
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
