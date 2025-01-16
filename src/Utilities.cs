@@ -219,13 +219,13 @@ namespace WarTechIIC {
         }
 
         public static void sendToCommandCenter(bool disableRoomChange = false) {
-            WIIC.l.Log($"sendToCommandCenter; disableRoomChange={disableRoomChange}");
+            WIIC.l.Log($"    sendToCommandCenter - disableRoomChange={disableRoomChange}");
 
             WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
             WIIC.sim.SetSimRoomState(DropshipLocation.CMD_CENTER);
 
             if (disableRoomChange) {
-                WIIC.sim.RoomManager.LeftNavWidget.gameObject.SetActive(false);
+                WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(false);
             }
         }
     }

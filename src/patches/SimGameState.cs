@@ -103,11 +103,13 @@ namespace WarTechIIC {
                     return;
                 }
 
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
-                    WIIC.l.Log($"currentId: {ac.currentEntry.contract?.id}");
-                    foreach (var contract in WIIC.sim.GlobalContracts) {
-                        WIIC.l.Log($"  contract.override.id: {contract.Override.ID} contract.overrideid: {contract.OverrideID}, contract.internalname: {contract.internalName}, contract.guid: {contract.GUID}, name: {contract.Name}, Override: {contract.Override.ToJSON()}, ");
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.ToArray()) {
+                    if (ac.currentEntry.contract?.immediate == true && WIIC.sim.GlobalContracts.Exists(c => c.Override.ID == ac.currentEntry.contract.id)) {
+                        WIIC.l.Log($"    ActiveCampaign loaded and we're pre-drop in an immediate contract.");
+                        Utilities.sendToCommandCenter(true);
+                        return;
                     }
+
                     if (
                         (ac.currentEntry.contract != null && !WIIC.sim.GlobalContracts.Exists(c => c.Override.ID == ac.currentEntry.contract.id))
                         || ac.currentEntry.@event != null
@@ -133,7 +135,10 @@ namespace WarTechIIC {
             try {
                 WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}");
 
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == __state)) {
+                // Re-enable the left drawer, in case we've come in from an `immediate` campaign mission.
+                WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(true);
+
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == __state).ToArray()) {
                     WIIC.l.Log($"    ActiveCampaign contract; running entryComplete().");
                     ac.entryComplete();
                     return;
@@ -193,7 +198,7 @@ namespace WarTechIIC {
 
                 // If an active campaign is currently counting down towards a contract,
                 // pause time passing when the counter reaches 0.
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.entryCountdown != null)) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.entryCountdown != null).ToArray()) {
                     ac.entryCountdown--;
                     if (activeItems.TryGetValue(ac.workOrder, out taskManagementElement)) {
                         taskManagementElement.UpdateItem(0);
@@ -399,7 +404,7 @@ namespace WarTechIIC {
             WIIC.l.Log($"SimGameState_SetActiveFlashpoint_Patch. fp.GUID={fp.GUID}, CurSystem.ID={__instance.CurSystem.ID}");
 
             try {
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentFakeFlashpoint == fp)) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentFakeFlashpoint == fp).ToArray()) {
                     WIIC.l.Log($"    ac={ac}");
                     ac.entryComplete();
                     __instance.RoomManager.NavRoom.RefreshData();
@@ -453,7 +458,7 @@ namespace WarTechIIC {
         }
 
         public static bool campaignEntryEvent(string eventId) {
-            foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.@event?.id == eventId)) {
+            foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.@event?.id == eventId).ToArray()) {
                 ac.entryComplete();
                 return true;
             }
@@ -467,7 +472,7 @@ namespace WarTechIIC {
         public static void Postfix(string videoName) {
             try {
                 WIIC.l.Log($"SimGameState_OnVideoComplete_Patch: video={videoName}.");
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => $"Video/{ac.currentEntry.video}" == videoName)) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => $"Video/{ac.currentEntry.video}" == videoName).ToArray()) {
                     WIIC.l.Log($"SimGameState_OnVideoComplete_Patch: node={ac.node} nodeIndex={ac.nodeIndex}");
                     ac.entryComplete();
                     return;

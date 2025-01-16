@@ -13,7 +13,7 @@ namespace WarTechIIC {
                     return;
                 }
 
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.ToArray()) {
                     WIIC.l.Log($"SimGameInterruptManager_PopupClosed_Patch: node={ac.node} nodeIndex={ac.nodeIndex}");
 
                     if (ac.currentEntry.reward == null) {

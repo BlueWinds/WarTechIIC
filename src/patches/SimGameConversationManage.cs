@@ -7,7 +7,7 @@ namespace WarTechIIC {
     public static class SimGameConversationManager_EndConversation_Patch {
         public static void Postfix() {
             try {
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.ToArray()) {
                     WIIC.l.Log($"SimGameConversationManager_EndConversation_Patch: ac={ac}");
 
                     if (ac?.currentEntry.conversation != null) {

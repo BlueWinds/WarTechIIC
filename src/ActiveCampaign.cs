@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using BattleTech;
 using BattleTech.StringInterpolation;
+using BattleTech.UI;
 using Newtonsoft.Json;
 using ColourfulFlashPoints.Data;
 using isogame;
@@ -164,6 +165,7 @@ namespace WarTechIIC {
             }
 
             if (e.contract != null) {
+                WIIC.l.Log($"    contract {e.contract.id}.");
                 FactionValue employer = FactionEnumeration.GetFactionByName(e.contract.employer);
                 FactionValue target = FactionEnumeration.GetFactionByName(e.contract.target);
                 Contract contract = ContractManager.getContractByName(e.contract.id, employer, target);
@@ -185,7 +187,20 @@ namespace WarTechIIC {
                 WIIC.l.Log($"    conversation {conv.id}.");
 
                 conv.characters.apply();
-                Conversation conversation = WIIC.sim.DataManager.SimGameConversations.Get(conv.id);
+                WIIC.sim.DataManager.SimGameConversations.TryGet(conv.id, out Conversation conversation);
+
+                if (conversation == null) {
+                    WIIC.l.Log($"    Cannot find conversation; prompting to continue or exit.");
+                    GenericPopupBuilder.Create("WIIC Campaign Error", $"Unable to find conversation {conv.id}. Skip to next entry or exit game?")
+                        .AddButton("Skip", delegate {
+                            WIIC.l.Log($"    Player chose to skip conversation; running entryComplete.");
+                            entryComplete();
+                        }, true)
+                        .AddButton("Exit", UnityGameInstance.Instance.ShutdownGame, false)
+                        .Render();
+
+                    return;
+                }
                 WIIC.sim.interruptQueue.QueueConversation(conversation, conv.header, conv.subheader);
 
                 // entryComplete will be triggered from SimGameConversationManager_EndConversation_Patch
