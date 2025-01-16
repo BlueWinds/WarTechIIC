@@ -138,7 +138,7 @@ namespace WarTechIIC {
         public string postContractEvent;
 
         public bool immediate;
-        public int? forcedDays;
+        public int? withinDays;
 
         public void validate(string path, CampaignNodes nodes) {
             if (String.IsNullOrEmpty(id) || String.IsNullOrEmpty(employer) || String.IsNullOrEmpty(target) || String.IsNullOrEmpty(onFailGoto)) {
@@ -165,12 +165,12 @@ namespace WarTechIIC {
                 WIIC.validationErrors.Add($"{path}.postContractEvent \"{postContractEvent}\" does not seem to exist");
             }
 
-            if (immediate && forcedDays != null) {
-                WIIC.validationErrors.Add($"{path} can only have onee of [immediate, forcedDays]");
+            if (immediate && withinDays != null) {
+                WIIC.validationErrors.Add($"{path} can only have onee of [immediate, withinDays]");
             }
 
-            if (forcedDays < 0) {
-                WIIC.validationErrors.Add($"{path}.forcedDays must be >= 0");
+            if (withinDays < 0) {
+                WIIC.validationErrors.Add($"{path}.withinDays must be >= 0");
             }
         }
     }

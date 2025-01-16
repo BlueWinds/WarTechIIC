@@ -171,9 +171,9 @@ namespace WarTechIIC {
                 Contract contract = ContractManager.getContractByName(e.contract.id, employer, target);
                 WIIC.sim.GlobalContracts.Add(contract);
 
-                if (e.contract.forcedDays != null || e.contract.immediate) {
-                    entryCountdown = e.contract.forcedDays ?? 0;
-                    contract.SetExpiration(e.contract.forcedDays ?? 0);
+                if (e.contract.withinDays != null || e.contract.immediate) {
+                    entryCountdown = e.contract.withinDays ?? 0;
+                    contract.SetExpiration(e.contract.withinDays ?? 0);
                 }
 
                 Utilities.sendToCommandCenter(e.contract.immediate);
@@ -238,7 +238,7 @@ namespace WarTechIIC {
                 string curIdx = $"{node}.{nodeIndex}";
                 if (_workOrderIndex != curIdx) {
                     WIIC.l.Log($"Generating work order for {campaign} nodes.{curIdx}");
-                    if (currentEntry.contract?.forcedDays != null) {
+                    if (currentEntry.contract?.withinDays != null) {
                         Contract contract = WIIC.sim.GlobalContracts.Find(c => c.Override.ID == currentEntry.contract.id);
                         _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", contract?.Name ?? campaign);
                     } else if (currentEntry.wait?.workOrder != null) {

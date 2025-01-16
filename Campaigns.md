@@ -118,21 +118,21 @@ Example:
       target: Unknown
       at: starsystemdef_Coromodir
       
-      # You can use multi-line strings in yaml with "|". No "\r\n" like you use in JSON!
+      # You can use multi-line strings in yaml with "|". No "\r\n" like in JSON!
       description: |
         Your old mentor, Raju, has invited you to be one of [[DM.BaseDescriptionDefs[LoreKameaArano],Lady Kamea Arano's]] honor guards on the day of her coronation. Travel to [[DM.BaseDescriptionDefs[LoreCoromodir],Coromodir]] to meet with him.
 
         The [[DM.BaseDescriptionDefs[LoreAuriganCoalition],Aurigan Coalition]] will supply you with a mech for use in her procession, a venerable Shadowhawk that has been with the Aurigan Royal Guard for decades.
 ```
 
-All fields are required, and displayed to the player. `employer` and `target` need not be who the player is actually going to fight for / against; they're display only.
+All fields are required. `employer` and `target` need not be who the player is actually going to fight for / against; they're display only.
 
-`at` can be the current system; this is a fine way to offer the player breakpoints in the action that they can return to later.
+`at` can be the current system; this is a fine way to offer the player break points in the action that they can return to later.
 
 ### `contract`
-Offer a contract in the command center. Its requirements are ignored; use an `if` condition instead. The campaign will be on hold until they complete the drop. If successful, it moves onto the next Entry. If the player fails the mission, we instead `onFailGoto` (exactly as `goto`, explained above). It is recommended, but not required, that `onFailGoto` send the player to a `fakFlashpoint` - this lets them put the campaign on hold, giving time to heal up, repair damage and build a stronger lance without time pressure.
+Offer a contract in the command center. Any requirements on the contract are ignored; use an `if` condition instead. If successful, the campaign moves onto the next Entry; if the player fails the mission, we go to `onFailGoto` instead (exactly as `goto`, explained above). It is recommended, but not required, that `onFailGoto` send the player to a `fakeFlashpoint` - this lets them put the campaign on hold, giving time to heal up, repair damage and build a stronger lance.
 
-A contract always spawns in the current star system, and always blocks travel. Use a `fakeFlashpoint` to have the user travel; custom campaigns do not support travel contracts for several reasons (mainly because they're buggy as hell).
+A contract always spawns in the current star system, and always blocks travel. Use a `fakeFlashpoint` to have the user travel or allow them to leave; custom campaigns do not support travel contracts for several reasons (mainly because they're extremely hard to work with programatically).
 
 Example:
 ```
@@ -144,8 +144,8 @@ Example:
 
       postContractEvent: sword_4_postcontract
 
-      # Can't use both these together
-      forcedDays: 7
+      # A contract can only have withinDays or immediate, not both
+      withinDays: 7
       immediate: true
 ```
 
@@ -153,13 +153,14 @@ Example:
 
 `postContractEvent` deserves some special explanation. If the player succeeds at the mission, the given event *replaces the objectives screen* in the after action report. The event must be `Company` or `StarSystem` scoped; no other scopes are supported.
 
-When a `forcedDays` contract is available, it blocks all other contracts, and begins a ticking countdown of days; when it reaches zero (or immediately if it's set to `0`), the player is forced into the drop. They can still access the barracks, system store, save, load, etc, even if the countdown is 0. They just can't leave the system or take any other contracts.
+*DO NOT* set `"disableAfterAction": true` or `travelOnly` in contracts, WIIC-campaign related or not; skipping the AAR will soft-lock the game, and travelOnly contracts have a variety of issues. This is a basegame issue, not caused by WIIC or any other mod, and I'm not going to fix it.
+
+#### Time pressure
+A contract without `withinDays` or `immediate` spawns without a time limit; the player can take other contracts and pass as much time as they please; the contract will wait for them, but they cannot leave the current system.
+
+When a `withinDays` contract is available, it blocks all other contracts, and begins a ticking countdown of days; when it reaches zero (or immediately if it's set to `0`), the player is forced into the drop. They can still access the barracks, system store, save, load, etc, even if the countdown is 0. They just can't leave the system or take any other contracts.
 
 `immediate` contracts are even more pressing; they lock the player in the command center, allowing them to save the game, but otherwise forcing an immediate drop - no time to visit the store, hire pilots, or do anything other than accept the contract.
-
-A contract without `forcedDays` or `immediate` spawns without a time limit; the player can take other contracts and pass as much time as they please; the contract will wait for them, but they cannot leave the current system.
-
-*DO NOT* set `"disableAfterAction": true` or `travelOnly` in contracts, WIIC-campaign related or not; skipping the AAR will soft-lock the game, and travelOnly contracts have a variety of issues. This is a basegame issue, not caused by WIIC or any other mod, and I'm not going to fix it.
 
 ### `conversation`
 Trigger a SimGameConversation. Conversations are more immersive, but significantly more challenging to create, than Events. They also serve as an excellent place to offer the player choices. The next Entry triggers once the conversation is over.

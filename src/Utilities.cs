@@ -210,7 +210,7 @@ namespace WarTechIIC {
                 return true;
             }
 
-            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forcedDays != null).ToList();
+            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.withinDays != null).ToList();
             if (blockingCampaigns.Count > 0 && !blockingCampaigns.Exists(ac => ac.currentEntry.contract.id == contract.Override.ID)) {
                 return true;
             }

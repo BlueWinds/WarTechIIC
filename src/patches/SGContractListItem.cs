@@ -12,7 +12,7 @@ namespace WarTechIIC {
                 if (Utilities.shouldBlockContract(__instance.Contract)) {
                     string reason = "Extended";
                     foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
-                        if (ac.currentEntry.contract?.forcedDays != null) { reason = "Campaign"; }
+                        if (ac.currentEntry.contract?.withinDays != null || ac.currentEntry.contract?.immediate == true) { reason = "Campaign"; }
                     }
                     __instance.enableObjects.ForEach((GameObject obj) => obj.SetActive(false));
                     __instance.disableObjects.ForEach((GameObject obj) => tweakTooltip(obj, reason));
