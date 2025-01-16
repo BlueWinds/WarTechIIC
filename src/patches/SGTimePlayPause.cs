@@ -12,11 +12,11 @@ namespace WarTechIIC {
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
                     WIIC.l.Log($"SGTimePlayPause_ReceiveButtonPress_Patch: entryCountdown={ac.entryCountdown} button={button}");
 
-                    if (ac.currentEntry.contract?.forced != null && (ac.entryCountdown == 0 || ac.entryCountdown == null)) {
+                    CampaignContract c = ac.currentEntry.contract;
+                    if ((c?.forcedDays != null || c?.immediate == true) && (ac.entryCountdown == 0 || ac.entryCountdown == null)) {
                         WIIC.l.Log($"    Overriding original \"{button}\" button and sending player to the command center.");
 
-                        WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
-                        WIIC.sim.SetSimRoomState(DropshipLocation.CMD_CENTER);
+                        Utilities.sendToCommandCenter();
                         return false;
                     }
                 }

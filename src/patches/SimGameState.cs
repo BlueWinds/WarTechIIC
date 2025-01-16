@@ -104,6 +104,10 @@ namespace WarTechIIC {
                 }
 
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
+                    WIIC.l.Log($"currentId: {ac.currentEntry.contract?.id}");
+                    foreach (var contract in WIIC.sim.GlobalContracts) {
+                        WIIC.l.Log($"  contract.override.id: {contract.Override.ID} contract.overrideid: {contract.OverrideID}, contract.internalname: {contract.internalName}, contract.guid: {contract.GUID}, name: {contract.Name}, Override: {contract.Override.ToJSON()}, ");
+                    }
                     if (
                         (ac.currentEntry.contract != null && !WIIC.sim.GlobalContracts.Exists(c => c.Override.ID == ac.currentEntry.contract.id))
                         || ac.currentEntry.@event != null
@@ -153,6 +157,7 @@ namespace WarTechIIC {
                 foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values.ToList()) {
                     bool finished = extendedContract.passDay();
                     if (finished) {
+                        extendedContract.removeParticipationContracts();
                         WIIC.extendedContracts.Remove(extendedContract.locationID);
                         Utilities.cleanupSystem(extendedContract.location);
                     }

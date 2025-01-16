@@ -130,7 +130,9 @@ All fields are required, and displayed to the player. `employer` and `target` ne
 `at` can be the current system; this is a fine way to offer the player breakpoints in the action that they can return to later.
 
 ### `contract`
-Offer a contract in the command center. Its requirements are ignored; use an `if` condition instead. The campaign will be on hold until they complete the drop. If successful, it moves onto the next Entry. If the player fails the mission, or the mission expires, we instead `onFailGoto` (exactly as `goto`, explained above).
+Offer a contract in the command center. Its requirements are ignored; use an `if` condition instead. The campaign will be on hold until they complete the drop. If successful, it moves onto the next Entry. If the player fails the mission, we instead `onFailGoto` (exactly as `goto`, explained above). It is recommended, but not required, that `onFailGoto` send the player to a `fakFlashpoint` - this lets them put the campaign on hold, giving time to heal up, repair damage and build a stronger lance without time pressure.
+
+A contract always spawns in the current star system, and always blocks travel. Use a `fakeFlashpoint` to have the user travel; custom campaigns do not support travel contracts for several reasons (mainly because they're buggy as hell).
 
 Example:
 ```
@@ -142,30 +144,22 @@ Example:
 
       postContractEvent: sword_4_postcontract
 
-      forced:
-        maxDays: 7
-
+      # Can't use both these together
+      forcedDays: 7
+      immediate: true
 ```
 
-`id`, `employer`, `target` and `onFailGoto` are required, all others are optional. `blockOtherContracts` defaults to false.
+`id`, `employer`, `target` and `onFailGoto` are required, all others are optional.
 
 `postContractEvent` deserves some special explanation. If the player succeeds at the mission, the given event *replaces the objectives screen* in the after action report. The event must be `Company` or `StarSystem` scoped; no other scopes are supported.
 
-A contract is either `forced` or `travel`:
+When a `forcedDays` contract is available, it blocks all other contracts, and begins a ticking countdown of days; when it reaches zero (or immediately if it's set to `0`), the player is forced into the drop. They can still access the barracks, system store, save, load, etc, even if the countdown is 0. They just can't leave the system or take any other contracts.
 
-```
-forced:
-  maxDays: 10
-  
-travel:
-  at: starsystemdef_Coromodir
-```
+`immediate` contracts are even more pressing; they lock the player in the command center, allowing them to save the game, but otherwise forcing an immediate drop - no time to visit the store, hire pilots, or do anything other than accept the contract.
 
-When a `forced` contract is available, it blocks all other contracts and prevents travel. `maxDays` is a ticking countdown of days; when it reaches zero (or immediately if it's set to 0), the player is forced into the drop. They can still access the barracks, system store, save, load, etc, even if the countdown is 0. They just can't leave the system or take any other contract.
+A contract without `forcedDays` or `immediate` spawns without a time limit; the player can take other contracts and pass as much time as they please; the contract will wait for them, but they cannot leave the current system.
 
-A `travel` contract is spawned `at` the given system, without a time limit; the player can take other contracts, travel around, do whatever; the contract will wait for them. It is common to spawn a `travel` contract `at` the current system; this is 100% valid.
-
-*DO NOT* set `"disableAfterAction": true` in contracts, WIIC-campaign related or not; skipping the AAR will soft-lock the game. This is a basegame issue, not caused by WIIC or any other mod - maybe someday I'll fix it, but hasn't happened yet.
+*DO NOT* set `"disableAfterAction": true` or `travelOnly` in contracts, WIIC-campaign related or not; skipping the AAR will soft-lock the game, and travelOnly contracts have a variety of issues. This is a basegame issue, not caused by WIIC or any other mod, and I'm not going to fix it.
 
 ### `conversation`
 Trigger a SimGameConversation. Conversations are more immersive, but significantly more challenging to create, than Events. They also serve as an excellent place to offer the player choices. The next Entry triggers once the conversation is over.

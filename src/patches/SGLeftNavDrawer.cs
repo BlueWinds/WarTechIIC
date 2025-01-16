@@ -12,11 +12,8 @@ namespace WarTechIIC {
                 }
 
                 ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (extendedContract == null) {
-                    return true;
-                }
 
-                if (WIIC.sim.SelectedContract.Override.ID == extendedContract.currentContractName && !isCollapsed) {
+                if (WIIC.sim.SelectedContract.Override.ID == extendedContract?.currentContractName && !isCollapsed) {
                     WIIC.l.Log($"SGLeftNavDrawer.SetCollapsed -> blocking because selectedContract");
                     return false;
                 }

@@ -22,7 +22,7 @@ namespace WarTechIIC {
 
                 Sprite sumire = WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire);
 
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forced != null)) {
+                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract != null)) {
                     string cTitle = Strings.T("Navigation not allowed");
                     string cMessage = Strings.T("We can't leave {0} while we have an important contract pending, Commander.", WIIC.sim.CurSystem.Name);
                     PauseNotification.Show(cTitle, cMessage, sumire, "", true, cleanup);

@@ -15,6 +15,10 @@ namespace WarTechIIC {
         public int defenderStrength;
         [JsonProperty]
         public int? currentContractForceLoss = null;
+
+        // playerDrops decrimentts every time a contract is offered,
+        // and goes up by 2 every time the player wins. So if it's >= 0, they accepted
+        // and won at least half the contracts offered to them.
         [JsonProperty]
         public int? playerDrops = null;
         [JsonProperty]
@@ -159,14 +163,14 @@ namespace WarTechIIC {
             if (attackerStrength <= 0) {
                 if (isEmployedHere) {
                     if (employer == attacker) { return CompletionResult.DefenderWonEmployerLost; }
-                    if (employer == location.OwnerValue && playerDrops > 0) { return CompletionResult.DefenderWonReward; }
+                    if (employer == location.OwnerValue && playerDrops >= 0) { return CompletionResult.DefenderWonReward; }
                     if (employer == location.OwnerValue) { return CompletionResult.DefenderWonNoReward; }
                 }
                 return CompletionResult.DefenderWonUnemployed;
             } else {
                 if (isEmployedHere) {
                     if (employer == location.OwnerValue) { return CompletionResult.AttackerWonEmployerLost; }
-                    if (employer == attacker && playerDrops > 0) { return CompletionResult.AttackerWonReward; }
+                    if (employer == attacker && playerDrops >= 0) { return CompletionResult.AttackerWonReward; }
                     if (employer == attacker) { return CompletionResult.AttackerWonNoReward; }
                 }
                 return CompletionResult.AttackerWonUnemployed;
@@ -180,11 +184,11 @@ namespace WarTechIIC {
                 case CompletionResult.AttackerWonUnemployed: return "{0} takes control of {2} from {1}.";
                 case CompletionResult.AttackerWonEmployerLost: return "{0} takes control of {2}. {1} withdraws their forces in haste, your contract ending with their defeat.";
                 case CompletionResult.AttackerWonReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                case CompletionResult.AttackerWonNoReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                case CompletionResult.AttackerWonNoReward: return "{0} takes control of {2}. {1} withdraws their forces in haste, but your contact informs you that there will be no bonus forthcoming, since you failed to win at least half the offered missions.";
                 case CompletionResult.DefenderWonUnemployed: return "{1} drives the invasion by {0} from {2}.";
                 case CompletionResult.DefenderWonEmployerLost: return "{1} drives away the forces {0} sent to invade {2}. Your contract ends on a sour note with the invasion's defeat.";
                 case CompletionResult.DefenderWonReward: return "{1} drives away the forces {0} sent to invade {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                case CompletionResult.DefenderWonNoReward: return "{0} drives away the forces {1} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you never participated in a mission.";
+                case CompletionResult.DefenderWonNoReward: return "{0} drives away the forces {1} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you failed to win at least half the offered missions.";
             }
 
             return "Something went wrong. Attacker: {0}. Defender: {1}. Location: {2}.";
@@ -276,6 +280,10 @@ namespace WarTechIIC {
 
         public override void launchContract(Entry entry, Contract contract) {
             currentContractForceLoss = Utilities.rng.Next(WIIC.settings.combatForceLossMin, WIIC.settings.combatForceLossMax);
+            if (playerDrops == null) {
+                playerDrops = 0;
+            }
+            playerDrops -= 1;
             base.launchContract(entry, contract);
         }
 

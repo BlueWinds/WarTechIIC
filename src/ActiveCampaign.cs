@@ -166,22 +166,15 @@ namespace WarTechIIC {
             if (e.contract != null) {
                 FactionValue employer = FactionEnumeration.GetFactionByName(e.contract.employer);
                 FactionValue target = FactionEnumeration.GetFactionByName(e.contract.target);
-
-                StarSystem at = e.contract.travel == null ? WIIC.sim.CurSystem : WIIC.sim.GetSystemById(e.contract.travel.at);
-                Contract contract = ContractManager.getContractByName(e.contract.id, WIIC.sim.CurSystem, employer, target);
+                Contract contract = ContractManager.getContractByName(e.contract.id, employer, target);
                 WIIC.sim.GlobalContracts.Add(contract);
 
-                if (e.contract.forced != null) {
-                    entryCountdown = e.contract.forced.maxDays;
-                    contract.SetExpiration(e.contract.forced.maxDays ?? 0);
-
-                    if (e.contract.forced?.maxDays != 0) {
-                        entryCountdown = e.contract.forced?.maxDays;
-                    }
+                if (e.contract.forcedDays != null || e.contract.immediate) {
+                    entryCountdown = e.contract.forcedDays ?? 0;
+                    contract.SetExpiration(e.contract.forcedDays ?? 0);
                 }
 
-                WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
-                WIIC.sim.SetSimRoomState(DropshipLocation.CMD_CENTER);
+                Utilities.sendToCommandCenter(e.contract.immediate);
 
                 // entryComplete will be triggered from SimGameState_OnAttachUXComplete_Patch
                 return;
@@ -230,7 +223,7 @@ namespace WarTechIIC {
                 string curIdx = $"{node}.{nodeIndex}";
                 if (_workOrderIndex != curIdx) {
                     WIIC.l.Log($"Generating work order for {campaign} nodes.{curIdx}");
-                    if (currentEntry.contract?.forced != null) {
+                    if (currentEntry.contract?.forcedDays != null) {
                         Contract contract = WIIC.sim.GlobalContracts.Find(c => c.Override.ID == currentEntry.contract.id);
                         _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", contract?.Name ?? campaign);
                     } else if (currentEntry.wait?.workOrder != null) {

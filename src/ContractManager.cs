@@ -16,7 +16,9 @@ namespace WarTechIIC {
             (int)ContractType.ThreeWayBattle
         };
 
-        public static Contract getNewProceduralContract(StarSystem system, FactionValue employer, FactionValue target, int[] validTypes) {
+        public static Contract getNewProceduralContract(FactionValue employer, FactionValue target, int[] validTypes) {
+            StarSystem system = WIIC.sim.CurSystem;
+
             // In order to force a given employer and target, we have to temoporarily munge the system we're in, such that
             // our employer/target are the only valid ones. We undo this at the end of getNewProceduralContract.
             var oldEmployers = system.Def.contractEmployerIDs;
@@ -93,7 +95,7 @@ namespace WarTechIIC {
             return contract;
         }
 
-        public static Contract getContractByName(string contractName, StarSystem location, FactionValue employer, FactionValue target) {
+        public static Contract getContractByName(string contractName, FactionValue employer, FactionValue target) {
             FactionValue hostile = chooseHostileToAll(employer, target);
 
             SimGameState.AddContractData addContractData = new SimGameState.AddContractData {
@@ -101,13 +103,13 @@ namespace WarTechIIC {
                 Employer = employer.Name,
                 Target = target.Name,
                 HostileToAll = hostile.Name,
-                TargetSystem = location.ID,
-                IsGlobal =  location.ID != WIIC.sim.CurSystem.ID,
+                TargetSystem = WIIC.sim.CurSystem.ID,
+                IsGlobal = false,
             };
 
-            location.SetCurrentContractFactions(employer, target);
+            WIIC.sim.CurSystem.SetCurrentContractFactions(employer, target);
             Contract contract = WIIC.sim.AddContract(addContractData);
-            location.SystemContracts.Remove(contract);
+            WIIC.sim.CurSystem.SystemContracts.Remove(contract);
             return contract;
         }
 

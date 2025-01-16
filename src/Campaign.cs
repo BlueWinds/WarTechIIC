@@ -137,8 +137,8 @@ namespace WarTechIIC {
         public string onFailGoto;
         public string postContractEvent;
 
-        public CampaignContractForced forced;
-        public CampaignContractTravel travel;
+        public bool immediate;
+        public int? forcedDays;
 
         public void validate(string path, CampaignNodes nodes) {
             if (String.IsNullOrEmpty(id) || String.IsNullOrEmpty(employer) || String.IsNullOrEmpty(target) || String.IsNullOrEmpty(onFailGoto)) {
@@ -165,36 +165,12 @@ namespace WarTechIIC {
                 WIIC.validationErrors.Add($"{path}.postContractEvent \"{postContractEvent}\" does not seem to exist");
             }
 
-            if ((forced != null && travel != null) || forced == null && travel == null) {
-                WIIC.validationErrors.Add($"{path} must have exactly one of [forced, travel]");
+            if (immediate && forcedDays != null) {
+                WIIC.validationErrors.Add($"{path} can only have onee of [immediate, forcedDays]");
             }
 
-            forced?.validate($"{path}.forced");
-            travel?.validate($"{travel}.forced");
-        }
-    }
-
-    public class CampaignContractForced {
-        public int? maxDays = 0;
-
-        public void validate(string path) {
-            if (maxDays == null || maxDays < 0) {
-                WIIC.validationErrors.Add($"{path}.maxDays is required and must be >= 0");
-            }
-        }
-    }
-
-    public class CampaignContractTravel {
-        public string at;
-
-        public void validate(string path) {
-            if (String.IsNullOrEmpty(at)) {
-                WIIC.validationErrors.Add($"{path} must have \"at\"");
-                return;
-            }
-
-            if (!Campaign.defExists(BattleTechResourceType.StarSystemDef, at)) {
-                WIIC.validationErrors.Add($"{path}.at \"{at}\" does not seem to be a valid star system");
+            if (forcedDays < 0) {
+                WIIC.validationErrors.Add($"{path}.forcedDays must be >= 0");
             }
         }
     }

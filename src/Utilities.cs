@@ -136,6 +136,7 @@ namespace WarTechIIC {
         public static void cleanupSystem(StarSystem system) {
             if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                 WIIC.l.Log($"Removing ExtendedContract at {system.ID}");
+                WIIC.extendedContracts[system.ID].removeParticipationContracts();
                 WIIC.extendedContracts.Remove(system.ID);
             }
 
@@ -209,12 +210,23 @@ namespace WarTechIIC {
                 return true;
             }
 
-            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forced != null).ToList();
+            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forcedDays != null).ToList();
             if (blockingCampaigns.Count > 0 && !blockingCampaigns.Exists(ac => ac.currentEntry.contract.id == contract.Override.ID)) {
                 return true;
             }
 
             return false;
+        }
+
+        public static void sendToCommandCenter(bool disableRoomChange = false) {
+            WIIC.l.Log($"sendToCommandCenter; disableRoomChange={disableRoomChange}");
+
+            WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);
+            WIIC.sim.SetSimRoomState(DropshipLocation.CMD_CENTER);
+
+            if (disableRoomChange) {
+                WIIC.sim.RoomManager.LeftNavWidget.gameObject.SetActive(false);
+            }
         }
     }
 }

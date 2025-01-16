@@ -18,7 +18,7 @@ namespace WarTechIIC {
                     ExtendedContract extended = Utilities.currentExtendedContract();
                     sprite = extended.employer.FactionDef.GetSprite();
                 } else if (entry.ID == "campaignContract") {
-                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forced != null)) {
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.forcedDays != null)) {
                         string employer = ac.currentEntry.contract.employer;
                         sprite = WIIC.sim.GetFactionDef(employer).GetSprite();
                     }

@@ -54,7 +54,10 @@ namespace WarTechIIC {
                 if (attack.playerDrops == null) {
                     attack.playerDrops = 0;
                 }
-                attack.playerDrops += 1;
+
+                if (won) {
+                    attack.playerDrops += 2;
+                }
                 attack.currentContractForceLoss = null;
             } catch (Exception e) {
                 WIIC.l.LogException(e);
