@@ -318,49 +318,6 @@ namespace WarTechIIC {
         }
     }
 
-    [HarmonyPatch(typeof(SGContractsWidget), "OnContractAccepted")]
-    [HarmonyPatch(new Type[] { typeof(bool) })]
-    public static class SGContractsWidget_OnContractAccepted_Patch {
-        public static bool Prefix(SGContractsWidget __instance, bool skipCombat) {
-            try {
-                WIIC.l.Log($"OnContractAccepted Prefix - Blocking CU's prefix, because it is breaking things for some users? If you understand the purpose of CustomUnits.SGContractsWidget_OnContractAccepted, reach out to BloodyDoves or BlueWinds.");
-                originalImplementation(__instance, skipCombat);
-
-                return false;
-            } catch (Exception e) {
-                WIIC.l.LogException(e);
-            }
-
-            return true;
-        }
-        public static void originalImplementation(SGContractsWidget __instance, bool skipCombat) {
-            if (__instance.Sim.HasTravelContract) {
-                if (__instance.Sim.IsContractOurArrivedAtTravelContract(__instance.SelectedContract)) {
-                    __instance.Sim.PrepareBreadcrumb(__instance.Sim.ActiveTravelContract);
-                    return;
-                }
-
-                __instance.Sim.CreateBreakContractWarning(delegate {
-                    __instance.OnTravelContractWarningAccepted(skipCombat);
-                }, __instance.OnTravelContractWarningCancelled);
-
-                __instance.uiManager.SetFaderColor(__instance.uiManager.UILookAndColorConstants.PopupBackfill, UIManagerFader.FadePosition.FadeInBack, UIManagerRootType.PopupRoot);
-                return;
-            }
-            float num = 0f;
-            float num2 = 0f;
-            if (__instance.SelectedContract.Override != null && !__instance.SelectedContract.CanNegotiate) {
-                num = __instance.SelectedContract.Override.negotiatedSalary;
-                num2 = __instance.SelectedContract.Override.negotiatedSalvage;
-            } else {
-                num = __instance.NegPaymentSlider.Value / __instance.NegPaymentSlider.ValueMax;
-                num2 = __instance.NegSalvageSlider.Value / __instance.NegSalvageSlider.ValueMax;
-            }
-            __instance.SelectedContract.SetNegotiatedValues(num, num2);
-            __instance.contractAccepted(skipCombat);
-        }
-    }
-
     [HarmonyPatch(typeof(SimGameState), "GetFlashpointInSystem")]
     public static class SimGameState_GetFlashpointInSystem_Patch {
         public static bool Prefix(ref Flashpoint __result, StarSystem theSystem) {

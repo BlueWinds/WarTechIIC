@@ -274,8 +274,8 @@ namespace WarTechIIC {
             if (extendedType.targetHireContract != null) {
                 if (WIIC.settings.wontHirePlayer.Contains(target.Name)) {
                     WIIC.l.Log($"Skipping targetHireContract for {type} at {location.Name} because target {target.Name} wontHirePlayer");
-                } else if (employerRep < minRepToHelp()) {
-                    WIIC.l.Log($"Skipping targetHireContract for {type} at {location.Name} because player has too low rep with {employer.Name} (has {targetRep}, needs {minRepToHelp()}).");
+                } else if (targetRep < minRepToHelp()) {
+                    WIIC.l.Log($"Skipping targetHireContract for {type} at {location.Name} because player has too low rep with {target.Name} (has {targetRep}, needs {minRepToHelp()}).");
                 } else {
                     WIIC.l.Log($"    Also adding {extendedType.targetHireContract} from targetHireContract");
                     ContractManager.addTravelContract(extendedType.targetHireContract, location, target, employer);
