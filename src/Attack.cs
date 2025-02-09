@@ -188,7 +188,7 @@ namespace WarTechIIC {
                 case CompletionResult.DefenderWonUnemployed: return "{1} drives the invasion by {0} from {2}.";
                 case CompletionResult.DefenderWonEmployerLost: return "{1} drives away the forces {0} sent to invade {2}. Your contract ends on a sour note with the invasion's defeat.";
                 case CompletionResult.DefenderWonReward: return "{1} drives away the forces {0} sent to invade {2}, leaving you to celebrate victory with your crew - and with a bonus from your employer.";
-                case CompletionResult.DefenderWonNoReward: return "{0} drives away the forces {1} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you failed to win at least half the offered missions.";
+                case CompletionResult.DefenderWonNoReward: return "{1} drives away the forces {0} sent to invade {2}, but your contact informs you that there will be no bonus forthcoming, since you failed to win at least half the offered missions.";
             }
 
             return "Something went wrong. Attacker: {0}. Defender: {1}. Location: {2}.";

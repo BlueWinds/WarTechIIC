@@ -321,6 +321,7 @@ namespace WarTechIIC {
         }
 
         public virtual void launchContract(Entry entry, Contract contract) {
+            WIIC.l.Log($"Offering {type} mission ID={contract.Override.ID}.");
             if (contract.Override.contractRewardOverride < 0) {
                 WIIC.l.Log($"contractRewardOverride < 0, generating.");
                 contract.Override.contractRewardOverride = WIIC.sim.CalculateContractValueByContractType(contract.ContractTypeValue, contract.Override.finalDifficulty, WIIC.sim.Constants.Finances.ContractPricePerDifficulty, WIIC.sim.Constants.Finances.ContractPriceVariance, 0);
@@ -355,10 +356,11 @@ namespace WarTechIIC {
 
             WIIC.l.Log(message);
 
+            WIIC.l.Log($"Do we still have ID? ID={contract.Override.ID}.");
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
-                    WIIC.l.Log($"Accepted {type} mission {contract.Override.ID}.");
+                    WIIC.l.Log($"Accepted {type} mission ID={contract.Override.ID}.");
 
                     if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
                         // Add it to the command center, so that it gets persisted in the pre-drop save.
@@ -386,6 +388,7 @@ namespace WarTechIIC {
             if (!queue.IsOpen) {
                 queue.DisplayIfAvailable();
             }
+            WIIC.l.Log($"Do we still have ID2? ID={contract.Override.ID}.");
         }
 
         public virtual void applyDeclinePenalty(DeclinePenalty declinePenalty) {

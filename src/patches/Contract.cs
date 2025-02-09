@@ -28,7 +28,6 @@ namespace WarTechIIC {
                     return;
                 }
 
-                current.currentContractName = null;
                 if (__instance.Name != current.currentContractName || current as Attack == null) {
                     return;
                 }

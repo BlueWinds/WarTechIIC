@@ -13,4 +13,4 @@ then
     exit
 fi
 
-nodemon -x "~/.dotnet/dotnet build --verbosity normal --configuration Release -p:BattleTechGameDir='$BTPATH' && rm -f 'WarTechIIC.zip' && cd '$BTPATH/Mods/WarTechIIC' && zip -x WartechIIC.log -x WartechIIC.1.log -rq '$PWD/WarTechIIC.zip' ." -w src/ -w WarTechIIC.csproj -e .
+nodemon -x "~/.dotnet/dotnet build --verbosity normal --configuration Release -p:BattleTechGameDir='$BTPATH' && rm -f 'WarTechIIC.zip' && cd '$BTPATH/Mods/WarTechIIC' && zip -x WartechIIC.log -x WartechIIC.log.1 -rq '$PWD/WarTechIIC.zip' ." -w src/ -w WarTechIIC.csproj -e .

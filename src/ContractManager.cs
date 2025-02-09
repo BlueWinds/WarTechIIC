@@ -70,6 +70,7 @@ namespace WarTechIIC {
             MapAndEncounters level = activeMaps.GetNext(false);
 
             var MapEncounterContractData = WIIC.sim.FillMapEncounterContractData(system, difficultyRange, potentialContracts, validParticipants, level);
+
             while (!MapEncounterContractData.HasContracts && activeMaps.ActiveListCount > 0) {
                 level = activeMaps.GetNext(false);
                 MapEncounterContractData = WIIC.sim.FillMapEncounterContractData(system, difficultyRange, potentialContracts, validParticipants, level);
@@ -86,7 +87,7 @@ namespace WarTechIIC {
             GameContext gameContext = new GameContext(WIIC.sim.Context);
             gameContext.SetObject(GameContextObjectTagEnum.TargetStarSystem, system);
 
-            Contract contract = WIIC.sim.CreateProceduralContract(system, true, level, MapEncounterContractData, gameContext);
+            Contract contract = WIIC.sim.CreateProceduralContract(system, false, level, MapEncounterContractData, gameContext);
 
             // Restore system and faction to previous values, now that we've forced the game to generate our desired contract.
             system.Def.contractEmployerIDs = oldEmployers;

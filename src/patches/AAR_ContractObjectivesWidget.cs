@@ -17,6 +17,8 @@ namespace WarTechIIC {
                 Contract contract = __instance.theContract;
                 ExtendedContract ec = Utilities.currentExtendedContract();
 
+                WIIC.l.Log($"AAR_ContractObjectivesWidget_FillInObjectives: ec={ec}, currentContractName={ec.currentContractName}, Override.ID={contract.Override.ID}");
+
                 // Player not working here
                 if (ec == null || ec.currentContractName != contract.Override.ID) {
                     return;
@@ -74,7 +76,7 @@ namespace WarTechIIC {
         private static void Postfix(AAR_ContractObjectivesWidget __instance) {
             try {
                 ExtendedContract ec = Utilities.currentExtendedContract();
-                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: contract: {__instance.theContract.Name}, ec={ec}");
+                WIIC.l.Log($"AAR_ContractObjectivesWidget_Init: ID={__instance.theContract.Override.ID}, ec={ec}");
 
                 string eventId = null;
 
