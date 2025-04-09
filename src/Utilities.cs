@@ -199,14 +199,22 @@ namespace WarTechIIC {
             return c.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").FactionDef;
         }
 
-        public static bool shouldBlockContract(Contract contract) {
+        public static bool? shouldBlockContract(Contract contract) {
             string employer = getEmployer(contract).factionID;
             if (WIIC.settings.neverBlockContractsOfferedBy.Contains(employer) && contract.TargetSystem == WIIC.sim.CurSystem.ID) {
                 return false;
             }
 
-            ExtendedContract extendedContract = currentExtendedContract();
-            if (extendedContract?.extendedType.blockOtherContracts == true) {
+            ExtendedContract ec = currentExtendedContract();
+            WIIC.l.Log($"shouldBlockContract - contract.Override.ID={contract.Override.ID}, ec={ec?.type}, ec.currentContractName={ec?.currentContractName}");
+
+            if (ec?.currentContractName == contract.Override.ID) {
+                WIIC.l.Log($"    Not Blocking because ec?.currentContractName == contract.Override.ID");
+                return false;
+            }
+
+            if (ec?.extendedType.blockOtherContracts == true) {
+                WIIC.l.Log($"    Blocking because blockOtherContracts");
                 return true;
             }
 
@@ -215,7 +223,7 @@ namespace WarTechIIC {
                 return true;
             }
 
-            return false;
+            return null;
         }
 
         public static void sendToCommandCenter(bool disableRoomChange = false) {

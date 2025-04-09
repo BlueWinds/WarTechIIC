@@ -9,7 +9,7 @@ namespace WarTechIIC {
     public static class SGContractsListItem_setMode_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                if (Utilities.shouldBlockContract(__instance.Contract)) {
+                if (Utilities.shouldBlockContract(__instance.Contract) == true) {
                     string reason = "Extended";
                     foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
                         if (ac.currentEntry.contract?.withinDays != null || ac.currentEntry.contract?.immediate == true) { reason = "Campaign"; }
@@ -40,7 +40,9 @@ namespace WarTechIIC {
     public static class SGContractsListItem_OnClicked_Patch {
         public static bool Prefix(SGContractsListItem __instance) {
             try {
-                return !Utilities.shouldBlockContract(__instance.Contract);
+                if (Utilities.shouldBlockContract(__instance.Contract) == true) {
+                    return false;
+                }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }

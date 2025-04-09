@@ -310,7 +310,12 @@ namespace WarTechIIC {
                     _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "extendedContractComplete", title);
                 }
 
-                _workOrder.SetCost(extendedType.schedule.Length - (((currentDay ?? 0) + 1) % extendedType.schedule.Length));
+                if (currentContractName != null) {
+                    _workOrder.SetCost(0);
+                } else {
+                    _workOrder.SetCost(extendedType.schedule.Length - (((currentDay ?? 0) + 1) % extendedType.schedule.Length));
+                }
+
                 return _workOrder;
             }
             set {

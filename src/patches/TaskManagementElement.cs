@@ -22,10 +22,6 @@ namespace WarTechIIC {
                         string employer = ac.currentEntry.contract.employer;
                         sprite = WIIC.sim.GetFactionDef(employer).GetSprite();
                     }
-
-                    if (__instance.entry.IsCostPaid()) {
-                        __instance.daysText.SetText("0 Days");
-                    }
                 } else if (entry.ID == "campaignWait") {
                     foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.wait?.sprite != null)) {
                         sprite = WIIC.sim.DataManager.SpriteCache.GetSprite(ac.currentEntry.wait.sprite);
@@ -34,6 +30,20 @@ namespace WarTechIIC {
 
                 if (sprite != null) {
                     __instance.SetIcon(sprite);
+                }
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(TaskManagementElement), "UpdateItem")]
+    public static class TaskManagementElement_UpdateItem_Patch {
+        static void Postfix(TaskManagementElement __instance) {
+            try {
+                if (__instance.entry.IsCostPaid()) {
+                    WIIC.l.Log($"TaskManagementElement_UpdateItem_Patch. 0 days");
+                    __instance.daysText.SetText("0 Days");
                 }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
