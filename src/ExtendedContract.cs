@@ -336,6 +336,7 @@ namespace WarTechIIC {
             contract.SalvagePotential += entry.contractBonusSalvage;
             contract.SalvagePotential = Math.Min(WIIC.sim.Constants.Salvage.MaxSalvagePotential, Math.Max(0, contract.SalvagePotential));
             contract.Override.salvagePotential = contract.SalvagePotential;
+            contract.SetExpiration(0);
 
             // Make contract values available under RES_OBJ
             // eg: "Contract name: {RES_OBJ.Name} is a {RES_OBJ.ContractTypeValue.FriendlyName} contract"
@@ -360,18 +361,12 @@ namespace WarTechIIC {
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
                     WIIC.l.Log($"Accepted {type} mission ID={contract.Override.ID}.");
-
-                    if (!WIIC.sim.CurSystem.SystemContracts.Contains(contract)) {
-                        // Add it to the command center, so that it gets persisted in the pre-drop save.
-                        WIIC.sim.CurSystem.SystemContracts.Add(contract);
+                    if (!WIIC.sim.GlobalContracts.Contains(contract)) {
+                        WIIC.sim.GlobalContracts.Add(contract);
                     }
 
                     currentContractName = contract.Override.ID;
-                    WIIC.sim.RoomManager.ChangeRoom(DropshipLocation.CMD_CENTER);
-                    WIIC.sim.RoomManager.ForceShipRoomChangeOfRoom(DropshipLocation.CMD_CENTER);
-                    WIIC.sim.RoomManager.RefreshDisplay();
-                    WIIC.sim.ForceTakeContract(contract, false);
-                    WIIC.sim.RoomManager.LeftDrawerWidget.SetCollapsed(true);
+                    Utilities.sendToCommandCenter();
                 } catch (Exception e) {
                     WIIC.l.LogException(e);
                 }

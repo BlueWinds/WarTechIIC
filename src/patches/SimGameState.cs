@@ -90,19 +90,6 @@ namespace WarTechIIC {
                 ExtendedContract ec = Utilities.currentExtendedContract();
                 WIIC.l.Log($"_OnAttachUXComplete: Loaded SimGame. system={system.ID} ec.type={ec?.type}");
 
-                if (!String.IsNullOrEmpty(ec?.currentContractName)) {
-                    Contract contract = system.SystemContracts.Find(c => c.Override.ID == ec.currentContractName);
-
-                    if (contract == null) {
-                        WIIC.l.LogError($"    EC currentContract {ec.currentContractName} was not found among {system.SystemContracts.Count} contracts in {system.ID}. Something is wrong.");
-                        return;
-                    }
-
-                    WIIC.l.Log($"    Launching EC currentContract {ec.currentContractName}.");
-                    ec.launchContract(ec.currentEntry, contract);
-                    return;
-                }
-
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns.ToArray()) {
                     if (ac.currentEntry.contract?.immediate == true && WIIC.sim.GlobalContracts.Exists(c => c.Override.ID == ac.currentEntry.contract.id)) {
                         WIIC.l.Log($"    ActiveCampaign loaded and we're pre-drop in an immediate contract.");
@@ -288,32 +275,21 @@ namespace WarTechIIC {
         }
     }
 
-    [HarmonyPatch(typeof(SimGameState), "CompleteLanceConfigurationPrep")]
-    public static class SimGameState_CompleteLanceConfigurationPrep_Patch {
-        public static void Postfix() {
-            try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                WIIC.l.Log($"CompleteLanceConfigurationPrep. selectedContract: {WIIC.sim.SelectedContract.Override.ID}, currentContractName: {(extendedContract != null ? extendedContract.currentContractName : null)}");
-                if (extendedContract != null && WIIC.sim.SelectedContract.Override.ID == extendedContract.currentContractName) {
-                    WIIC.l.Log($"Hiding nav drawer from CompleteLanceConfigurationPrep.");
-                    WIIC.sim.RoomManager.LeftDrawerWidget.Visible = false;
-                }
-            } catch (Exception e) {
-                WIIC.l.LogException(e);
-            }
-        }
-    }
-
     [HarmonyPatch(typeof(SimGameState), "ContractUserMeetsReputation")]
     public static class SimGameState_ContractUserMeetsReputation_Patch {
-        public static void Postfix(ref bool __result, Contract c) {
+        public static bool Prefix(ref bool __result, Contract c) {
             try {
-                if (Utilities.shouldBlockContract(c)) {
-                    __result = false;
+                bool? shouldBlock = Utilities.shouldBlockContract(c) == false;
+                if (shouldBlock != null) {
+                    WIIC.l.Log($"ContractUserMeetsReputation_Patch. c.Override.ID={c.Override.ID}, __result={__result}");
+                    __result = (bool)shouldBlock;
+                    return false;
                 }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
+
+            return true;
         }
     }
 

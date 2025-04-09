@@ -5,41 +5,6 @@ using BattleTech.Framework;
 using BattleTech.UI;
 
 namespace WarTechIIC {
-    [HarmonyPatch(typeof(SGContractsWidget), "HandleEscapeKeypress")]
-    public static class SGContractsWidget_HandleEscapeKeypress_Patch {
-        public static bool Prefix(SGContractsWidget __instance) {
-            try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (extendedContract != null && __instance.SelectedContract.Override.ID == extendedContract.currentContractName) {
-                    WIIC.l.Log($"Blocking HandleEscapeKeypress. selectedContract: {__instance.SelectedContract.Override.ID}, currentContractName: {extendedContract.currentContractName}");
-                    return false;
-                }
-            }
-            catch (Exception e) {
-                WIIC.l.LogException(e);
-            }
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(SGContractsWidget), "NegotiateContract")]
-    public static class SGContractsWidget_NegotiateContract_Patch {
-        public static void Postfix(SGContractsWidget __instance) {
-            try {
-                ExtendedContract extendedContract = Utilities.currentExtendedContract();
-                if (extendedContract != null && __instance.SelectedContract.Override.ID == extendedContract.currentContractName) {
-                    WIIC.l.Log($"Hiding widgets for NegotiateContract. selectedContract: {__instance.SelectedContract.Override.ID}, currentContractName: {extendedContract.currentContractName}");
-
-                    __instance.NegotiateTitleBackButton.SetState(ButtonState.Disabled);
-                    WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(false);
-                }
-            }
-            catch (Exception e) {
-                WIIC.l.LogException(e);
-            }
-        }
-    }
-
     [HarmonyPatch(typeof(SGContractsWidget), "GetContractComparePriority")]
     public static class SGContractsWidget_GetContractComparePriority_Patch {
         static bool Prefix(SGContractsWidget __instance, ref int __result, Contract contract) {
