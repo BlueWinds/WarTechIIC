@@ -170,14 +170,13 @@ namespace WarTechIIC {
 
                 ExtendedContract current = Utilities.currentExtendedContract();
                 TaskManagementElement taskManagementElement;
-                if (current != null) {
-                    if (activeItems.TryGetValue(current.workOrder, out taskManagementElement)) {
-                        taskManagementElement.UpdateItem(0);
-                    }
-                    if (current.extraWorkOrder != null && activeItems.TryGetValue(current.extraWorkOrder, out taskManagementElement)) {
-                        taskManagementElement.UpdateItem(0);
-                        taskManagementElement.UpdateTaskInfo();
-                    }
+                if (current?.workOrder != null && activeItems.TryGetValue(current.workOrder, out taskManagementElement)) {
+                    taskManagementElement.UpdateItem(0);
+                }
+
+                if (current?.extraWorkOrder != null && activeItems.TryGetValue(current.extraWorkOrder, out taskManagementElement)) {
+                    taskManagementElement.UpdateItem(0);
+                    taskManagementElement.UpdateTaskInfo();
                 }
 
                 Attack newFlareup = WhoAndWhere.checkForNewFlareup();
@@ -200,12 +199,12 @@ namespace WarTechIIC {
                 // pause time passing when the counter reaches 0.
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.entryCountdown != null).ToArray()) {
                     ac.entryCountdown--;
-                    if (activeItems.TryGetValue(ac.workOrder, out taskManagementElement)) {
+                    if (ac.workOrder != null && activeItems.TryGetValue(ac.workOrder, out taskManagementElement)) {
                         taskManagementElement.UpdateItem(0);
                         taskManagementElement.UpdateTaskInfo();
                     }
 
-                    if (ac.entryCountdown == 0) {
+                    if (ac.entryCountdown <= 0) {
                         WIIC.sim.SetTimeMoving(false);
                         if (ac.currentEntry.wait != null) {
                             ac.entryComplete();
@@ -358,9 +357,13 @@ namespace WarTechIIC {
     [HarmonyPatch(typeof(SimGameState), "SetActiveFlashpoint")]
     public static class SimGameState_SetActiveFlashpoint_Patch {
         public static bool Prefix(Flashpoint fp, SimGameState __instance) {
-            WIIC.l.Log($"SimGameState_SetActiveFlashpoint_Patch. fp.GUID={fp.GUID}, CurSystem.ID={__instance.CurSystem.ID}");
-
             try {
+                WIIC.l.Log($"SimGameState_SetActiveFlashpoint_Patch begin");
+                if (fp is null || __instance is null) {
+                    WIIC.l.Log($"SimGameState_SetActiveFlashpoint_Patch - null exit. fp is null={fp is null}, __instance is null={__instance is null}");
+                    return true;
+                }
+                WIIC.l.Log($"SimGameState_SetActiveFlashpoint_Patch. fp={fp} fp.GUID={fp?.GUID}, CurSystem.ID={__instance?.CurSystem?.ID}");
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentFakeFlashpoint == fp).ToArray()) {
                     WIIC.l.Log($"    ac={ac}");
                     ac.entryComplete();

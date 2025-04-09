@@ -80,6 +80,7 @@ namespace WarTechIIC {
 
         public static RequirementDef toRequirementDef(ECRequirementDef old) {
             RequirementDef def = new RequirementDef();
+            def.Scope = old.Scope;
             def.ExclusionTags = new TagSet(old.ExclusionTags.items ?? new string[] { });
             def.RequirementTags = new TagSet(old.RequirementTags.items ?? new string[] { });
             def.RequirementComparisons = old.RequirementComparisons;

@@ -3,6 +3,7 @@ using HBS.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace WarTechIIC {
     public class WhoAndWhere {
@@ -78,6 +79,11 @@ namespace WarTechIIC {
 
             (StarSystem system, FactionValue employer) = getFlareupEmployerAndLocation(type);
 
+            if (system == null) {
+                WIIC.l.Log($"Tried to spawn {type.name}, but couldn't find a valid system and employer.");
+                return null;
+            }
+
             if (type == WIIC.extendedContractTypes["Attack"]) {
                 WIIC.extendedContracts[system.ID] = new Attack(system, employer, type);
             } else {
@@ -113,6 +119,7 @@ namespace WarTechIIC {
                 StarSystem system;
                 FactionValue employer;
                 try {
+                    WIIC.l.Log($"Choosing location and employer for {type.name}. employer={type.employer}, spawnLocation={type.spawnLocation}");
                     (system, employer) = getExtendedEmployerAndLocation(type.employer, type.spawnLocation, systemReqs);
                 } catch (InvalidOperationException) {
                     WIIC.l.Log($"Chose {type.name}, but couldn't find a system and employer. i={i}");
@@ -190,6 +197,7 @@ namespace WarTechIIC {
 
             foreach (StarSystem system in WIIC.sim.StarSystems) {
                 if (getDistance(system) > WIIC.settings.maxAttackRaidDistance) {
+                    // WIIC.l.Log($"    {system.Name} too far away ({getDistance(system)} > {WIIC.settings.maxAttackRaidDistance})");
                     continue;
                 }
 
@@ -215,19 +223,22 @@ namespace WarTechIIC {
                 }
 
                 double distanceMult = getDistanceMultiplier(system);
-                // WIIC.l.Log($"Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
+                // WIIC.l.Log($"    Potential Flareup at {system.Name}, distanceMult: {distanceMult}, distanceFactor: {s.distanceFactor}, owner {owner.Name}");
 
                 Action<FactionValue> considerEmployer = (FactionValue employer) => {
                     if (forceEmployer != null && employer != forceEmployer) {
+                        // WIIC.l.Log($"    Skipping {employer.Name} because it's not {forceEmployer.Name}");
                         return;
                     }
 
                     if (s.ignoreFactions.Contains(employer.Name)) {
+                        // WIIC.l.Log($"    Skipping {employer.Name} because it's in ignoreFactions");
                         return;
                     }
 
                     // Factions only attack themselves if they are their own enemy (eg, extremely fractured factions).
                     if ((s.limitTargetsToFactionEnemies || employer == system.OwnerValue) && !employer.FactionDef.Enemies.Contains(owner.Name)) {
+                        // WIIC.l.Log($"    Skipping {employer.Name} because they own the system and they're not their own enemy");
                         return;
                     }
 
@@ -253,6 +264,8 @@ namespace WarTechIIC {
                 };
 
                 foreach (StarSystem neighbor in  WIIC.sim.Starmap.GetAvailableNeighborSystem(system)) {
+                    // WIIC.l.Log($"    Considering system {neighbor.Name}");
+
                     considerEmployer(neighbor.OwnerValue);
                 }
 
@@ -276,6 +289,10 @@ namespace WarTechIIC {
                 weightedLocationCache = weightedLocations;
             }
 
+            if (weightedLocations.Count == 0) {
+                return (null, null);
+            }
+
             return Utilities.WeightedChoice(weightedLocations);
         }
 
@@ -283,7 +300,6 @@ namespace WarTechIIC {
             Settings s = WIIC.settings;
             var weightedLocations = new Dictionary<(StarSystem, FactionValue), double>();
 
-            WIIC.l.Log($"Checking locations for extended contract, using distanceFactor: {s.distanceFactor}");
             foreach (StarSystem system in WIIC.sim.StarSystems) {
                 if (getDistance(system) > WIIC.settings.maxExtendedContractDistance) {
                     continue;

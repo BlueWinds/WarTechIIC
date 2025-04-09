@@ -356,7 +356,6 @@ namespace WarTechIIC {
 
             WIIC.l.Log(message);
 
-            WIIC.l.Log($"Do we still have ID? ID={contract.Override.ID}.");
             SimGameInterruptManager queue = WIIC.sim.GetInterruptQueue();
             queue.QueuePauseNotification(title, message, WIIC.sim.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, delegate {
                 try {
@@ -388,7 +387,6 @@ namespace WarTechIIC {
             if (!queue.IsOpen) {
                 queue.DisplayIfAvailable();
             }
-            WIIC.l.Log($"Do we still have ID2? ID={contract.Override.ID}.");
         }
 
         public virtual void applyDeclinePenalty(DeclinePenalty declinePenalty) {

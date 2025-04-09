@@ -16,7 +16,7 @@ namespace WarTechIIC {
                 Contract contract = __instance.contract;
                 ExtendedContract ec = Utilities.currentExtendedContract();
 
-                WIIC.l.Log($"AAR_SalvageScreen_OnCompleted: ec={ec}, currentContractName={ec.currentContractName}, Override.ID={contract.Override.ID}");
+                WIIC.l.Log($"AAR_SalvageScreen_OnCompleted: ec={ec}, currentContractName={ec?.currentContractName}, Override.ID={contract.Override.ID}");
 
                 if (ec?.currentContractName == contract.Override.ID) {
                     ec.currentContractName = null;

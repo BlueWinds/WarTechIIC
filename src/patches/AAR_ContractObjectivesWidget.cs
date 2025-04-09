@@ -17,7 +17,7 @@ namespace WarTechIIC {
                 Contract contract = __instance.theContract;
                 ExtendedContract ec = Utilities.currentExtendedContract();
 
-                WIIC.l.Log($"AAR_ContractObjectivesWidget_FillInObjectives: ec={ec}, currentContractName={ec.currentContractName}, Override.ID={contract.Override.ID}");
+                WIIC.l.Log($"AAR_ContractObjectivesWidget_FillInObjectives: ec={ec}, currentContractName={ec?.currentContractName}, Override.ID={contract.Override.ID}");
 
                 // Player not working here
                 if (ec == null || ec.currentContractName != contract.Override.ID) {

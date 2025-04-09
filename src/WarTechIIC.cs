@@ -31,6 +31,7 @@ namespace WarTechIIC {
 
         public static void Init(string modDirectory, string settingsJSON) {
             modDir = modDirectory;
+            l = Logger.GetLogger("WartechIIC");
 
             try {
                 using (StreamReader reader = new StreamReader($"{modDir}/settings.json")) {
@@ -41,14 +42,12 @@ namespace WarTechIIC {
                     string jdata = reader.ReadToEnd();
                     campaignSettings = JsonConvert.DeserializeObject<CampaignSettings>(jdata);
                 }
-                l = Logger.GetLogger("WartechIIC");
                 l.Log($"Loaded settings from {modDir}/settings.json and campaignSettings.json");
             }
 
             catch (Exception e) {
-                settings = new Settings();
-                l = Logger.GetLogger("WartechIIC");
                 l.LogException(e);
+                settings = new Settings();
             }
 
             HarmonyInstance harmony = HarmonyInstance.Create("blue.winds.WarTechIIC");

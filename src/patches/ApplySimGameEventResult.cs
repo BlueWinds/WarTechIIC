@@ -108,10 +108,10 @@ namespace WarTechIIC {
             if (matches.Count > 0) {
                 string systemId = matches[0].Groups["system"].Value;
                 string factionID = matches[0].Groups["faction"].Value;
-                WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM: systemId {systemId}, factionID {factionID}");
 
                 StarSystem system = WIIC.sim.GetSystemById(systemId);
                 FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+                WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM: systemId={systemId}, factionID={factionID}, system={system}, faction={faction}");
 
                 Utilities.cleanupSystem(system);
 
@@ -127,7 +127,6 @@ namespace WarTechIIC {
                 WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
                 return true;
             }
-
 
             matches = ATTACK_SYSTEM.Matches(tag);
             if (matches.Count > 0) {
@@ -216,9 +215,9 @@ namespace WarTechIIC {
             if (matches.Count > 0) {
                 string addTag = matches[0].Groups["tag"].Value;
                 string systemId = matches[0].Groups["system"].Value;
-                WIIC.l.Log($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag {addTag}, systemId {systemId}");
 
                 StarSystem system = WIIC.sim.GetSystemById(systemId);
+                WIIC.l.Log($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag={addTag}, systemId={systemId}, system={system}");
                 system.Tags.Add(addTag);
 
                 return true;
