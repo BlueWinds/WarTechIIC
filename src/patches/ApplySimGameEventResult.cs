@@ -82,6 +82,14 @@ namespace WarTechIIC {
             }
         }
 
+        public static StarSystem getSystem(string systemId) {
+            if (systemId == "HERE") {
+                return WIIC.sim.CurSystem;
+            } else {
+                return WIIC.sim.GetSystemById(systemId);
+            }
+        }
+
         public static bool applyWIICEvent(string tag) {
             MatchCollection matches = GIVE_SYSTEM_ON_WIN.Matches(tag);
             if (matches.Count > 0) {
@@ -89,7 +97,7 @@ namespace WarTechIIC {
                 string factionID = matches[0].Groups["faction"].Value;
                 WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                StarSystem system = getSystem(systemId);
 
                 if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                     if (WIIC.extendedContracts[system.ID] is Attack) {
@@ -109,7 +117,8 @@ namespace WarTechIIC {
                 string systemId = matches[0].Groups["system"].Value;
                 string factionID = matches[0].Groups["faction"].Value;
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                StarSystem system = getSystem(systemId);
+
                 FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
                 WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM: systemId={systemId}, factionID={factionID}, system={system}, faction={faction}");
 
@@ -135,11 +144,12 @@ namespace WarTechIIC {
                 WIIC.l.Log($"ApplySimGameEventResult ATTACK_SYSTEM: factionID {factionID}, systemId {systemId}");
 
                 FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+
                 StarSystem system;
                 if (systemId == "SOMEWHERE") {
                     (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Attack"], faction);
                 } else {
-                    system = WIIC.sim.GetSystemById(systemId);
+                    system = getSystem(systemId);
                 }
 
                 if (system.OwnerValue.Name == faction.Name) {
@@ -162,11 +172,12 @@ namespace WarTechIIC {
                 WIIC.l.Log($"ApplySimGameEventResult RAID_SYSTEM: factionID {factionID}, systemId {systemId}");
 
                 FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
+
                 StarSystem system;
                 if (systemId == "SOMEWHERE") {
                     (system, FactionValue _ignored) = WhoAndWhere.getFlareupEmployerAndLocation(WIIC.extendedContractTypes["Raid"], faction);
                 } else {
-                    system = WIIC.sim.GetSystemById(systemId);
+                    system = getSystem(systemId);
                 }
 
                 Utilities.cleanupSystem(system);
@@ -183,7 +194,7 @@ namespace WarTechIIC {
                 int strength = int.Parse(matches[0].Groups["strength"].Value);
                 WIIC.l.Log($"ApplySimGameEventResult ATTACKER_FORCES: systemId {systemId}, strength {strength}");
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                StarSystem system = getSystem(systemId);
 
                 if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                     (WIIC.extendedContracts[system.ID] as Attack).attackerStrength = strength;
@@ -200,7 +211,7 @@ namespace WarTechIIC {
                 int strength = int.Parse(matches[0].Groups["strength"].Value);
                 WIIC.l.Log($"ApplySimGameEventResult DEFENDER_FORCES: systemId {systemId}, strength {strength}");
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                StarSystem system = getSystem(systemId);
 
                 if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                     (WIIC.extendedContracts[system.ID] as Attack).defenderStrength = strength;
@@ -215,8 +226,8 @@ namespace WarTechIIC {
             if (matches.Count > 0) {
                 string addTag = matches[0].Groups["tag"].Value;
                 string systemId = matches[0].Groups["system"].Value;
+                StarSystem system = getSystem(systemId);
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
                 WIIC.l.Log($"ApplySimGameEventResult ADD_SYSTEM_TAG: tag={addTag}, systemId={systemId}, system={system}");
                 system.Tags.Add(addTag);
 
@@ -227,9 +238,9 @@ namespace WarTechIIC {
             if (matches.Count > 0) {
                 string removeTag = matches[0].Groups["tag"].Value;
                 string systemId = matches[0].Groups["system"].Value;
-                WIIC.l.Log($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {removeTag}, systemId {systemId}");
+                StarSystem system = getSystem(systemId);
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                WIIC.l.Log($"ApplySimGameEventResult REMOVE_SYSTEM_TAG: tag {removeTag}, systemId {systemId}, system={system}");
                 system.Tags.Remove(removeTag);
 
                 return true;
@@ -242,7 +253,8 @@ namespace WarTechIIC {
                 string systemId = matches[0].Groups["system"].Value;
                 string targetID = matches[0].Groups["target"].Value;
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                StarSystem system = getSystem(systemId);
+
                 FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
                 FactionValue target = Utilities.getFactionValueByFactionID(targetID);
 
@@ -269,7 +281,8 @@ namespace WarTechIIC {
                     throw new Exception($"Use WIIC_(faction)_attacks_(system) or WIIC_(faction)_raids_(system) instead of {tag}. Doing nothing.");
                 }
 
-                StarSystem system = WIIC.sim.GetSystemById(systemId);
+                StarSystem system = getSystem(systemId);
+
                 FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
                 FactionValue target = Utilities.getFactionValueByFactionID(targetID);
                 ExtendedContractType type = WIIC.extendedContractTypes[extendedContractType];

@@ -206,15 +206,12 @@ namespace WarTechIIC {
             }
 
             ExtendedContract ec = currentExtendedContract();
-            WIIC.l.Log($"shouldBlockContract - contract.Override.ID={contract.Override.ID}, ec={ec?.type}, ec.currentContractName={ec?.currentContractName}");
 
             if (ec?.currentContractName == contract.Override.ID) {
-                WIIC.l.Log($"    Not Blocking because ec?.currentContractName == contract.Override.ID");
                 return false;
             }
 
             if (ec?.extendedType.blockOtherContracts == true) {
-                WIIC.l.Log($"    Blocking because blockOtherContracts");
                 return true;
             }
 

@@ -120,10 +120,15 @@ namespace WarTechIIC {
 
         public static void Postfix(SimGameState __instance, string __state) {
             try {
-                WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}");
+                ExtendedContract ec = Utilities.currentExtendedContract();
+                WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}, ec={ec}, currentContractName={ec?.currentContractName}");
+                if (ec?.currentContractName == __state) {
+                    ec.currentContractName = null;
+                }
 
                 // Re-enable the left drawer, in case we've come in from an `immediate` campaign mission.
                 WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(true);
+
 
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == __state).ToArray()) {
                     WIIC.l.Log($"    ActiveCampaign contract; running entryComplete().");
@@ -282,7 +287,7 @@ namespace WarTechIIC {
                 bool? shouldBlock = Utilities.shouldBlockContract(c);
                 if (shouldBlock != null) {
                     WIIC.l.Log($"ContractUserMeetsReputation_Patch. c.Override.ID={c.Override.ID}, __result={__result}");
-                    __result = (bool)shouldBlock;
+                    __result = !(bool)shouldBlock;
                     return false;
                 }
             } catch (Exception e) {
