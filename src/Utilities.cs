@@ -207,7 +207,9 @@ namespace WarTechIIC {
 
             ExtendedContract ec = currentExtendedContract();
 
-            if (ec?.currentContractName == contract.Override.ID) {
+            // Only travel contracts located in the current system can possibly belong to the EC; these checks block out
+            // other contracts with the same name that might be randomly generated.
+            if (ec?.currentContractName == contract.Override.ID && contract.TargetSystem == WIIC.sim.CurSystem.ID && WIIC.sim.GlobalContracts.Contains(contract)) {
                 return false;
             }
 
@@ -215,9 +217,13 @@ namespace WarTechIIC {
                 return true;
             }
 
-            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.withinDays != null).ToList();
-            if (blockingCampaigns.Count > 0 && !blockingCampaigns.Exists(ac => ac.currentEntry.contract.id == contract.Override.ID)) {
-                return true;
+            List<ActiveCampaign> blockingCampaigns = WIIC.activeCampaigns.Where(ac => {
+                var c = ac.currentEntry.contract;
+                return c?.withinDays != null || c?.immediate == true;
+            }).ToList();
+            if (blockingCampaigns.Count > 0) {
+                bool isCampaignContract = blockingCampaigns.Exists(ac => ac.currentEntry.contract.id == contract.Override.ID);
+                return !isCampaignContract;
             }
 
             return null;
