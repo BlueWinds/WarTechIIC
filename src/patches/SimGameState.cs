@@ -171,16 +171,21 @@ namespace WarTechIIC {
                     taskManagementElement.UpdateTaskInfo();
                 }
 
-                Attack newFlareup = WhoAndWhere.checkForNewFlareup();
-                if (newFlareup == null) {
-                    WhoAndWhere.checkForNewExtendedContract();
-                } else {
-                    FactionValue attacker = newFlareup.attacker;
-                    FactionValue defender = newFlareup.defender;
-                    string action = newFlareup.type == "Attack" ? "invade" : "raid";
-                    string s = SimGameState_ApplySimGameEventResult_Patch.anS(attacker);
-                    string toast = $"{attacker.factionDef.CapitalizedName} {action}{s} {defender.FactionDef.Name} at {newFlareup.location.Name}";
-                    WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
+                // Don't let an error spawning a flareup break campaigns / everything else
+                try {
+                  Attack newFlareup = WhoAndWhere.checkForNewFlareup();
+                  if (newFlareup == null) {
+                      WhoAndWhere.checkForNewExtendedContract();
+                  } else {
+                      FactionValue attacker = newFlareup.attacker;
+                      FactionValue defender = newFlareup.defender;
+                      string action = newFlareup.type == "Attack" ? "invade" : "raid";
+                      string s = SimGameState_ApplySimGameEventResult_Patch.anS(attacker);
+                      string toast = $"{attacker.factionDef.CapitalizedName} {action}{s} {defender.FactionDef.Name} at {newFlareup.location.Name}";
+                      WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
+                  }
+                } catch (Exception e) {
+                    WIIC.l.LogException(e);
                 }
 
                 Utilities.redrawMap();
