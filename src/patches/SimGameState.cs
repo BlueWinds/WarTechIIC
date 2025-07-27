@@ -120,10 +120,15 @@ namespace WarTechIIC {
 
         public static void Postfix(SimGameState __instance, string __state) {
             try {
-                WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}");
+                ExtendedContract ec = Utilities.currentExtendedContract();
+                WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}, ec={ec}, currentContractName={ec?.currentContractName}");
+                if (ec?.currentContractName == __state) {
+                    ec.currentContractName = null;
+                }
 
                 // Re-enable the left drawer, in case we've come in from an `immediate` campaign mission.
                 WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(true);
+
 
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == __state).ToArray()) {
                     WIIC.l.Log($"    ActiveCampaign contract; running entryComplete().");
@@ -166,16 +171,21 @@ namespace WarTechIIC {
                     taskManagementElement.UpdateTaskInfo();
                 }
 
-                Attack newFlareup = WhoAndWhere.checkForNewFlareup();
-                if (newFlareup == null) {
-                    WhoAndWhere.checkForNewExtendedContract();
-                } else {
-                    FactionValue attacker = newFlareup.attacker;
-                    FactionValue defender = newFlareup.defender;
-                    string action = newFlareup.type == "Attack" ? "invade" : "raid";
-                    string s = SimGameState_ApplySimGameEventResult_Patch.anS(attacker);
-                    string toast = $"{attacker.factionDef.CapitalizedName} {action}{s} {defender.FactionDef.Name} at {newFlareup.location.Name}";
-                    WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
+                // Don't let an error spawning a flareup break campaigns / everything else
+                try {
+                  Attack newFlareup = WhoAndWhere.checkForNewFlareup();
+                  if (newFlareup == null) {
+                      WhoAndWhere.checkForNewExtendedContract();
+                  } else {
+                      FactionValue attacker = newFlareup.attacker;
+                      FactionValue defender = newFlareup.defender;
+                      string action = newFlareup.type == "Attack" ? "invade" : "raid";
+                      string s = SimGameState_ApplySimGameEventResult_Patch.anS(attacker);
+                      string toast = $"{attacker.factionDef.CapitalizedName} {action}{s} {defender.FactionDef.Name} at {newFlareup.location.Name}";
+                      WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(toast));
+                  }
+                } catch (Exception e) {
+                    WIIC.l.LogException(e);
                 }
 
                 Utilities.redrawMap();
@@ -279,10 +289,10 @@ namespace WarTechIIC {
     public static class SimGameState_ContractUserMeetsReputation_Patch {
         public static bool Prefix(ref bool __result, Contract c) {
             try {
-                bool? shouldBlock = Utilities.shouldBlockContract(c) == false;
+                bool? shouldBlock = Utilities.shouldBlockContract(c);
                 if (shouldBlock != null) {
                     WIIC.l.Log($"ContractUserMeetsReputation_Patch. c.Override.ID={c.Override.ID}, __result={__result}");
-                    __result = (bool)shouldBlock;
+                    __result = !(bool)shouldBlock;
                     return false;
                 }
             } catch (Exception e) {

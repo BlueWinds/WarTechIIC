@@ -4,24 +4,29 @@ using BattleTech;
 using BattleTech.UI;
 
 namespace WarTechIIC {
-    [HarmonyPatch(typeof(SGTimePlayPause), "ReceiveButtonPress")]
-    public static class SGTimePlayPause_ReceiveButtonPress_Patch {
+    [HarmonyPatch(typeof(SGTimePlayPause), "SetTimeMoving")]
+    public static class SGTimePlayPause_SetTimeMoving_Patch {
         [HarmonyPrefix]
-        static bool Prefix(ref string button) {
+        static bool Prefix(bool isPlaying, SGTimePlayPause __instance) {
             try {
+                if (!isPlaying || __instance.TimeMoving) {
+                    return true;
+                }
+
                 ExtendedContract ec = Utilities.currentExtendedContract();
 
                 if (ec?.currentContractName != null) {
-                    WIIC.l.Log($"SGTimePlayPause_ReceiveButtonPress_Patch: ec.type={ec.type}, currentContractName={ec.currentContractName}, button={button}");
+                    WIIC.l.Log($"SGTimePlayPause_SetTimeMoving_Patch: ec.type={ec.type}, currentContractName={ec.currentContractName}, isPlaying={isPlaying}");
+                    WIIC.l.Log($"    Overriding original SetTimeMoving and sending player to the command center.");
                     Utilities.sendToCommandCenter();
                     return false;
                 }
 
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
-                    WIIC.l.Log($"SGTimePlayPause_ReceiveButtonPress_Patch: entryCountdown={ac.entryCountdown}, button={button}");
+                    WIIC.l.Log($"SGTimePlayPause_SetTimeMoving_Patch: entryCountdown={ac.entryCountdown}, isPlaying={isPlaying}");
 
                     if (ac.currentEntry.contract?.withinDays != null && (ac.entryCountdown == 0 || ac.entryCountdown == null)) {
-                        WIIC.l.Log($"    Overriding original \"{button}\" button and sending player to the command center.");
+                        WIIC.l.Log($"    Overriding original SetTimeMoving and sending player to the command center.");
 
                         Utilities.sendToCommandCenter();
                         return false;

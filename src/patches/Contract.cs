@@ -21,14 +21,14 @@ namespace WarTechIIC {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort) {
             try {
                 Settings s = WIIC.settings;
-                WIIC.l.Log($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}");
-
                 ExtendedContract current = Utilities.currentExtendedContract();
+                WIIC.l.Log($"Contract complete: {__instance.Name}, override: {__instance.Override.ID}, current: {current}, currentContractName={current?.currentContractName}");
+
                 if (current == null) {
                     return;
                 }
 
-                if (__instance.Name != current.currentContractName || current as Attack == null) {
+                if (current as Attack == null || __instance.Override.ID != current.currentContractName) {
                     return;
                 }
 

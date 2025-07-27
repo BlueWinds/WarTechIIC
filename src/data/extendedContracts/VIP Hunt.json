@@ -1,0 +1,50 @@
+{
+	"name": "VIP Hunt",
+	"requirementList": [
+        {
+            "Scope": "StarSystem",
+			"RequirementComparisons": [],
+			"RequirementTags": {},
+            "ExclusionTags": {
+                "items": [ "planet_other_empty" ],
+                "tagSetSourceFile": ""
+            }
+        }
+    ],
+	"weight": 1,
+	"spawnLocation": "OwnSystem",
+	"employer": ["Allied"],
+	"target": ["NearbyEnemy"],
+	"hireContract": "wiic_vip_hunt",
+	"availableFor": [20, 35],
+	"travelContracts": true,
+	"blockOtherContracts": true,
+	"schedule": [
+		"",
+		"VIPHunt",
+		"VIPHunt",
+		"VIPHunt",
+		"PaymentDelivered"
+	],
+	"entries": {
+		"VIPHunt": {
+			"contractChance": 1,
+			"workOrder": "Time to Kill",
+			"allowedContractTypes": [ 10 ],
+			"declinePenalty": "BreakContract",
+			"contractPayoutMultiplier": 1.3,
+			"contractBonusSalvage": -60,
+			"ignoreContractRequirements": true,
+			"contractMessage": "We've got another target to hunt down, let's get it done, Commander."
+		},
+		"PaymentDelivered": {
+			"popupTitle": "Package for Commander {COMMANDER.LastName}",
+			"popupMessage": "Looks like {TEAM_EMP.FactionDef.ShortName} has delivered our payment, Commander {COMMANDER.LastName}. It looks good, Yang's already working on sorting through it, you'll have his report shortly.",
+			"rewardByDifficulty": {
+				"2": "BTA_standard_Minor_Loot_EC",
+				"5": "BTA_standard_Major_Loot_EC",
+				"8": "BTA_standard_Superior_Loot_EC"
+			}
+		}
+  }
+}
