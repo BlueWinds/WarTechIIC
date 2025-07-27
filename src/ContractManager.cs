@@ -99,14 +99,9 @@ namespace WarTechIIC {
         public static Contract getContractByName(string contractName, FactionValue employer, FactionValue target) {
             FactionValue hostile = chooseHostileToAll(employer, target);
 
-            SimGameState.AddContractData addContractData = new SimGameState.AddContractData {
-                ContractName = contractName,
-                Employer = employer.Name,
-                Target = target.Name,
-                HostileToAll = hostile.Name,
-                TargetSystem = WIIC.sim.CurSystem.ID,
-                IsGlobal = false,
-            };
+            SimGameState.AddContractData addContractData = WIIC.sim.ParseContractActionData(contractName, new[] { target.Name, employer.Name, WIIC.sim.CurSystem.ID });
+            addContractData.HostileToAll = hostile.Name;
+            addContractData.IsGlobal = false;
 
             WIIC.sim.CurSystem.SetCurrentContractFactions(employer, target);
             Contract contract = WIIC.sim.AddContract(addContractData);
