@@ -18,11 +18,26 @@ namespace WarTechIIC {
 
     public class CampaignIf {
         public string companyHasTag;
+        public List<string> companyHasAnyTag;
+        public List<string> companyHasAllTags;
         public string companyDoesNotHaveTag;
+        public List<string> companyDoesNotHaveTags;
 
         public void validate(string path) {
-            if (String.IsNullOrEmpty(companyHasTag) && String.IsNullOrEmpty(companyDoesNotHaveTag)) {
-                WIIC.validationErrors.Add($"{path} must have \"companyHasTag\" and/or \"companyDoesNotHaveTag\"");
+            if (String.IsNullOrEmpty(companyHasTag) && String.IsNullOrEmpty(companyDoesNotHaveTag) && companyHasAnyTag == null && companyHasAllTags == null && companyDoesNotHaveTags == null) {
+                WIIC.validationErrors.Add($"{path} must have at least one condition, such as \"companyHasTag\" or its variants.");
+            }
+
+            if (companyHasAnyTag != null && companyHasAnyTag.Count < 2) {
+                WIIC.validationErrors.Add($"{path}.companyHasAnyTag must have at least two tags if present. If you only want one, use \"companyHasTag\" instead.");
+            }
+
+            if (companyHasAllTags != null && companyHasAllTags.Count < 2) {
+                WIIC.validationErrors.Add($"{path}.companyHasAllTags must have at least two tags if present. If you only want one, use \"companyHasTag\" instead.");
+            }
+
+            if (companyDoesNotHaveTags != null && companyDoesNotHaveTags.Count == 0) {
+                WIIC.validationErrors.Add($"{path}.companyDoesNotHaveTags must have at least two tags if present. If you only want one, use \"companyDoesNotHaveTag\" instead.");
             }
         }
 
@@ -34,6 +49,21 @@ namespace WarTechIIC {
 
             if (!String.IsNullOrEmpty(companyDoesNotHaveTag) && WIIC.sim.CompanyTags.Contains(companyDoesNotHaveTag)) {
                 WIIC.l.Log($"    Company has {companyHasTag}, which is not allowed");
+                return false;
+            }
+
+            if (companyHasAnyTag != null && !WIIC.sim.CompanyTags.Intersect(companyHasAnyTag).Any()) {
+                WIIC.l.Log($"    Company has none of the tags: \"{String.Join("\", \"", companyHasAnyTag.ToArray())}\", any of which is required");
+                return false;
+            }
+
+            if (companyHasAllTags != null && !companyHasAllTags.Except(WIIC.sim.CompanyTags).Any()) {
+                WIIC.l.Log($"    Company missing one of: \"{String.Join("\", \"", companyHasAllTags.ToArray())}\", all of which are required");
+                return false;
+            }
+
+            if (companyDoesNotHaveTags != null && companyDoesNotHaveTags.Intersect(WIIC.sim.CompanyTags).Any()) {
+                WIIC.l.Log($"    Company has at least one of the tags: \"{String.Join("\", \"", companyDoesNotHaveTags.ToArray())}\", none of which are allowed");
                 return false;
             }
 

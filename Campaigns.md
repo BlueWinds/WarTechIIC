@@ -43,7 +43,17 @@ All entries can have a condition applied, using `if`:
   Start:
     - if:
         companyHasTag: <tagName>
+        companyHasAnyTag:
+          - tagA
+          - tagB
+        companyHasAllTags:
+          - tagC
+          - tagD
+
         companyDoesNotHaveTag: <tagName>
+        companyDoesNotHaveTags:
+          - tagE
+          - tagF
       event:
         id: <some event>
 ```
