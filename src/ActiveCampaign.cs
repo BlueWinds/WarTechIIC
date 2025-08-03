@@ -166,8 +166,8 @@ namespace WarTechIIC {
 
             if (e.contract != null) {
                 WIIC.l.Log($"    contract {e.contract.id}.");
-                FactionValue employer = FactionEnumeration.GetFactionByName(e.contract.employer);
-                FactionValue target = FactionEnumeration.GetFactionByName(e.contract.target);
+                FactionValue employer = Utilities.getFactionValueByName(e.contract.employer);
+                FactionValue target = Utilities.getFactionValueByName(e.contract.target);
                 Contract contract = ContractManager.getContractByName(e.contract.id, employer, target);
                 WIIC.sim.GlobalContracts.Add(contract);
 
