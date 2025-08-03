@@ -119,10 +119,10 @@ namespace WarTechIIC {
             if (!Campaign.defExists(BattleTechResourceType.CastDef, employerPortrait)) {
                 WIIC.validationErrors.Add($"{path}.employerPortrait \"{employerPortrait}\" does not seem to be a valid castDef");
             }
-            if (!Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
+            if (!Utilities.isSystemOwnerTag(employer) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
                 WIIC.validationErrors.Add($"{path}.employer \"{employer}\" does not seem to be a valid factionDef");
             }
-            if (!Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
+            if (!Utilities.isSystemOwnerTag(target) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
                 WIIC.validationErrors.Add($"{path}.target \"{target}\" does not seem to be a valid factionDef");
             }
             if (!Campaign.defExists(BattleTechResourceType.StarSystemDef, at)) {
@@ -133,16 +133,16 @@ namespace WarTechIIC {
         public Flashpoint toFlashpoint() {
             Flashpoint fp = new Flashpoint();
             fp.GUID = "CampaignFakeFlashpoint";
-            fp.EmployerValue = FactionEnumeration.GetFactionByName(employer);
-
             fp.CurStatus = Flashpoint.Status.WAITING_FOR_DATA;
             fp.CurSystem = WIIC.sim.GetSystemById(at);
+            fp.EmployerValue = Utilities.getFactionValueByName(employer, fp.CurSystem);
+
             fp.Def = new FlashpointDef();
 
             // Use the HM prefix to style it in green, differentiating from normal campaign flashpoints
             fp.Def.Description = new BaseDescriptionDef("fp_HM_" + name, name, description, "uixTxrSpot_campaignOutcomeVictory");
             fp.Def.Difficulty = difficulty;
-            fp.Def.TargetFaction = target;
+            fp.Def.TargetFaction = Utilities.isSystemOwnerTag(target) ? Utilities.getFactionValueByName(target, fp.CurSystem).FactionDef.factionID : target;
             fp.Def.FlashpointDescriberCastDefId = employerPortrait;
             fp.Def.FlashpointLength = FlashpointDef.EngagementLength.CAMPAIGN;
             fp.Def.AllowRefitTime = true;
@@ -180,10 +180,10 @@ namespace WarTechIIC {
                 WIIC.validationErrors.Add($"{path}.id \"{id}\" does not appear to exist");
             }
 
-            if (!Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
+            if (!employer.Equals(WIIC.settings.systemOwnerTag) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
                 WIIC.validationErrors.Add($"{path}.employer \"{employer}\" does not seem to be a valid factionDef");
             }
-            if (!Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
+            if (!target.Equals(WIIC.settings.systemOwnerTag) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
                 WIIC.validationErrors.Add($"{path}.target \"{target}\" does not seem to be a valid factionDef");
             }
 
