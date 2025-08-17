@@ -18,9 +18,9 @@ namespace WarTechIIC {
 
     public class CampaignIf {
         public string companyHasTag;
+        public string companyDoesNotHaveTag;
         public List<string> companyHasAnyTag;
         public List<string> companyHasAllTags;
-        public string companyDoesNotHaveTag;
         public List<string> companyDoesNotHaveTags;
 
         public void validate(string path) {
@@ -119,10 +119,10 @@ namespace WarTechIIC {
             if (!Campaign.defExists(BattleTechResourceType.CastDef, employerPortrait)) {
                 WIIC.validationErrors.Add($"{path}.employerPortrait \"{employerPortrait}\" does not seem to be a valid castDef");
             }
-            if (!Utilities.isSystemOwnerTag(employer) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
+            if (employer != "OWNER" && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
                 WIIC.validationErrors.Add($"{path}.employer \"{employer}\" does not seem to be a valid factionDef");
             }
-            if (!Utilities.isSystemOwnerTag(target) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
+            if (target != "OWNER" && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
                 WIIC.validationErrors.Add($"{path}.target \"{target}\" does not seem to be a valid factionDef");
             }
             if (!Campaign.defExists(BattleTechResourceType.StarSystemDef, at)) {
@@ -142,7 +142,7 @@ namespace WarTechIIC {
             // Use the HM prefix to style it in green, differentiating from normal campaign flashpoints
             fp.Def.Description = new BaseDescriptionDef("fp_HM_" + name, name, description, "uixTxrSpot_campaignOutcomeVictory");
             fp.Def.Difficulty = difficulty;
-            fp.Def.TargetFaction = Utilities.isSystemOwnerTag(target) ? Utilities.getFactionValueByName(target, fp.CurSystem).FactionDef.factionID : target;
+            fp.Def.TargetFaction = target  == "OWNER" ? Utilities.getFactionValueByName(target, fp.CurSystem).FactionDef.factionID : target;
             fp.Def.FlashpointDescriberCastDefId = employerPortrait;
             fp.Def.FlashpointLength = FlashpointDef.EngagementLength.CAMPAIGN;
             fp.Def.AllowRefitTime = true;

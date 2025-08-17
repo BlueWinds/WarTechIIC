@@ -74,10 +74,23 @@ namespace WarTechIIC {
             get {
                 CampaignFakeFlashpoint fakeFp = currentEntry.fakeFlashpoint;
 
+                // Ensure that any OWNER values are kept up to date; if the system owner has changed, invalidate the cache.
+                if (_fp != null) {
+                    if (fakeFp.employer == "OWNER" && _fp.EmployerValue != Utilities.getFactionValueByName(fakeFp.employer, _fp.CurSystem)
+                    ) {
+                        _fp = null;
+                    }
+
+                    if (fakeFp.target == "OWNER" && _fp.Def.TargetFaction != Utilities.getFactionValueByName(fakeFp.target, _fp.CurSystem).FactionDef.factionID) {
+                        _fp = null;
+                    }
+                }
+
                 // If fakeFp is null, this will null out _fp as well.
                 if (_fp?.Def.Description.Name != fakeFp?.name) {
                     _fp = fakeFp?.toFlashpoint();
                 }
+
 
                 return _fp;
             }
