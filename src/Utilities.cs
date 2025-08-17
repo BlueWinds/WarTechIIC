@@ -3,11 +3,37 @@ using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
 using BattleTech.UI;
+using UnityEngine;
+using Random = System.Random;
 
 namespace WarTechIIC {
     public class Utilities {
         public static Random rng = new Random();
         public static List<string> deferredToasts = new List<string>();
+        public static FactionValue CurrentSystemOwnerValue => WIIC.sim.CurSystem.OwnerValue;
+
+        public static bool isSystemOwnerTag(string tag)
+        {
+            return tag.Equals(WIIC.settings.systemOwnerTag);
+        }
+
+        public static FactionValue getFactionValueByName(string factionName, StarSystem system = null)
+        {
+            if (isSystemOwnerTag(factionName))
+            {
+                return system == null ? CurrentSystemOwnerValue : system.OwnerValue;
+            }
+            return FactionEnumeration.GetFactionByName(factionName);
+        }
+
+        public static Sprite getFactionSpriteByName(string factionName, StarSystem system = null)
+        {
+            if (isSystemOwnerTag(factionName))
+            {
+                return system == null ? CurrentSystemOwnerValue.FactionDef.GetSprite() : system.OwnerValue.FactionDef.GetSprite();
+            }
+            return WIIC.sim.GetFactionDef(factionName).GetSprite();
+        }
 
         public static FactionValue getFactionValueByFactionID(string id) {
             try {

@@ -313,6 +313,12 @@ namespace WarTechIIC {
                 ActiveCampaign ac = new ActiveCampaign(campaign);
                 WIIC.activeCampaigns.Add(ac);
                 ac.runEntry();
+                
+                // Workaround for WorkOrder not being added if a time-limited contract is the first point in a campaign as entryComplete() is never called.
+                if (ac.currentEntry.contract != null && (ac.currentEntry.contract.withinDays != null || ac.currentEntry.contract.immediate))
+                {
+                    WIIC.sim.RoomManager.AddWorkQueueEntry(ac.workOrder);
+                }
 
                 StarSystem system = WIIC.sim.GetSystemById(ac.c.beginsAt);
                 WIIC.eventResultsCache.Add(($"{name} campaign begins at", $"[[DM.SystemDefs[{system.ID}],{system.Name}]]"));
