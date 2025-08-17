@@ -152,6 +152,7 @@ Example:
       id: Sword_4_LiberationOfWeldry
       employer: AuriganRestoration
       target: AuriganDirectorate
+      mapName: mapStory_StoryEncounter4_iGlc
       onFailGoto: LiberationOfWeldry
 
       postContractEvent: sword_4_postcontract
@@ -164,6 +165,8 @@ Example:
 `id`, `employer`, `target` and `onFailGoto` are required, all others are optional.
 
 Both `employer` and `target` support using `OWNER` as a dynamic reference to the star system's owner. This will be resolved at contract creation; if the system owner changes afterward it will not be updated.
+
+`mapName` can be used to set a fixed map, rather than letting the game select it automatically. See [the map reference doc](https://docs.google.com/spreadsheets/d/1utF2ZgvomILAKWSA8GR1gNFcQc1t98nwNY-Gs-kWpT8/edit?pli=1&gid=0#gid=0) for a list of maps.
 
 `postContractEvent` deserves some special explanation. If the player succeeds at the mission, the given event *replaces the objectives screen* in the after action report. The event must be `Company` or `StarSystem` scoped; no other scopes are supported.
 

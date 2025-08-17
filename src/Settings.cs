@@ -58,7 +58,5 @@ namespace WarTechIIC {
         public List<int> customContractEnums = new List<int>();
 
         public string saveFolder;
-
-        public string systemOwnerTag = "OWNER";
     }
 }

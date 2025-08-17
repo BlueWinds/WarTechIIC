@@ -164,6 +164,7 @@ namespace WarTechIIC {
         public string id;
         public string employer;
         public string target;
+        public string mapName;
         public string onFailGoto;
         public string postContractEvent;
 
@@ -180,11 +181,11 @@ namespace WarTechIIC {
                 WIIC.validationErrors.Add($"{path}.id \"{id}\" does not appear to exist");
             }
 
-            if (!employer.Equals(WIIC.settings.systemOwnerTag) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
-                WIIC.validationErrors.Add($"{path}.employer \"{employer}\" does not seem to be a valid factionDef");
+            if (employer != "OWNER" && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + employer)) {
+                WIIC.validationErrors.Add($"{path}.employer \"{employer}\" does not seem to be 'EMPLOYER' or a valid factionDef");
             }
-            if (!target.Equals(WIIC.settings.systemOwnerTag) && !Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
-                WIIC.validationErrors.Add($"{path}.target \"{target}\" does not seem to be a valid factionDef");
+            if (target != "OWNER" &&!Campaign.defExists(BattleTechResourceType.FactionDef, "faction_" + target)) {
+                WIIC.validationErrors.Add($"{path}.target \"{target}\" does not seem to be 'EMPLOYER' or a valid factionDef");
             }
 
             if (onFailGoto != "Exit" && !nodes.ContainsKey(onFailGoto)) {
