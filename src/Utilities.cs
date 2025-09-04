@@ -80,7 +80,7 @@ namespace WarTechIIC {
             system.Def.OwnerValue = newOwner;
             setActiveFactions(system);
 
-            if (refresh) {
+            if (refresh && system == WIIC.sim.CurSystem) {
                 system.RefreshSystem();
                 system.ResetContracts();
             }

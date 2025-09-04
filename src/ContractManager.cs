@@ -96,7 +96,7 @@ namespace WarTechIIC {
             return contract;
         }
 
-        public static Contract getContractByName(string contractName, FactionValue employer, FactionValue target, string mapName = null) {
+        public static Contract getContractByName(string contractName, FactionValue employer, FactionValue target, string mapName = null, string encounterLayer = null) {
             FactionValue hostile = chooseHostileToAll(employer, target);
 
             SimGameState.AddContractData addContractData = WIIC.sim.ParseContractActionData(contractName, new[] { target.Name, employer.Name, WIIC.sim.CurSystem.ID });
@@ -104,6 +104,10 @@ namespace WarTechIIC {
             addContractData.IsGlobal = false;
             if (mapName != null) {
               addContractData.Map = mapName;
+            }
+
+            if (encounterLayer != null) {
+              addContractData.EncounterGuid = encounterLayer;
             }
 
             WIIC.sim.CurSystem.SetCurrentContractFactions(employer, target);

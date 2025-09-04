@@ -76,12 +76,12 @@ namespace WarTechIIC {
 
                 // Ensure that any OWNER values are kept up to date; if the system owner has changed, invalidate the cache.
                 if (_fp != null) {
-                    if (fakeFp.employer == "OWNER" && _fp.EmployerValue != Utilities.getFactionValueByName(fakeFp.employer, _fp.CurSystem)
+                    if (fakeFp?.employer == "OWNER" && _fp.EmployerValue != Utilities.getFactionValueByName(fakeFp.employer, _fp.CurSystem)
                     ) {
                         _fp = null;
                     }
 
-                    if (fakeFp.target == "OWNER" && _fp.Def.TargetFaction != Utilities.getFactionValueByName(fakeFp.target, _fp.CurSystem).FactionDef.factionID) {
+                    if (fakeFp?.target == "OWNER" && _fp.Def.TargetFaction != Utilities.getFactionValueByName(fakeFp.target, _fp.CurSystem).FactionDef.factionID) {
                         _fp = null;
                     }
                 }
@@ -181,7 +181,7 @@ namespace WarTechIIC {
                 WIIC.l.Log($"    contract {e.contract.id}.");
                 FactionValue employer = Utilities.getFactionValueByName(e.contract.employer);
                 FactionValue target = Utilities.getFactionValueByName(e.contract.target);
-                Contract contract = ContractManager.getContractByName(e.contract.id, employer, target, e.contract.mapName);
+                Contract contract = ContractManager.getContractByName(e.contract.id, employer, target, e.contract.mapName, e.contract.encounterLayer);
                 WIIC.sim.GlobalContracts.Add(contract);
 
                 if (e.contract.withinDays != null || e.contract.immediate) {

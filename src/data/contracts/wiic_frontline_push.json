@@ -3,7 +3,7 @@
   "contractName": "Frontline Push",
   "difficulty": 8,
   "finalDifficulty": 8,
-  "shortDescription": "We're being hired to support an offensive push into enemy territory by {TEAM_EMP.FactionDef.Name}. They'd like us to attack {TGT_SYSTEM.name} and take on a series of heavy fighting contracts back to back in quick succession to clear a beachhead for their own forces.\n\nThis is an extended contract, will last 10 days, and will prevent us from taking other contracts for the duration.",
+  "shortDescription": "We're being hired to support an offensive push into enemy territory by {TEAM_EMP.FactionDef.Name}. They'd like us to attack {TGT_SYSTEM.name} and take on a series of heavy fighting contracts back to back in quick succession to clear a beachhead for their own forces. {TEAM_TAR.FactionDef.Name} is sure to try and contest our landing so expect heavy combat immediately.\n\nThis is an extended contract, will last 10 days, and will prevent us from taking other contracts for the duration.",
   "longDescription": "If we accept this contract we'll be in for the duration, Commander. This one's gonna be fast and brutal, be prepared for immediate and rapid combat drops with limited time between deployments.",
   "salvagePotential": 0,
   "requirementList": [],

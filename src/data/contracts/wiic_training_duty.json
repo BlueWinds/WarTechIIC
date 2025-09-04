@@ -4,7 +4,7 @@
   "difficulty": 5,
   "finalDifficulty": 5,
   "shortDescription": "We have a contract from {TEAM_EMP.FactionDef.Name} - they would like to hire us to help train up some of their forces in {TGT_SYSTEM.name} over the coming month via mock wargames between their more experienced forces and the trainees. This should be pretty much a cakewalk but we'll be expected to take some of their pilots along with us for the training fights, so be aware of that.\n\nThis is an extended contract, and will last 31 days.",
-  "longDescription": "If we accept this contract we'll be in for the duration, Commander. It shouldn't be particularly difficult and the employer has offered to pay for our repairs, though the actual pay is low and we won't get any salvage at all.",
+  "longDescription": "If we accept this contract we'll be in for the duration, Commander. It shouldn't be particularly difficult and the employer has offered to pay for our repairs, though the actual pay is low and we won't get any salvage at all since we're fighting the employer's forces on this contract.",
   "salvagePotential": 0,
   "requirementList": [],
   "OnContractSuccessResults": [],

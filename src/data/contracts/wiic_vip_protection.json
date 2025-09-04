@@ -3,7 +3,7 @@
   "contractName": "VIP Protection",
   "difficulty": 6,
   "finalDifficulty": 6,
-  "shortDescription": "{TEAM_EMP.FactionDef.Name} has contacted us with a job on {TGT_SYSTEM.name}. Apparently, they have a local politican who needs escorting to a military installation and then defending while he's present. The client isn't specifying quite why he needs protection but they don't pay us to ask those kinds of questions.\n\nThis is an extended contract, will last 12 days, and will prevent us from taking other contracts for the duration.",
+  "shortDescription": "{TEAM_EMP.FactionDef.Name} has contacted us with a job on {TGT_SYSTEM.name}. Apparently, they have a local politican who needs escorting to a military installation and then defending from {TEAM_TAR.FactionDef.Name} while he's present. The client isn't specifying quite why he needs protection but they don't pay us to ask those kinds of questions.\n\nThis is an extended contract, will last 12 days, and will prevent us from taking other contracts for the duration.",
   "longDescription": "If we accept this, we'll be locked in for the duration, Commander. Sounds relatively easy but you know how these kinds of contracts go, sometimes they get unexpectedly tricky out of nowhere. Keep your eyes peeled. ",
   "salvagePotential": 0,
   "requirementList": [],

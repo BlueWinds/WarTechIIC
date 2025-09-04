@@ -3,7 +3,7 @@
   "contractName": "Pirate Raid",
   "difficulty": 7,
   "finalDifficulty": 7,
-  "shortDescription": "We've been contacted by some local pirates. They're interested in performing a raid against {TGT_SYSTEM.name} and want us to participate. They've promised to split some of the loot from the raids with us if we join in. It'll be a short and intense raid though, we'll be hitting multiple spots in quick succession.\n\nThis is an extended contract, will last 9 days, and will not prevent us from taking other contracts for the duration.",
+  "shortDescription": "We've been contacted by some local pirates. They're interested in performing a raid against {TGT_SYSTEM.name} and want us to participate. They've promised to split some of the loot from the raids with us if we join in. It'll be a short and intense raid though, we'll be hitting multiple spots in quick succession in order to throw {TEAM_TAR.FactionDef.Name} off balance.\n\nThis is an extended contract, will last 9 days, and will not prevent us from taking other contracts for the duration.",
   "longDescription": "If we accept this contract we'll be in for the duration, Commander. This one's gonna be quick, be prepared for repeated combat drops with limited time between deployments.",
   "salvagePotential": 0,
   "requirementList": [],

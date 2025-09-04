@@ -42,7 +42,8 @@
     <Reference Include="InControl">
       <HintPath>$(BattleTechGameDir)/BattleTech_Data/Managed/InControl.dll</HintPath>
     </Reference>
-    <Reference Include="System.Xml" /><Reference Include="ColourfulFlashpoints">
+    <Reference Include="System.Xml" />
+    <Reference Include="ColourfulFlashpoints">
       <HintPath>$(BattleTechGameDir)/Mods/ColourfulFlashpoints/ColourfulFlashPoints.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">

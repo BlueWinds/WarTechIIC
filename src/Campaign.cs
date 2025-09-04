@@ -165,6 +165,7 @@ namespace WarTechIIC {
         public string employer;
         public string target;
         public string mapName;
+        public string encounterLayer;
         public string onFailGoto;
         public string postContractEvent;
 
