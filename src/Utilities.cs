@@ -29,8 +29,12 @@ namespace WarTechIIC {
             return WIIC.sim.GetFactionDef(factionName).GetSprite();
         }
 
-        public static FactionValue getFactionValueByFactionID(string id) {
+        public static FactionValue getFactionValueByFactionID(string id, StarSystem system = null) {
             try {
+                if (id == "OWNER") {
+                    system ??= WIIC.sim.CurSystem;
+                    return system.OwnerValue.FactionDef.FactionValue;
+                }
                 return WIIC.sim.DataManager.Factions.FirstOrDefault(x => x.Value.FactionValue.Name == id).Value.FactionValue;
             } catch (Exception e) {
                 WIIC.l.LogError($"Error getting faction: {id}");

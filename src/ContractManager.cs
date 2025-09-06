@@ -97,9 +97,10 @@ namespace WarTechIIC {
         }
 
         public static Contract getContractByName(string contractName, FactionValue employer, FactionValue target, string mapName = null, string encounterLayer = null) {
-            FactionValue hostile = chooseHostileToAll(employer, target);
+            WIIC.l.Log($"getContractByName contractName={contractName} employer={employer?.Name} target={target?.Name} mapName={mapName} encounterLayer={encounterLayer}");
 
-            SimGameState.AddContractData addContractData = WIIC.sim.ParseContractActionData(contractName, new[] { target.Name, employer.Name, WIIC.sim.CurSystem.ID });
+            SimGameState.AddContractData addContractData = WIIC.sim.ParseContractActionData(contractName, new[] { target.Name, employer.Name });
+            FactionValue hostile = chooseHostileToAll(employer, target);
             addContractData.HostileToAll = hostile.Name;
             addContractData.IsGlobal = false;
             if (mapName != null) {
@@ -110,9 +111,14 @@ namespace WarTechIIC {
               addContractData.EncounterGuid = encounterLayer;
             }
 
-            WIIC.sim.CurSystem.SetCurrentContractFactions(employer, target);
+            WIIC.l.Log($"getContractByName CurSystem={WIIC.sim.CurSystem.Name}");
+            // WIIC.sim.CurSystem.SetCurrentContractFactions(employer, target);
+            WIIC.sim.SimGameMode = SimGameState.SimGameType.KAMEA_CAMPAIGN;
+            WIIC.l.Log($"getContractByName IsCampaign={WIIC.sim.IsCampaign}");
             Contract contract = WIIC.sim.AddContract(addContractData);
-            WIIC.sim.CurSystem.SystemContracts.Remove(contract);
+            WIIC.sim.SimGameMode = SimGameState.SimGameType.CAREER;
+            WIIC.l.Log($"getContractByName 2 IsCampaign={WIIC.sim.IsCampaign}");
+            // WIIC.sim.CurSystem.SystemContracts.Remove(contract);
             return contract;
         }
 

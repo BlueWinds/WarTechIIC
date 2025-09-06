@@ -256,7 +256,7 @@ namespace WarTechIIC {
                 StarSystem system = getSystem(systemId);
 
                 FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
-                FactionValue target = Utilities.getFactionValueByFactionID(targetID);
+                FactionValue target = Utilities.getFactionValueByFactionID(targetID, system);
 
                 SimGameState.ContractDifficultyRange diffRange = WIIC.sim.GetContractRangeDifficultyRange(system, WIIC.sim.SimGameMode, WIIC.sim.GlobalDifficulty);
                 int difficulty = WIIC.sim.NetworkRandom.Int(diffRange.MinDifficulty, diffRange.MaxDifficulty + 1);
@@ -284,7 +284,7 @@ namespace WarTechIIC {
                 StarSystem system = getSystem(systemId);
 
                 FactionValue employer = Utilities.getFactionValueByFactionID(employerID);
-                FactionValue target = Utilities.getFactionValueByFactionID(targetID);
+                FactionValue target = Utilities.getFactionValueByFactionID(targetID, system);
                 ExtendedContractType type = WIIC.extendedContractTypes[extendedContractType];
 
                 Utilities.cleanupSystem(system);
