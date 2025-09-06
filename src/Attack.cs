@@ -228,18 +228,24 @@ namespace WarTechIIC {
                     queue.DisplayIfAvailable();
                 }
             // Things happening elsewhere in the galaxy just get an event toast.
-            } else {
-                // Event toast only happens if it's nearby, or the player has strongly positive reputation with one of the factions involved.
-                SimGameReputation attackerRep = WIIC.sim.GetReputation(attacker);
-                SimGameReputation defenderRep = WIIC.sim.GetReputation(defender);
-                double distance = WhoAndWhere.getDistance(location);
-
-                if (attackerRep == SimGameReputation.HONORED || defenderRep == SimGameReputation.HONORED || distance < 150 ) {
-                    WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
-                }
+            } else if (shouldShowToast(true)) {
+                WIIC.sim.RoomManager.ShipRoom.AddEventToast(new Text(text));
             }
 
             finalEffects();
+        }
+
+        // Event toast only happens if it's nearby, or the player has strongly positive reputation with one of the factions involved.
+        public bool shouldShowToast(bool starting) {
+            Settings s = WIIC.settings;
+
+            // Event toast only happens if it's nearby, or the player has strongly positive reputation with one of the factions involved.
+            SimGameReputation attackerRep = WIIC.sim.GetReputation(attacker);
+            SimGameReputation defenderRep = WIIC.sim.GetReputation(defender);
+            double distance = WhoAndWhere.getDistance(location);
+            double maxDist = starting ? s.flareupStartNotificationDistance : s.flareupCompleteNotificationDistance;
+
+            return attackerRep == SimGameReputation.HONORED || defenderRep == SimGameReputation.HONORED || distance < maxDist;
         }
 
         public virtual void finalEffects() {

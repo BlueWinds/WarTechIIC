@@ -48,6 +48,8 @@
     "JohannsJaegers"
   ],
   "maxAttackRaidDistance": 300,
+  "flareupStartNotificationDistance": 150,
+  "flareupCompleteNotificationDistance": 90,
   "dailyAttackChance": 0.15,
   "dailyRaidChance": 0.15,
   "dailyExtConChanceIfNoneAvailable": 0.75,

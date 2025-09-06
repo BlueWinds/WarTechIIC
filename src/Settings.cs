@@ -13,6 +13,9 @@ namespace WarTechIIC {
         public int maxAttackRaidDistance = 300;
         public int maxExtendedContractDistance = 300;
 
+        public int flareupStartNotificationDistance = 300;
+        public int flareupCompleteNotificationDistance = 150;
+
         public bool setActiveFactionsForAllSystems = false;
         public List<string> clearEmployersAndTargetsForSystemTags = new List<string>();
         public List<string> ignoreFactions = new List<string>();

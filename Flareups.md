@@ -31,6 +31,8 @@ With the weight for each target system and each faction which could attack it fi
 ### Initial setup
 A border world controlled by the defender and near the attacker is chosen at random. The flareup is now visible as a blip to the starmap, appearance controlled by the `mapMarker` settings in `extendedContracts/Attack.json|Raid.json` as appropriate. See [ColourfulFlashpoints](https://github.com/wmtorode/ColourfulFlashPoints) for details on the settings.
 
+The player will get a toast if the flareup is within `flareupStartNotificationDistance` light years of the system, or if they're at HONORED reputation with the attacker or defender.
+
 The initial attacker and defender forces are calculated as follows.
 1) The attacker begins with `defaultAttackStrength` points, overridden by their setting in `attackStrength` if they have one.
 2) The defender begins with `defaultDefenseStrength` points, overridden by their setting in `defenseStrength` if they have one.
@@ -74,3 +76,5 @@ While participating in a flareup, the player has to stay in the star system - if
 
 ### When the flareup ends
 When a Flareup ends, if the player signed on with the winning faction and they dropped into combat at least once, they'll receive an extra reward. The itemCollection given to the player is determined by `defaultAttackReward` / `defaultRaidReward`, or overridden by an entry in `factionAttackRewards` / `factionRaidRewards`.
+
+The player will get a toast if the flareup is within `flareupCompleteNotificationDistance` light years of the system, or if they're at HONORED reputation with the attacker or defender.
