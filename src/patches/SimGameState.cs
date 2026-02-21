@@ -39,6 +39,7 @@ namespace WarTechIIC {
 
                 WIIC.extendedContracts.Clear();
                 WIIC.activeCampaigns.Clear();
+                WIIC.systemControl.Clear();
                 __instance.CompanyTags.Add("WIIC_enabled");
 
                 foreach (string tag in __instance.CompanyTags.ToList().Where(ActiveCampaign.isSerializedCampaign)) {
@@ -104,6 +105,10 @@ namespace WarTechIIC {
                         WIIC.l.Log($"    ActiveCampaign loaded and we're in a post-contract or post-event save; running entryComplete() to trigger next step.");
                         ac.entryComplete();
                         return;
+                    } else if (ac.currentEntry.conversation != null) {
+                        WIIC.l.Log($"    ActiveCampaign loaded and we're at a conversation node somehow; running runEntry() to retrigger the coversation.");
+                        ac.entryComplete();
+                        return;
                     }
                 }
             } catch (Exception e) {
@@ -116,24 +121,26 @@ namespace WarTechIIC {
     public static class SimGameState_ResolveCompleteContract_Patch {
         public static void Prefix(SimGameState __instance, out string __state) {
             __state = __instance.CompletedContract.Override.ID;
+
+            ExtendedContract ec = Utilities.currentExtendedContract();
+            WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}, ec={ec}, currentContractName={ec?.currentContractName}");
+
+            if (ec?.currentContractName == __state) {
+                ec.currentContractName = null;
+            }
         }
 
         public static void Postfix(SimGameState __instance, string __state) {
             try {
-                ExtendedContract ec = Utilities.currentExtendedContract();
-                WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}, ec={ec}, currentContractName={ec?.currentContractName}");
-                if (ec?.currentContractName == __state) {
-                    ec.currentContractName = null;
-                }
-
                 // Re-enable the left drawer, in case we've come in from an `immediate` campaign mission.
                 WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(true);
 
-
-                foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == __state).ToArray()) {
-                    WIIC.l.Log($"    ActiveCampaign contract; running entryComplete().");
-                    ac.entryComplete();
-                    return;
+                if (__state != null) {
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == __state).ToArray()) {
+                        WIIC.l.Log($"    ActiveCampaign contract; running entryComplete().");
+                        ac.entryComplete();
+                        return;
+                    }
                 }
             } catch (Exception e) {
                 WIIC.l.LogException(e);
@@ -149,11 +156,16 @@ namespace WarTechIIC {
 
                 Utilities.slowDownFloaties();
                 ColourfulFlashPoints.Main.clearMapMarkers();
+                WIIC.ecEndedTodayEmployerName = null;
 
                 // ToList is used to make a copy because we may need to remove elements as we're iterating
                 foreach (ExtendedContract extendedContract in WIIC.extendedContracts.Values.ToList()) {
                     bool finished = extendedContract.passDay();
                     if (finished) {
+                        if (extendedContract.isEmployedHere) {
+                            WIIC.ecEndedTodayEmployerName = extendedContract.employer.Name;
+                        }
+
                         extendedContract.removeParticipationContracts();
                         WIIC.extendedContracts.Remove(extendedContract.locationID);
                         Utilities.cleanupSystem(extendedContract.location);
@@ -293,7 +305,7 @@ namespace WarTechIIC {
             try {
                 bool? shouldBlock = Utilities.shouldBlockContract(c);
                 if (shouldBlock != null) {
-                    WIIC.l.Log($"ContractUserMeetsReputation_Patch. c.Override.ID={c.Override.ID}, __result={__result}");
+                    WIIC.l.Log($"ContractUserMeetsReputation_Patch. c.Override.ID={c.Override.ID}, shouldBlock={shouldBlock}");
                     __result = !(bool)shouldBlock;
                     return false;
                 }
@@ -430,6 +442,22 @@ namespace WarTechIIC {
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(SimGameState), "RefreshInjuries")]
+    public static class SimGameState_RefreshInjuries_Patch {
+        public static bool Prefix() {
+            try {
+                // timelineWidget is null in post-contract events; this means we can't add/remove workorders for injuries.
+                if (WIIC.sim.RoomManager?.timelineWidget == null) {
+                    WIIC.l.Log($"SimGameState_RefreshInjuries_Patch, blocking refresh because we're in a post-contract event");
+                    return false;
+                }
+            } catch (Exception e) {
+                WIIC.l.LogException(e);
+            }
+            return true;
         }
     }
 }

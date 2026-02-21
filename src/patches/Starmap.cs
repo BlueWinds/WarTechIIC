@@ -5,6 +5,7 @@ using Harmony;
 using BattleTech;
 using BattleTech.Save;
 using BattleTech.Save.Test;
+using UnityEngine;
 
 namespace WarTechIIC {
     [HarmonyPatch(typeof(Starmap), "PopulateMap", new Type[] { typeof(SimGameState) })]
@@ -13,7 +14,7 @@ namespace WarTechIIC {
 
         static void Postfix(Starmap __instance) {
             try {
-                WIIC.l.Log($"Patching starmap with new owners (setActiveFactionsForAllSystems: {WIIC.settings.setActiveFactionsForAllSystems})");
+                WIIC.l.Log($"Starmap_PopulateMap_Patch: applying new owners (setActiveFactionsForAllSystems: {WIIC.settings.setActiveFactionsForAllSystems})");
                 int count = 0;
                 int controlCount = 0;
                 int clearCount = 0;
@@ -44,8 +45,7 @@ namespace WarTechIIC {
                 deferredOwnershipChanges.Clear();
 
                 Utilities.redrawMap();
-                WIIC.l.Log($"Finished patching starmap (checked {count} systems, flipped control of {controlCount}, cleared targets and employers for {clearCount})");
-
+                WIIC.l.Log($"Starmap_PopulateMap_Patch: Checked {count} systems, flipped control of {controlCount}, cleared targets and employers for {clearCount}.");
             } catch (Exception e) {
                 WIIC.l.LogException(e);
             }

@@ -17,14 +17,13 @@ namespace WarTechIIC {
                 if (entry.ID == "extendedContractComplete" || entry.ID == "extendedContractExtra") {
                     ExtendedContract extended = Utilities.currentExtendedContract();
                     sprite = extended.employer.FactionDef.GetSprite();
-                } else if (entry.ID == "campaignContract") {
-                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.withinDays != null))
-                    {
+                } else if (entry.ID.StartsWith("campaignContract")) {
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.withinDays != null && entry.ID == $"campaignContract-{ac.campaign}")) {
                         string employer = ac.currentEntry.contract.employer;
                         sprite = Utilities.getFactionSpriteByName(employer);
                     }
-                } else if (entry.ID == "campaignWait") {
-                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.wait?.sprite != null)) {
+                } else if (entry.ID.StartsWith("campaignWait")) {
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.wait?.sprite != null && entry.ID == $"campaignWait-{ac.campaign}")) {
                         sprite = WIIC.sim.DataManager.SpriteCache.GetSprite(ac.currentEntry.wait.sprite);
                     }
                 }

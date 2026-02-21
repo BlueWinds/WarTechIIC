@@ -86,7 +86,7 @@ namespace WarTechIIC {
                 }
 
                 foreach (ActiveCampaign ac in WIIC.activeCampaigns) {
-                    if (ac.currentEntry.contract?.postContractEvent != null) {
+                    if (ac.currentEntry.contract?.postContractEvent != null && ac.currentEntry.contract.id == __instance.theContract.Override.ID) {
                         eventId = ac.currentEntry.contract.postContractEvent;
                         WIIC.l.Log($"    ac eventId={eventId}");
                     }

@@ -129,13 +129,14 @@ Example:
       at: starsystemdef_Coromodir
       
       # You can use multi-line strings in yaml with "|". No "\r\n" like in JSON!
+      image: uixTxrSpot_campaignOutcomeVictory
       description: |
         Your old mentor, Raju, has invited you to be one of [[DM.BaseDescriptionDefs[LoreKameaArano],Lady Kamea Arano's]] honor guards on the day of her coronation. Travel to [[DM.BaseDescriptionDefs[LoreCoromodir],Coromodir]] to meet with him.
 
         The [[DM.BaseDescriptionDefs[LoreAuriganCoalition],Aurigan Coalition]] will supply you with a mech for use in her procession, a venerable Shadowhawk that has been with the Aurigan Royal Guard for decades.
 ```
 
-All fields are required. `employer` and `target` need not be who the player is actually going to fight for / against; they're display only. 
+All fields are required except for `image`, which defaults to `"uixTxrSpot_campaignOutcomeVictory"` (Kamea addressing some troops). `employer` and `target` need not be who the player is actually going to fight for / against; they're display only. 
 
 Both `employer` and `target` support using `OWNER` as a dynamic reference to the `at` star system's owner, and kept up to date if the system owner changes.
 

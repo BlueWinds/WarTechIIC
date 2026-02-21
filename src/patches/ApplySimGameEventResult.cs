@@ -95,14 +95,15 @@ namespace WarTechIIC {
             if (matches.Count > 0) {
                 string systemId = matches[0].Groups["system"].Value;
                 string factionID = matches[0].Groups["faction"].Value;
-                WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
 
+                WIIC.l.Log($"ApplySimGameEventResult GIVE_SYSTEM_ON_WIN: systemId {systemId}, factionID {factionID}");
                 StarSystem system = getSystem(systemId);
+                FactionValue faction = Utilities.getFactionValueByFactionID(factionID);
 
                 if (WIIC.extendedContracts.ContainsKey(system.ID)) {
                     if (WIIC.extendedContracts[system.ID] is Attack) {
                         Attack attack = (Attack)WIIC.extendedContracts[system.ID];
-                        attack.giveOnWin = factionID;
+                        attack.giveOnWin = faction.Name;
                     } else {
                         WIIC.l.LogError($"ApplySimGameEventResult: Flareup at {systemId} is '{WIIC.extendedContracts[system.ID].type}' rather than an Attack");
                     }

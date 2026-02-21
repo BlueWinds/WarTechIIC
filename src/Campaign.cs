@@ -109,6 +109,7 @@ namespace WarTechIIC {
         public int difficulty;
         public string at;
         public string description;
+        public string image;
 
         public void validate(string path) {
             if (String.IsNullOrEmpty(name) || String.IsNullOrEmpty(employer) || String.IsNullOrEmpty(employerPortrait) ||  String.IsNullOrEmpty(target) ||  String.IsNullOrEmpty(at) ||  String.IsNullOrEmpty(description)) {
@@ -140,7 +141,7 @@ namespace WarTechIIC {
             fp.Def = new FlashpointDef();
 
             // Use the HM prefix to style it in green, differentiating from normal campaign flashpoints
-            fp.Def.Description = new BaseDescriptionDef("fp_HM_" + name, name, description, "uixTxrSpot_campaignOutcomeVictory");
+            fp.Def.Description = new BaseDescriptionDef("fp_HM_" + name, name, description, image ?? "uixTxrSpot_campaignOutcomeVictory");
             fp.Def.Difficulty = difficulty;
             fp.Def.TargetFaction = target  == "OWNER" ? Utilities.getFactionValueByName(target, fp.CurSystem).FactionDef.factionID : target;
             fp.Def.FlashpointDescriberCastDefId = employerPortrait;

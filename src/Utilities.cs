@@ -34,6 +34,16 @@ namespace WarTechIIC {
                 if (id == "OWNER") {
                     system ??= WIIC.sim.CurSystem;
                     return system.OwnerValue.FactionDef.FactionValue;
+                } else if (id == "WIICEMPLOYER") {
+                    ExtendedContract ec = currentExtendedContract();
+                    if (ec != null) {
+                        return ec.employer;
+                    }
+                    if (WIIC.ecEndedTodayEmployerName != null) {
+                        return getFactionValueByName(WIIC.ecEndedTodayEmployerName);
+                    }
+
+                    throw new NullReferenceException("Player not currently engaged in an EC; WIICEMPLOYER is not valid in this context.");
                 }
                 return WIIC.sim.DataManager.Factions.FirstOrDefault(x => x.Value.FactionValue.Name == id).Value.FactionValue;
             } catch (Exception e) {

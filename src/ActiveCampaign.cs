@@ -253,9 +253,9 @@ namespace WarTechIIC {
                     WIIC.l.Log($"Generating work order for {campaign} nodes.{curIdx}");
                     if (currentEntry.contract?.withinDays != null) {
                         Contract contract = WIIC.sim.GlobalContracts.Find(c => c.Override.ID == currentEntry.contract.id);
-                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignContract", contract?.Name ?? campaign);
+                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, $"campaignContract-{campaign}", contract?.Name ?? campaign);
                     } else if (currentEntry.wait?.workOrder != null) {
-                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, "campaignWait", currentEntry.wait.workOrder);
+                        _workOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationCmdCenter, $"campaignWait-{campaign}", currentEntry.wait.workOrder);
                     } else {
                         _workOrder = null;
                     }

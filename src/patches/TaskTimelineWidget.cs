@@ -62,7 +62,7 @@ namespace WarTechIIC {
                     return;
                 }
 
-                if (element.Entry.ID == "campaignContract") {
+                if (element.Entry.ID.StartsWith("campaignContract")) {
                     WIIC.l.Log($"Sent to command center from task timeline widget");
                     WIIC.sim.SetTimeMoving(false);
                     WIIC.sim.RoomManager.SetQueuedUIActivationID(DropshipMenuType.Contract, DropshipLocation.CMD_CENTER, true);

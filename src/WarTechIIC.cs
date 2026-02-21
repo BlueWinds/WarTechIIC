@@ -12,6 +12,7 @@ namespace WarTechIIC {
     public class WIIC {
         public static Dictionary<string, ExtendedContractType> extendedContractTypes = new Dictionary<string, ExtendedContractType>();
         internal static Dictionary<string, ExtendedContract> extendedContracts = new Dictionary<string, ExtendedContract>();
+        internal static string ecEndedTodayEmployerName = null;
 
         internal static ILog l;
         internal static string modDir;
