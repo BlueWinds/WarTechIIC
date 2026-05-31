@@ -97,7 +97,6 @@ namespace WarTechIIC {
         }
 
         public void entryComplete() {
-            WorkOrderEntry_Notification oldWorkOrder = workOrder;
             Flashpoint oldFp = currentFakeFlashpoint;
 
             entryCountdown = null;
@@ -115,6 +114,26 @@ namespace WarTechIIC {
             } else {
                 WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
             }
+        }
+
+        public void contractFailed() {
+          if (currentEntry.contract == null) {
+            WIIC.l.Log($"{campaign}: contractFailed called, but not current contract? On nodes[{node}][{nodeIndex}].");
+            return;
+          }
+
+          entryCountdown = null;
+
+          node = currentEntry.contract.onFailGoto;
+          nodeIndex = 0;
+          runEntry();
+
+          // We might need to remove a previous work order
+          if (workOrder == null) {
+              WIIC.sim.RoomManager.RefreshTimeline(false);
+          } else {
+              WIIC.sim.RoomManager.AddWorkQueueEntry(workOrder);
+          }
         }
 
         public void runEntry() {

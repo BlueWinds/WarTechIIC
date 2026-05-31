@@ -119,26 +119,33 @@ namespace WarTechIIC {
 
     [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
     public static class SimGameState_ResolveCompleteContract_Patch {
-        public static void Prefix(SimGameState __instance, out string __state) {
-            __state = __instance.CompletedContract.Override.ID;
+        public static void Prefix(SimGameState __instance, out Contract __state) {
+            __state = __instance.CompletedContract;
 
             ExtendedContract ec = Utilities.currentExtendedContract();
             WIIC.l.Log($"ResolveCompleteContract: CompletedContract={__state}, ec={ec}, currentContractName={ec?.currentContractName}");
 
-            if (ec?.currentContractName == __state) {
+            if (ec?.currentContractName == __state.Override.ID) {
                 ec.currentContractName = null;
             }
         }
 
-        public static void Postfix(SimGameState __instance, string __state) {
+        public static void Postfix(SimGameState __instance, Contract __state) {
             try {
                 // Re-enable the left drawer, in case we've come in from an `immediate` campaign mission.
                 WIIC.sim.RoomManager.LeftDrawerWidget.gameObject.SetActive(true);
 
-                if (__state != null) {
-                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == __state).ToArray()) {
-                        WIIC.l.Log($"    ActiveCampaign contract; running entryComplete().");
-                        ac.entryComplete();
+                string id = __state.Override.ID;
+                if (id != null) {
+                    foreach (ActiveCampaign ac in WIIC.activeCampaigns.Where(ac => ac.currentEntry.contract?.id == id).ToArray()) {
+                        bool won = __state.State == Contract.ContractState.Complete;
+
+                        WIIC.l.Log($"    ActiveCampaign contract; won={won}.");
+                        if (won) {
+                          ac.entryComplete();
+                        } else {
+                          ac.contractFailed();
+                        }
                         return;
                     }
                 }
