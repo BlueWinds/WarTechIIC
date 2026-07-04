@@ -45,6 +45,5 @@ For all company stats, `-1` is a magic value - "ignore this". If present, we'll 
 
 # Misc functionality
 WarTechIIC modifies several base-game features.
-  * Contracts in the current system refresh every time the month rolls over.
   * Contracts in the command center are sorted by difficulty (with travel contracts at the bottom and priority contracts at the top).
   * Contract descriptions can now use `{RES_OBJ}` for self-referencing descriptions ("mad libs"). For example, a contract can use its own name, `{RES_OBJ.Name}`, inside its `shortDescription`.

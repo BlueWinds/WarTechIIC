@@ -235,21 +235,6 @@ namespace WarTechIIC {
         }
     }
 
-    [HarmonyPatch(typeof(SimGameState), "OnNewQuarterBegin")]
-    public static class SimGameStateOnNewQuarterBeginPatch {
-        private static void Postfix() {
-            try {
-                // If we're in the middle of initializing a new career no need to do anything.
-                if (WIIC.sim != null) {
-                    WIIC.l.Log($"Refreshing contracts in current system at start of month");
-                    WIIC.sim.CurSystem.ResetContracts();
-                }
-            } catch (Exception e) {
-                WIIC.l.LogException(e);
-            }
-        }
-    }
-
     [HarmonyPatch(typeof(SimGameState), "FinishCompleteBreadcrumbProcess")]
     public static class SimGameState_FinishCompleteBreadcrumbProcessPatch {
         public static void Prefix(SimGameState __instance, out string __state) {

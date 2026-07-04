@@ -30,7 +30,7 @@ namespace WarTechIIC {
                     // Check if a previous flareup flipped control of the system
                     if (WIIC.systemControl.ContainsKey(system.ID)) {
                         FactionValue ownerFromTag = Utilities.controlFromTag(WIIC.systemControl[system.ID]);
-                        Utilities.applyOwner(system, ownerFromTag, false);
+                        Utilities.applyOwner(system, ownerFromTag);
                         controlCount++;
                     }
                     count++;
@@ -40,7 +40,8 @@ namespace WarTechIIC {
                 // in this case, SimGameState_ApplySimGameEventResult_Patch will push changes into this array
                 // so that we can process them once the player arrives back in the simgame.
                 foreach ((StarSystem system, FactionValue newOwner) in deferredOwnershipChanges) {
-                    Utilities.applyOwner(system, newOwner, true);
+                    Utilities.applyOwner(system, newOwner);
+                    system.RefreshSystem();
                 }
                 deferredOwnershipChanges.Clear();
 

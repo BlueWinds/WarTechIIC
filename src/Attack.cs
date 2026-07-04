@@ -253,7 +253,8 @@ namespace WarTechIIC {
             if (defenderStrength <= 0 && attackerStrength > 0) {
                 try {
                     FactionValue giveTo = string.IsNullOrEmpty(giveOnWin) ? attacker : Utilities.getFactionValueByFactionID(giveOnWin);
-                    Utilities.applyOwner(location, giveTo, true);
+                    Utilities.applyOwner(location, giveTo);
+                    location.RefreshSystem();
                 } catch (Exception e) {
                     WIIC.l.LogError($"Tried to apply owner after attack, but got an error. giveOnWin={giveOnWin}");
                     WIIC.l.LogException(e);

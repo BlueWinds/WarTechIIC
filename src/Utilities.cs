@@ -83,7 +83,7 @@ namespace WarTechIIC {
           return tag.StartsWith("WIIC_control_");
         }
 
-        public static void applyOwner(StarSystem system, FactionValue newOwner, bool refresh) {
+        public static void applyOwner(StarSystem system, FactionValue newOwner) {
             WIIC.l.Log($"Flipping control of {system.Name} to {newOwner.Name}");
 
             WhoAndWhere.clearLocationCache();
@@ -93,11 +93,6 @@ namespace WarTechIIC {
 
             system.Def.OwnerValue = newOwner;
             setActiveFactions(system);
-
-            if (refresh && system == WIIC.sim.CurSystem) {
-                system.RefreshSystem();
-                system.ResetContracts();
-            }
 
             // Refreshes the system description with appropriate defender name
             if (WIIC.extendedContracts.ContainsKey(system.ID)) {

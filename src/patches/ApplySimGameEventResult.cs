@@ -131,7 +131,8 @@ namespace WarTechIIC {
                     WIIC.l.Log($"Deferring applyOwner() until Starmap.PopulateMap when we return to simgame");
                     Starmap_PopulateMap_Patch.deferredOwnershipChanges.Add((system, faction));
                 } else {
-                    Utilities.applyOwner(system, faction, true);
+                    Utilities.applyOwner(system, faction);
+                    system.RefreshSystem();
                 }
 
                 WIIC.eventResultsCache.Add(($"[[DM.Factions[faction_{factionID}],{faction.FactionDef.CapitalizedName}]] take{anS(faction)} control of", $"[[DM.SystemDefs[{systemId}],{system.Name}]]"));
